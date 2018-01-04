@@ -247,7 +247,7 @@ export class OAuthComponent {
 
 
 @Component({
-  selector: 'my-implicit-oauth',
+  selector: 'oauth-implicit',
   template: `
     <a href="#" class="oauth {{className}}">
       <span *ngIf="isLogout()" (click)="oauth.login()">{{i18nLogin}}</span>
@@ -269,7 +269,7 @@ export class ImplicitOAuthComponent extends OAuthComponent {
 }
 
 @Component({
-  selector: 'my-resource-oauth',
+  selector: 'oauth-resource',
   template: `
     <div class="oauth dropdown {{collapse?'show':''}} {{className}}">
       <button class="btn btn-link p-0 dropdown-toogle" [innerHtml]="getText()" (click)="collapse = !collapse"></button>

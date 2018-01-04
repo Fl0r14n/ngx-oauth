@@ -1,0 +1,47 @@
+{
+  "name": "ngx-oauth",
+  "version": "0.0.1",
+  "description": "Angular OAuth client which supports resource and implicit flows",
+  "keywords": [
+    "angular",
+    "oauth",
+    "ngx"
+  ],
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rimraf dist",
+    "lint": "tslint --force \"src/**/*.ts\"",
+    "pretest": "npm run lint",
+    "build": "npm run clean && npm run lint && ng-packagr -p ng-package.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Fl0r14n/ngx-oauth.git"
+  },
+  "peerDependencies": {
+    "@angular/core": "*"
+  },
+  "author": "Fl0r14n <florian.chis@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@angular/compiler": "*",
+    "@angular/compiler-cli": "*",
+    "typescript": "*",
+    "tslint": "*",
+    "codelyzer": "*",
+    "ng-packagr": "*",
+    "rimraf": "*"
+  },
+  "dependencies": {
+    "@angular/common": "*",
+    "@angular/core": "*",
+    "@angular/forms": "*",
+    "@angular/platform-browser": "*",
+    "@angular/platform-browser-dynamic": "*",
+    "@angular/router": "*",
+    "rxjs": "*",
+    "zone.js": "*"
+  },
+  "homepage": "https://github.com/Fl0r14n/ngx-oauth"
+}

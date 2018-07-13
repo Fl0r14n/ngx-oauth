@@ -1,6 +1,6 @@
 {
   "name": "ngx-oauth",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Angular OAuth client which supports resource and implicit flows",
   "keywords": [
     "angular",
@@ -13,35 +13,77 @@
     "clean": "rimraf dist",
     "lint": "tslint --force \"src/**/*.ts\"",
     "pretest": "npm run lint",
-    "build": "npm run clean && npm run lint && ng-packagr -p ng-package.json"
+    "build": "npm run clean && npm run lint && ng-packagr -p ng-package.json",
+    "watch": "webpack --config config/webpack.config.dev.ts --watch --progress --profile",
+    "server": "webpack-dev-server --config config/webpack.config.dev.ts --inline --progress --port 8080",
+    "start": "npm run server"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:Fl0r14n/ngx-oauth.git"
   },
   "peerDependencies": {
-    "@angular/core": "*"
+    "@angular/core": "*",
+    "@angular/common": "*",
+    "@angular/forms": "*",
+    "@angular/router": "*",
+    "@angular/platform-browser": "*",
+    "rxjs": "*"
   },
   "author": "Fl0r14n <florian.chis@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "@angular/compiler": "*",
     "@angular/compiler-cli": "*",
-    "typescript": "*",
-    "tslint": "*",
+    "@angular/platform-browser-dynamic": "*",
+    "@types/angular": "*",
+    "@types/core-js": "*",
+    "@types/jasmine": "*",
+    "@types/node": "10.1.4",
+    "@types/rx": "*",
+    "@types/webpack": "*",
+    "angular2-template-loader": "*",
+    "autoprefixer": "*",
+    "bootstrap": "*",
     "codelyzer": "*",
+    "copy-webpack-plugin": "*",
+    "css-loader": "*",
+    "extract-text-webpack-plugin": "next",
+    "file-loader": "*",
+    "font-awesome": "*",
+    "fork-ts-checker-webpack-plugin": "*",
+    "happypack": "next",
+    "html-webpack-plugin": "*",
     "ng-packagr": "*",
-    "rimraf": "*"
+    "node-sass": "*",
+    "null-loader": "*",
+    "postcss-loader": "*",
+    "raw-loader": "*",
+    "reflect-metadata": "*",
+    "rimraf": "*",
+    "rxjs": "*",
+    "rxjs-compat": "*",
+    "sass-loader": "*",
+    "source-map-loader": "*",
+    "style-loader": "*",
+    "ts-helpers": "*",
+    "ts-loader": "*",
+    "ts-node": "*",
+    "tslib": "*",
+    "tslint": "*",
+    "typescript": "2.7.2",
+    "webpack": "*",
+    "webpack-cli": "*",
+    "webpack-dev-server": "*",
+    "zone.js": "*"
   },
   "dependencies": {
-    "@angular/common": "*",
     "@angular/core": "*",
+    "@angular/common": "*",
     "@angular/forms": "*",
-    "@angular/platform-browser": "*",
-    "@angular/platform-browser-dynamic": "*",
     "@angular/router": "*",
-    "rxjs": "*",
-    "zone.js": "*"
+    "@angular/platform-browser": "*",
+    "rxjs": "*"
   },
   "homepage": "https://github.com/Fl0r14n/ngx-oauth"
 }

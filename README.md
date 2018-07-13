@@ -31,7 +31,7 @@ export class LoginComponent extends ImplicitOauthSettings {
 }
 ```
 
-or
+**or**
 
 ```angular2html
 <div class="login-component">
@@ -64,7 +64,7 @@ export class LoginComponent extends ResourceOAuthSettings {
 }
 ```
 
-or create your custom login template using OAuthService
+**or create your custom login template using OAuthService**
 
 ```angular2html
 <form (submit)="oauthService.login()">
@@ -105,5 +105,12 @@ Import ```OAuthModule``` in your angular app
 ## App Requirements
 * none
 
+##Running the demo
+
+* change proxy context in ```webpack.config.dev.ts``` so that webpack forwards your request to your oauth server
+* in app.component.ts add your **clientId, secret**, oauth server **token enpoint** and user **profile endpoint**
+* npm install
+* npm start
+ 
 #### Licensing
 MIT License

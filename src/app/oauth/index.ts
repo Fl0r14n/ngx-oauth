@@ -16,6 +16,7 @@ import {NavigationEnd, Router, RouterModule} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/empty';
+import {HttpParameterCodec} from '@angular/common/http';
 
 export enum OAuthEvent {
   LOGOUT = <any>'oauth:logout',
@@ -61,6 +62,32 @@ export class DefaultOAuthConfig implements ResourceOAuthConfig, ImplicitOAuthCon
   state = '';
   storage = sessionStorage;
 }
+
+class HttpParamEncoder implements HttpParameterCodec {
+  encodeKey(key: string): string {
+    return encodeURIComponent(key);
+  }
+
+  encodeValue(value: string): string {
+    return encodeURIComponent(value);
+  }
+
+  decodeKey(key: string): string {
+    return decodeURIComponent(key);
+  }
+
+  decodeValue(value: string): string {
+    return decodeURIComponent(value);
+  }
+}
+
+const toHttpParams = (data: Object): HttpParams => {
+  let httpParams = new HttpParams({encoder: new HttpParamEncoder()});
+  Object.keys(data).forEach(function (key) {
+    httpParams = httpParams.append(key, data[key]);
+  });
+  return httpParams;
+};
 
 @Injectable()
 export class OAuthService extends DefaultOAuthConfig {
@@ -115,14 +142,15 @@ export class OAuthService extends DefaultOAuthConfig {
       location.replace(authUrl);
     }
     if (this.tokenPath) {
-      const body = new URLSearchParams();
-      body.set('client_id', this.clientId);
-      body.set('client_secret', this.clientSecret);
-      body.set('grant_type', this.grantType);
-      body.set('username', this.username);
-      body.set('password', this.password);
+      const body = toHttpParams({
+        'client_id': this.clientId,
+        'client_secret': this.clientSecret,
+        'grant_type': this.grantType,
+        'username': this.username,
+        'password': this.password
+      });
       let headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
-      this.http.post(this.tokenPath, body.toString(), {headers}).catch(error => {
+      this.http.post(this.tokenPath, body, {headers}).catch(error => {
         this.status = OAuthEvent.DENIED;
         this.onStatus.emit(OAuthEvent.DENIED);
         return Observable.empty();
@@ -292,7 +320,7 @@ export class ImplicitOAuthComponent extends OAuthComponent {
       <button class="btn btn-link p-0 dropdown-toogle" [innerHtml]="getText()"
               (click)="isAuthorized() ? this.oauth.logout() :collapse = !collapse"></button>
       <div class="dropdown-menu mr-3 {{collapse?'show':''}}">
-        <form class="p-3" *ngIf="isLogout() || isDenied()" (submit)="oauth.login(); collapse=false;">
+        <form class="p-3" *ngIf="isLogout() || isDenied()" (submit)="oauth.login($event); collapse=false;">
           <div class="form-group">
             <input type="text" class="form-control" name="username" required [(ngModel)]="oauth.username" [placeholder]="i18Username">
           </div>

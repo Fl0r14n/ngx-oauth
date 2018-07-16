@@ -320,7 +320,7 @@ export class ImplicitOAuthComponent extends OAuthComponent {
       <button class="btn btn-link p-0 dropdown-toogle" [innerHtml]="getText()"
               (click)="isAuthorized() ? this.oauth.logout() :collapse = !collapse"></button>
       <div class="dropdown-menu mr-3 {{collapse?'show':''}}">
-        <form class="p-3" *ngIf="isLogout() || isDenied()" (submit)="oauth.login($event); collapse=false;">
+        <form class="p-3" *ngIf="isLogout() || isDenied()" (submit)="oauth.login(); collapse=false;">
           <div class="form-group">
             <input type="text" class="form-control" name="username" required [(ngModel)]="oauth.username" [placeholder]="i18Username">
           </div>

@@ -1,6 +1,6 @@
 {
   "name": "ngx-oauth",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Angular OAuth client which supports resource and implicit flows",
   "keywords": [
     "angular",

@@ -198,6 +198,7 @@ export class OAuthService extends DefaultOAuthConfig {
           const appendChar = this.tokenPath.indexOf('?') === -1 ? '?' : '&';
           const authUrl = `${this.tokenPath}${appendChar}refresh_token=${this.token.refresh_token
             }&client_id=${this.clientId}&client_secret=${this.clientSecret}&redirect_uri=&grant_type=refresh_token`;
+          localStorage.clear();
           this.http.post(authUrl, null).subscribe(params => this.setToken(params));
         } else {
           this.logout();

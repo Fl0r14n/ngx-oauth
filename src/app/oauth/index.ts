@@ -192,6 +192,9 @@ export class OAuthService extends DefaultOAuthConfig {
           this.onStatus.emit(OAuthEvent.DENIED);
         }
       );
+    } else {
+      this.status = OAuthEvent.AUTHORIZED;
+      this.onStatus.emit(OAuthEvent.AUTHORIZED);
     }
   }
 

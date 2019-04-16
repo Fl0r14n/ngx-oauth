@@ -1,22 +1,22 @@
 import {
   HTTP_INTERCEPTORS,
   HttpClient,
+  HttpClientModule,
   HttpEvent,
   HttpHandler,
   HttpHeaders,
   HttpInterceptor,
+  HttpParameterCodec,
   HttpParams,
   HttpRequest
 } from '@angular/common/http';
 import {Component, EventEmitter, HostListener, Injectable, Injector, Input, NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {HttpClientModule} from '@angular/common/http';
 import {BrowserModule} from '@angular/platform-browser';
 import {NavigationEnd, Router, RouterModule} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/empty';
-import {HttpParameterCodec} from '@angular/common/http';
 
 export enum OAuthEvent {
   LOGOUT = <any>'oauth:logout',
@@ -175,8 +175,6 @@ export class OAuthService extends DefaultOAuthConfig {
     this.token = this.token || {};
     Object.assign(this.token, params);
     this.storage['token'] = JSON.stringify(this.token);
-    this.status = OAuthEvent.AUTHORIZED;
-    this.onStatus.emit(OAuthEvent.AUTHORIZED);
     this.startExpirationTimer();
     if (this.profileUri) {
       this.http.get(this.profileUri, {
@@ -184,9 +182,19 @@ export class OAuthService extends DefaultOAuthConfig {
           Authorization: `Bearer ${this.token.access_token}`
         }
       }).subscribe(profile => {
-        this.profile = profile;
-        this.onStatus.emit(OAuthEvent.PROFILE);
-      });
+          this.profile = profile;
+          this.status = OAuthEvent.AUTHORIZED;
+          this.onStatus.emit(OAuthEvent.AUTHORIZED);
+          this.onStatus.emit(OAuthEvent.PROFILE);
+        },
+        () => {
+          this.status = OAuthEvent.DENIED;
+          this.onStatus.emit(OAuthEvent.DENIED);
+        }
+      );
+    } else {
+      this.status = OAuthEvent.AUTHORIZED;
+      this.onStatus.emit(OAuthEvent.AUTHORIZED);
     }
   }
 
@@ -220,8 +228,8 @@ export class OAuthService extends DefaultOAuthConfig {
 
   private cleanLocationHash() {
     let curHash = location.hash;
-    const haskKeys = ['#access_token', 'token_type', 'expires_in', 'scope', 'state', 'error', 'error_description'];
-    haskKeys.forEach((hashKey) => {
+    const hashKeys = ['#access_token', 'token_type', 'expires_in', 'scope', 'state', 'error', 'error_description'];
+    hashKeys.forEach((hashKey) => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
       curHash = curHash.replace(re, '');
     });
@@ -264,13 +272,13 @@ export class OAuthComponent {
 
   oauth: OAuthService;
 
+  constructor(oauth: OAuthService) {
+    this.oauth = oauth;
+  }
+
   @Input()
   set storage(storage: Storage) {
     this.oauth.storage = storage;
-  }
-
-  constructor(oauth: OAuthService) {
-    this.oauth = oauth;
   }
 
   isLogout() {

@@ -5,9 +5,10 @@ import {ResourceOAuthConfig} from './oauth';
 
 export class ResourceOAuthSettings implements ResourceOAuthConfig {
   tokenPath = 'authorizationserver/oauth/token';
-  profileUri = 'rest/v2/user/current';
+  profileUri = '/rest/v2/electronics/users/current';
   clientId = 'client-side';
   clientSecret = 'secret';
+  grantType = 'password';
   username = '';
   password = '';
   storage = localStorage;

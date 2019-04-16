@@ -61,8 +61,6 @@
     "raw-loader": "*",
     "reflect-metadata": "*",
     "rimraf": "*",
-    "rxjs": "*",
-    "rxjs-compat": "*",
     "sass-loader": "*",
     "source-map-loader": "*",
     "style-loader": "*",
@@ -83,7 +81,8 @@
     "@angular/forms": "*",
     "@angular/router": "*",
     "@angular/platform-browser": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "rxjs-compat": "*"
   },
   "homepage": "https://github.com/Fl0r14n/ngx-oauth"
 }

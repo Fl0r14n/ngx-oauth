@@ -1,7 +1,5 @@
-import {Component} from '@angular/core';
-
-import '../style/app.scss';
-import {ResourceOAuthConfig} from './oauth';
+import { Component } from '@angular/core';
+import { ResourceOAuthConfig } from 'ngx-oauth';
 
 export class ResourceOAuthSettings implements ResourceOAuthConfig {
   tokenPath = 'authorizationserver/oauth/token';
@@ -16,11 +14,12 @@ export class ResourceOAuthSettings implements ResourceOAuthConfig {
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html'
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
-export class AppComponent extends ResourceOAuthSettings {
+export class AppComponent  extends ResourceOAuthSettings {
 
   constructor() {
-    super()
+    super();
   }
 }

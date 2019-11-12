@@ -105,13 +105,5 @@ Import ```OAuthModule``` in your angular app
 ## App Requirements
 * none
  
-##Running the demo
-
-* change proxy context in ```proxy.conf.js``` so that webpack forwards your request to your oauth server
-* in app.component.ts add your **clientId, secret**, oauth server **token enpoint** and user **profile endpoint**
-* npm install
-* npm start
- 
 #### Licensing
 MIT License
-

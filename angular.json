@@ -1,0 +1,165 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "ngx-oauth": {
+      "projectType": "library",
+      "root": "projects/ngx-oauth",
+      "sourceRoot": "projects/ngx-oauth/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/ngx-oauth/tsconfig.lib.json",
+            "project": "projects/ngx-oauth/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngx-oauth/src/test.ts",
+            "tsConfig": "projects/ngx-oauth/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-oauth/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ngx-oauth/tsconfig.lib.json",
+              "projects/ngx-oauth/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "ngx-oauth-sample": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/ngx-oauth-sample",
+      "sourceRoot": "projects/ngx-oauth-sample/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/ngx-oauth-sample",
+            "index": "projects/ngx-oauth-sample/src/index.html",
+            "main": "projects/ngx-oauth-sample/src/main.ts",
+            "polyfills": "projects/ngx-oauth-sample/src/polyfills.ts",
+            "tsConfig": "projects/ngx-oauth-sample/tsconfig.app.json",
+            "aot": false,
+            "assets": [
+              "projects/ngx-oauth-sample/src/favicon.ico",
+              "projects/ngx-oauth-sample/src/assets"
+            ],
+            "styles": [
+              "projects/ngx-oauth-sample/src/styles.scss"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/ngx-oauth-sample/src/environments/environment.ts",
+                  "with": "projects/ngx-oauth-sample/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "ngx-oauth-sample:build",
+            "proxyConfig": "proxy.conf.js"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "ngx-oauth-sample:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "ngx-oauth-sample:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngx-oauth-sample/src/test.ts",
+            "polyfills": "projects/ngx-oauth-sample/src/polyfills.ts",
+            "tsConfig": "projects/ngx-oauth-sample/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-oauth-sample/karma.conf.js",
+            "assets": [
+              "projects/ngx-oauth-sample/src/favicon.ico",
+              "projects/ngx-oauth-sample/src/assets"
+            ],
+            "styles": [
+              "projects/ngx-oauth-sample/src/styles.scss"
+            ],
+            "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ngx-oauth-sample/tsconfig.app.json",
+              "projects/ngx-oauth-sample/tsconfig.spec.json",
+              "projects/ngx-oauth-sample/e2e/tsconfig.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        },
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "projects/ngx-oauth-sample/e2e/protractor.conf.js",
+            "devServerTarget": "ngx-oauth-sample:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "ngx-oauth-sample:serve:production"
+            }
+          }
+        }
+      }
+    }},
+  "defaultProject": "ngx-oauth"
+}

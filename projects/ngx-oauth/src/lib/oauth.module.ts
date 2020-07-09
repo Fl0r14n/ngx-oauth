@@ -24,7 +24,7 @@ import {OAuthConfig, OAuthConfigService} from './oauth.config';
   ]
 })
 export class OAuthModule {
-  static forRoot(config: OAuthConfig): ModuleWithProviders {
+  static forRoot(config: OAuthConfig): ModuleWithProviders<OAuthModule> {
     return {
       ngModule: OAuthModule,
       providers: [

@@ -1,173 +1,28 @@
-import {EventEmitter, Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders, HttpParameterCodec, HttpParams} from '@angular/common/http';
+import {Inject, Injectable, NgZone} from '@angular/core';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {NavigationEnd, Router} from '@angular/router';
-import {catchError} from 'rxjs/operators';
-import {EMPTY} from 'rxjs';
-import {DefaultOAuthConfig, ImplicitOAuthConfig, ResourceOAuthConfig} from './oauth.config';
-
-const STORAGE_ID = 'token';
-const QUERY_ACCESS_TOKEN = 'access_token';
-const QUERY_ERROR = 'error';
-
-class HttpParamEncoder implements HttpParameterCodec {
-  encodeKey(key: string): string {
-    return encodeURIComponent(key);
-  }
-
-  encodeValue(value: string): string {
-    return encodeURIComponent(value);
-  }
-
-  decodeKey(key: string): string {
-    return decodeURIComponent(key);
-  }
-
-  decodeValue(value: string): string {
-    return decodeURIComponent(value);
-  }
-}
-
-const toHttpParams = (data: object): HttpParams => {
-  let httpParams = new HttpParams({encoder: new HttpParamEncoder()});
-  Object.keys(data).forEach((key) => {
-    httpParams = httpParams.append(key, data[key]);
-  });
-  return httpParams;
-};
-
-export enum OAuthEvent {
-  LOGOUT = 'oauth:logout',
-  AUTHORIZED = 'oauth:autorized',
-  DENIED = 'oauth:denied',
-  PROFILE = 'oauth:profile'
-}
+import {catchError, filter, map, take, tap} from 'rxjs/operators';
+import {BehaviorSubject, EMPTY, Observable} from 'rxjs';
+import {
+  AuthorizationCodeFlowLoginParameters,
+  ImplicitLoginParameters,
+  LoginParameters,
+  OAuthConfigService,
+  OAuthFlows,
+  OAuthStatusTypes,
+  ResourceFlowLoginParameters,
+  Token
+} from './oauth.config';
 
 @Injectable()
-export class OAuthService extends DefaultOAuthConfig {
+export class OAuthService {
+  private static readonly QUERY_ERROR = 'error';
 
-  status = OAuthEvent.LOGOUT;
   timer: any;
-  profile: any;
-  token: {
-    access_token?: string
-    refresh_token?: string
-    token_type?: string
-    state?: string
-    error?: string
-    expires_in?: number
-  };
-  onStatus = new EventEmitter<OAuthEvent>();
+  token: Token | null;
+  status: BehaviorSubject<OAuthStatusTypes> = new BehaviorSubject<OAuthStatusTypes>(OAuthStatusTypes.NOT_AUTHORIZED);
 
-  constructor(protected http: HttpClient, protected router: Router) {
-    super();
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd && event.url.match('/#access_token=')) {
-        const hash = event.url.substr(2);
-        const params = this.parseOauthUri(hash);
-        if (params) {
-          this.cleanLocationHash();
-          this.setToken(params);
-        }
-      }
-    });
-  }
-
-  init() {
-    const tokenStr = this.storage[STORAGE_ID];
-    if (tokenStr) {
-      const token = JSON.parse(tokenStr);
-      if (token && token.access_token) {
-        this.setToken(token);
-      }
-    }
-  }
-
-  configure(oauthConfig: ResourceOAuthConfig | ImplicitOAuthConfig) {
-    Object.assign(this, oauthConfig);
-    this.init();
-  }
-
-  login() {
-    if (this.authorizePath) {
-      const appendChar = this.authorizePath.indexOf('?') === -1 ? '?' : '&';
-      const authUrl = `${this.authorizePath}${appendChar}response_type=${this.responseType}&client_id=${this.clientId
-      }&redirect_uri=${this.redirectUri}&scope=${this.scope}&state=${this.state}`;
-      location.replace(authUrl);
-    }
-    if (this.tokenPath) {
-      const body = toHttpParams({
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        grant_type: this.grantType,
-        username: this.username,
-        password: this.password
-      });
-      const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
-      this.http.post(this.tokenPath, body, {headers}).pipe(catchError( error => {
-        this.status = OAuthEvent.DENIED;
-        this.onStatus.emit(OAuthEvent.DENIED);
-        return EMPTY;
-      })).subscribe(params => this.setToken(params));
-    }
-  }
-
-  logout() {
-    delete this.storage[STORAGE_ID];
-    delete this.token;
-    delete this.profile;
-    this.status = OAuthEvent.LOGOUT;
-    this.onStatus.emit(OAuthEvent.LOGOUT);
-  }
-
-  private setToken(params: any) {
-    if (params.error) {
-      this.status = OAuthEvent.DENIED;
-      this.onStatus.emit(OAuthEvent.DENIED);
-      return;
-    }
-    this.token = this.token || {};
-    Object.assign(this.token, params);
-    this.storage[STORAGE_ID] = JSON.stringify(this.token);
-    this.startExpirationTimer();
-    if (this.profileUri) {
-      this.http.get(this.profileUri, {
-        headers: {
-          Authorization: `Bearer ${this.token.access_token}`
-        }
-      }).subscribe(profile => {
-          this.profile = profile;
-          this.status = OAuthEvent.AUTHORIZED;
-          this.onStatus.emit(OAuthEvent.AUTHORIZED);
-          this.onStatus.emit(OAuthEvent.PROFILE);
-        },
-        () => {
-          this.status = OAuthEvent.DENIED;
-          this.onStatus.emit(OAuthEvent.DENIED);
-        }
-      );
-    } else {
-      this.status = OAuthEvent.AUTHORIZED;
-      this.onStatus.emit(OAuthEvent.AUTHORIZED);
-    }
-  }
-
-  private startExpirationTimer() {
-    clearTimeout(this.timer);
-    if (this.token.expires_in) {
-      this.timer = setTimeout(() => {
-        if (this.tokenPath && this.token.refresh_token) {
-          const appendChar = this.tokenPath.indexOf('?') === -1 ? '?' : '&';
-          const authUrl = `${this.tokenPath}${appendChar}refresh_token=${this.token.refresh_token
-          }&client_id=${this.clientId}&client_secret=${this.clientSecret}&redirect_uri=&grant_type=refresh_token`;
-          this.http.post(authUrl, null).subscribe(params => this.setToken(params));
-        } else {
-          this.logout();
-        }
-      }, Number(this.token.expires_in) * 1000);
-    }
-  }
-
-  private parseOauthUri(hash: string) {
+  private static parseOauthUri(hash: string) {
     const regex = /([^&=]+)=([^&]*)/g;
     const params: any = {};
     let m;
@@ -175,8 +30,195 @@ export class OAuthService extends DefaultOAuthConfig {
     while ((m = regex.exec(hash)) !== null) {
       params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
     }
-    if (params[QUERY_ACCESS_TOKEN] || params[QUERY_ERROR]) {
+    if (Object.keys(params).length) {
       return params;
+    }
+  }
+
+  constructor(private http: HttpClient,
+              private router: Router,
+              private zone: NgZone,
+              @Inject(OAuthConfigService) private config
+  ) {
+    const currentToken = this.config.storage[this.config.storageKey] &&
+      this.config.storage[this.config.storageKey] &&
+      JSON.parse(this.config.storage[this.config.storageKey]);
+    if (currentToken && currentToken.access_token) {
+      this.token = currentToken.access_token;
+      this.status.next(OAuthStatusTypes.AUTHORIZED);
+      this.startExpirationTimer();
+    }
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd && !!event.url.match('/#access_token=')),
+      map((event: NavigationEnd) => OAuthService.parseOauthUri(event.url.substr(2))),
+      filter((params) => !!params),
+    ).subscribe((params) => {
+      this.cleanLocationHash();
+      if (params[OAuthService.QUERY_ERROR]) {
+        this.status.next(OAuthStatusTypes.DENIED);
+      } else {
+        this.setToken(params);
+        this.status.next(OAuthStatusTypes.AUTHORIZED);
+      }
+    });
+
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd && !!event.url.match(new RegExp(/\?code=/, 'g'))),
+      map((event: NavigationEnd) => OAuthService.parseOauthUri(event.url.substr(2))),
+      filter((params) => !!params),
+    ).subscribe((params) => {
+      const body = new HttpParams({
+        fromObject: {
+          code: params.code,
+          client_id: this.config.flowConfig.clientId,
+          client_secret: this.config.flowConfig.clientSecret,
+          redirect_uri: window.location.origin,
+          grant_type: 'authorization_code'
+        }
+      });
+      const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
+      this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
+        catchError( () => {
+          this.status.next(OAuthStatusTypes.DENIED);
+          return EMPTY;
+        })
+      ).subscribe(token => {
+        this.setToken(token);
+        this.status.next(OAuthStatusTypes.AUTHORIZED);
+      });
+    });
+  }
+
+  login(parameters?: LoginParameters) {
+    if (this.isResourceFlow(parameters)) {
+      this.resourceFlowLogin(parameters);
+    } else if (this.isAuthorizationCodeFlow(parameters)) {
+      this.authorizationCodeFlowLogin(parameters);
+    } else if (this.isImplicitFlow(parameters)) {
+      this.implicitFlowLogin(parameters);
+    } else if (this.isClientCredentialFlow(parameters)) {
+      this.clientCredentialFlowLogin();
+    }
+  }
+
+  logout() {
+    delete this.config.storage[this.config.storageKey];
+    this.token = null;
+    this.status.next(OAuthStatusTypes.NOT_AUTHORIZED);
+  }
+
+  getStatus(): Observable<OAuthStatusTypes> {
+    return this.status;
+  }
+
+  private resourceFlowLogin(parameters: ResourceFlowLoginParameters) {
+    const body = new HttpParams({fromObject: {
+      client_id: this.config.flowConfig.clientId,
+      client_secret: this.config.flowConfig.clientSecret,
+      grant_type: 'password',
+      username: parameters.username,
+      password: parameters.password
+    }});
+    const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
+    this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
+      catchError( () => {
+        this.status.next(OAuthStatusTypes.DENIED);
+        return EMPTY;
+      })
+    ).subscribe(params => {
+      this.setToken(params);
+      this.status.next(OAuthStatusTypes.AUTHORIZED);
+    });
+  }
+
+  private authorizationCodeFlowLogin(parameters: AuthorizationCodeFlowLoginParameters) {
+    const authUrl = this.getAuthorizationUrl(parameters, 'code');
+    location.replace(authUrl);
+  }
+
+  private implicitFlowLogin(parameters: ImplicitLoginParameters) {
+    const authUrl = this.getAuthorizationUrl(parameters, 'token');
+    location.replace(authUrl);
+  }
+
+  private clientCredentialFlowLogin() {
+    const body = new HttpParams({fromObject: {
+      client_id: this.config.flowConfig.clientId,
+      client_secret: this.config.flowConfig.clientSecret,
+      grant_type: 'client_credentials'
+    }});
+    const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
+    this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
+      catchError( () => {
+        this.status.next(OAuthStatusTypes.DENIED);
+        return EMPTY;
+      })
+    ).subscribe(params => {
+      this.setToken(params);
+      this.status.next(OAuthStatusTypes.AUTHORIZED);
+    });
+  }
+
+  private isResourceFlow(parameters?: LoginParameters): parameters is ResourceFlowLoginParameters {
+    return this.config.flowType === OAuthFlows.RESOURCE && parameters && !!(parameters as ResourceFlowLoginParameters).password;
+  }
+
+  private isAuthorizationCodeFlow(parameters?: LoginParameters): parameters is AuthorizationCodeFlowLoginParameters {
+    return this.config.flowType === OAuthFlows.AUTHORIZATION_CODE && parameters && !!(parameters as ImplicitLoginParameters).redirectUri;
+  }
+
+  private isImplicitFlow(parameters?: LoginParameters): parameters is ImplicitLoginParameters {
+    return this.config.flowType === OAuthFlows.IMPLICIT && parameters && !!(parameters as ImplicitLoginParameters).redirectUri;
+  }
+
+  private isClientCredentialFlow(parameters?: LoginParameters): parameters is undefined {
+    return this.config.flowType === OAuthFlows.CLIENT_CREDENTIAL;
+  }
+
+  private getAuthorizationUrl(parameters: AuthorizationCodeFlowLoginParameters | ImplicitLoginParameters, responseType): string {
+    const appendChar = this.config.flowConfig.authorizePath.includes('?') ? '&' : '?';
+    const clientId = `${appendChar}client_id=${this.config.flowConfig.clientId}`;
+    const redirectUri = `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`;
+    const responseTypeString = `&response_type=${responseType}`;
+    const scope = `&scope=${encodeURIComponent(parameters.scope || '')}`;
+    const state = `&state=${encodeURIComponent(parameters.state || '')}`;
+    const parametersString = `${clientId}${redirectUri}${responseTypeString}${scope}${state}`;
+
+    return `${this.config.flowConfig.authorizePath}${parametersString}`;
+  }
+
+  private setToken(token: Token) {
+    this.token = token;
+    this.config.storage[this.config.storageKey] = JSON.stringify(this.token);
+    this.startExpirationTimer();
+  }
+
+  private startExpirationTimer() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    if (this.token.expires_in) {
+      // this.zone.runOutsideAngular(() => {
+        this.timer = setTimeout(() => {
+          // this.zone.run(() => {
+            if (this.config.flowConfig.tokenPath && this.token.refresh_token) {
+              const appendChar = this.config.flowConfig.tokenPath.includes('?') ? '&' : '?';
+              const refreshToken = `${appendChar}refresh_token=${this.token.refresh_token}`;
+              const clientId = `&client_id=${this.config.flowConfig.clientId}`;
+              const clientSecret = `&client_secret=${this.config.flowConfig.clientSecret}`;
+              const grantType = '&grant_type=refresh_token';
+              const authUrl = `${this.config.flowConfig.tokenPath}${refreshToken}${clientId}${clientSecret}${grantType}`;
+              this.http.post(authUrl, null)
+                .subscribe(params => {
+                  this.setToken(params);
+                  this.status.next(OAuthStatusTypes.AUTHORIZED);
+                });
+            } else {
+              this.logout();
+            }
+          // });
+        }, Number(this.token.expires_in) * 1000);
+      // });
     }
   }
 

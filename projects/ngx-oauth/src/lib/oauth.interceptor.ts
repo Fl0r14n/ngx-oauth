@@ -1,24 +1,19 @@
-import {Injectable, Injector} from '@angular/core';
+import {Inject, Injectable} from '@angular/core';
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {OAuthService} from './oauth.service';
+import {OAuthConfigService, Token} from './oauth.config';
 
 @Injectable()
 export class OAuthInterceptor implements HttpInterceptor {
-
-  private oauth: OAuthService;
-
-  constructor(injector: Injector) {
-    setTimeout(() => {
-      this.oauth = injector.get(OAuthService);
-    });
-  }
+  constructor(@Inject(OAuthConfigService) private config) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (this.oauth && this.oauth.token && this.oauth.token.access_token) {
+    const token: Token = this.config.storage && this.config.storage[this.config.storageKey] &&
+      JSON.parse(this.config.storage[this.config.storageKey]);
+    if (token && token.access_token) {
       req = req.clone({
         setHeaders: {
-          Authorization: `Bearer ${this.oauth.token.access_token}`
+          Authorization: `Bearer ${token.access_token}`
         }
       });
     }

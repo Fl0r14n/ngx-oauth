@@ -1,37 +1,74 @@
-export interface OAuthConfig {
-  clientId: string;
-  redirectUri?: string;
-  profileUri?: string;
-  scope?: string;
-  state?: string;
-  storage?: Storage;
+import {InjectionToken} from '@angular/core';
+
+export const OAuthConfigService = new InjectionToken<OAuthConfig>('OAuthConfig');
+
+export enum OAuthFlows {
+  RESOURCE = 'RESOURCE',
+  AUTHORIZATION_CODE = 'AUTHORIZATION_CODE',
+  IMPLICIT = 'IMPLICIT',
+  CLIENT_CREDENTIAL = 'CLIENT_CREDENTIAL'
 }
 
-export interface ResourceOAuthConfig extends OAuthConfig {
-  tokenPath: string;
+export interface OAuthConfig {
+  flowType: OAuthFlows;
+  flowConfig: ResourceFlowConfig | ImplicitFlowConfig | AuthorizationCodeFlowConfig | ClientCredentialFlowConfig;
+  storageKey: string;
+  storage: Storage;
+}
+
+export interface ResourceFlowLoginParameters {
   username: string;
   password: string;
+}
+
+export interface ResourceFlowConfig {
+  tokenPath: string;
+  clientId: string;
   clientSecret: string;
-  grantType?: string;
 }
 
-export interface ImplicitOAuthConfig extends OAuthConfig {
+export interface AuthorizationCodeFlowLoginParameters {
+  redirectUri: string;
+  scope?: string;
+  state?: string;
+}
+
+export interface AuthorizationCodeFlowConfig {
   authorizePath: string;
-  responseType?: string;
+  tokenPath: string;
+  clientId: string;
+  clientSecret: string;
 }
 
-export class DefaultOAuthConfig implements ResourceOAuthConfig, ImplicitOAuthConfig {
-  authorizePath: string = null;
-  tokenPath: string = null;
-  profileUri: string = null;
-  redirectUri = window.location.origin;
-  clientId = 'client';
-  clientSecret = '';
-  grantType = 'password';
-  username = '';
-  password = '';
-  responseType = 'token';
-  scope = '';
-  state = '';
-  storage = sessionStorage;
+export interface ImplicitLoginParameters {
+  redirectUri: string;
+  scope?: string;
+  state?: string;
+}
+
+export interface ImplicitFlowConfig {
+  authorizePath: string;
+  clientId: string;
+}
+
+export interface ClientCredentialFlowConfig {
+  tokenPath: string;
+  clientId: string;
+  clientSecret: string;
+}
+
+export type LoginParameters = ResourceFlowLoginParameters | AuthorizationCodeFlowLoginParameters | ImplicitLoginParameters;
+
+export interface Token {
+  access_token?: string;
+  refresh_token?: string;
+  token_type?: string;
+  state?: string;
+  error?: string;
+  expires_in?: number;
+}
+export enum OAuthStatusTypes {
+  NOT_AUTHORIZED = 'NOT_AUTHORIZED',
+  AUTHORIZED = 'AUTHORIZED',
+  DENIED = 'DENIED'
 }

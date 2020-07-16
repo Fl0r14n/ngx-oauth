@@ -66,7 +66,7 @@ export class OAuthService {
       const parametersString = window.location.search.substr(1);
       const parameters = OAuthService.parseOauthUri(parametersString);
       const newParametersString = this.getCleanedUnSearchParameters();
-      if (parameters) {
+      if (parameters && parameters.code) {
         const body = new HttpParams({
           fromObject: {
             code: parameters.code,
@@ -89,6 +89,8 @@ export class OAuthService {
           this.status.next(OAuthStatusTypes.AUTHORIZED);
           window.location.href = `${window.location.origin}/${newParametersString}`;
         });
+      } else {
+        this.status.next(OAuthStatusTypes.DENIED);
       }
     }
   }

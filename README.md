@@ -1,70 +1,43 @@
 ## Angular OAuth
 
-OAuth client for angular which supports resource and implicit flows
+Ngx-oauth is an angular library for OAuth 2.0 login, the library supports all the 4 flows: resource, implicit, authorization code and client credentials.
 
 ### How to
+
+To start using the ngx-oauth you need to import and configure the ngx-oauth module.
+
+Example: 
+```typescript
+const resourceFlowConfig = {
+  flowType: OAuthFlows.RESOURCE,
+  flowConfig: {
+    tokenPath: 'authorizationserver/oauth/token',
+    clientSecret: 'secret',
+    clientId: 'client-side'
+  },
+  storage: localStorage,
+  storageKey: 'token'
+};
+
+
+@NgModule({
+  imports: [
+    OAuthModule.forRoot(resourceFlowConfig),
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+``` 
+
+You can use the ngx-login component
+
 ```angular2html
 <div class="login-component">
-  <oauth-implicit [oauthConfig]="this"></oauth-implicit>
+  <oauth-login></oauth-login>
 </div>  
 ```
-where
-
-```typescript
-export class ImplicitOauthSettings implements ImplicitOAuthConfig {
-  authorizePath = '/oauth/authorize';
-  profileUri = '/rest/v1/users/current';
-  clientId = 'clientID';
-  scope = 'basic';
-}
-
-@Component({
-  selector: 'my-login',
-  templateUrl: 'login.component.html',
-  styleUrls: ['login.component.scss']
-})
-export class LoginComponent extends ImplicitOauthSettings {
-
-  constructor() {
-    super()
-  }
-}
-```
-
-**or**
-
-```angular2html
-<div class="login-component">
-  <oauth-resource [oauthConfig]="this"></oauth-resource>
-</div>
-```
-
-where
-
-```typescript
-export class ResourceOAuthSettings implements ResourceOAuthConfig {
-  tokenPath = '/oauth/token';
-  profileUri = '/rest/v1/users/current';
-  clientId = 'clientID';
-  clientSecret = 'secret';
-  username = 'username';
-  password = 'password';
-}
-
-@Component({
-  selector: 'my-login',
-  templateUrl: 'login.component.html',
-  styleUrls: ['login.component.scss']
-})
-export class LoginComponent extends ResourceOAuthSettings {
-
-  constructor() {
-    super()
-  }
-}
-```
-
-**or create your custom login template using OAuthService**
+or create your custom login template using OAuthService
 
 ```angular2html
 <form (submit)="oauthService.login()">

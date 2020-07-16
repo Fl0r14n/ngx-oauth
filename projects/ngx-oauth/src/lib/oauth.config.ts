@@ -58,6 +58,7 @@ export interface ClientCredentialFlowConfig {
 }
 
 export type LoginParameters = ResourceFlowLoginParameters | AuthorizationCodeFlowLoginParameters | ImplicitLoginParameters;
+export type FlowConfig = ResourceFlowConfig | ImplicitFlowConfig | AuthorizationCodeFlowConfig | ClientCredentialFlowConfig;
 
 export interface Token {
   access_token?: string;

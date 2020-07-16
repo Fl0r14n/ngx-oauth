@@ -1,7 +1,0 @@
-<ng-container *ngIf="status$ | async as status">
-  <a href="#" class="oauth">
-    <span *ngIf="status === statusTypes.NOT_AUTHORIZED" (click)="oauth.login({redirectUri: location, scope: 'basic'})">Sign in</span>
-    <span *ngIf="status === statusTypes.AUTHORIZED" (click)="oauth.logout()">Logout</span>
-    <span *ngIf="status === statusTypes.DENIED" (click)="oauth.login({redirectUri: location, scope: 'basic'})">Access denied. Try Again</span>
-  </a>
-</ng-container>

@@ -1,14 +1,9 @@
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
-
-import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
-import {OauthImplicitComponent} from './components/implicit/oauth-implicit.component';
-import {OAuthResourceComponent} from './components/resource/oauth-resource.component';
-import {OauthAuthorizationCodeComponent} from './components/auth-code/oauth-authorization-code.component';
-import {OauthClientCredentialsComponent} from './components/client-credentials/oauth-client-credentials.component';
 import {OAuthFlows, OAuthModule} from 'ngx-oauth';
 import {FormsModule} from '@angular/forms';
+import {RouterModule} from '@angular/router';
 
 const resourceFlowConfig = {
   flowType: OAuthFlows.RESOURCE,
@@ -56,16 +51,12 @@ const authCodeFlowConfig = {
 
 @NgModule({
   declarations: [
-    AppComponent,
-    OauthImplicitComponent,
-    OAuthResourceComponent,
-    OauthAuthorizationCodeComponent,
-    OauthClientCredentialsComponent
+    AppComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
     OAuthModule.forRoot(resourceFlowConfig),
+    RouterModule,
     FormsModule
   ],
   providers: [],

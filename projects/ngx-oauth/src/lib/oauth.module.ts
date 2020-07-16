@@ -6,6 +6,7 @@ import {RouterModule} from '@angular/router';
 import {OAuthService} from './oauth.service';
 import {OAuthInterceptor} from './oauth.interceptor';
 import {OAuthConfig, OAuthConfigService} from './oauth.config';
+import {OauthLoginComponent} from './components/login/oauth-login.component';
 
 @NgModule({
   imports: [
@@ -14,6 +15,8 @@ import {OAuthConfig, OAuthConfigService} from './oauth.config';
     HttpClientModule,
     RouterModule
   ],
+  declarations: [OauthLoginComponent],
+  exports: [OauthLoginComponent],
   providers: [
     OAuthService,
     {

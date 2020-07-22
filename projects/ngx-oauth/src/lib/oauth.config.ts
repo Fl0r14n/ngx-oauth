@@ -12,8 +12,8 @@ export enum OAuthFlows {
 export interface OAuthConfig {
   flowType: OAuthFlows;
   flowConfig: ResourceFlowConfig | ImplicitFlowConfig | AuthorizationCodeFlowConfig | ClientCredentialFlowConfig;
-  storageKey: string;
-  storage: Storage;
+  storageKey?: string;
+  storage?: Storage;
 }
 
 export interface ResourceFlowLoginParameters {
@@ -66,10 +66,15 @@ export interface Token {
   token_type?: string;
   state?: string;
   error?: string;
-  expires_in?: number;
+  expires_in?: string;
 }
 export enum OAuthStatusTypes {
   NOT_AUTHORIZED = 'NOT_AUTHORIZED',
   AUTHORIZED = 'AUTHORIZED',
   DENIED = 'DENIED'
 }
+
+export const DefaultConfig = {
+  storage: localStorage,
+  storageKey: 'token'
+};

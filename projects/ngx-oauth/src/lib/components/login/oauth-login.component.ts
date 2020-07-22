@@ -1,4 +1,4 @@
-import {Component, HostListener, Input, OnInit} from '@angular/core';
+import {Component, ContentChild, HostListener, Input, OnInit, TemplateRef} from '@angular/core';
 import {OAuthService} from '../../oauth.service';
 import {Observable} from 'rxjs';
 import {OAuthFlows, OAuthStatusTypes} from '../../oauth.config';
@@ -11,17 +11,10 @@ import {map} from 'rxjs/operators';
 })
 export class OauthLoginComponent implements OnInit {
   @Input()
-  loginText = 'Sign In';
-  @Input()
-  logoutText = 'Logout';
-  @Input()
-  loginErrorText = 'Access Denied. Try again';
-  @Input()
-  usernameText = 'Username';
-  @Input()
-  passwordText = 'Password';
-  @Input()
   name: string;
+  @ContentChild('login', {static: false})
+  loginTemplate: TemplateRef<any>;
+
   status$: Observable<OAuthStatusTypes>;
   flowType: OAuthFlows;
   collapse = false;
@@ -31,6 +24,8 @@ export class OauthLoginComponent implements OnInit {
   StatusTypes = OAuthStatusTypes;
   FlowTypes = OAuthFlows;
   location = window.location.href;
+  loginFunction = (p) => this.login(p);
+  logoutFunction = () => this.logout();
   constructor(private readonly oauthService: OAuthService) {}
 
   ngOnInit() {
@@ -40,11 +35,11 @@ export class OauthLoginComponent implements OnInit {
       map((status) => {
         switch (status) {
           case OAuthStatusTypes.NOT_AUTHORIZED:
-            return this.loginText;
+            return 'Sign In';
           case OAuthStatusTypes.AUTHORIZED:
-            return `${this.logoutText}&nbsp;<strong>${this.name || ''}</strong>`;
+            return `Logout&nbsp;<strong>${this.name || ''}</strong>`;
           case OAuthStatusTypes.DENIED:
-            return this.loginErrorText;
+            return 'Access Denied. Try again';
         }
       })
     );

@@ -15,8 +15,8 @@ const resourceFlowConfig = {
     clientSecret: 'secret',
     clientId: 'client-side'
   },
-  storage: localStorage,
-  storageKey: 'token'
+  storage: localStorage, // Optional, default value is localStorage
+  storageKey: 'token' // Optional, default value is 'token'
 };
 
 
@@ -40,30 +40,37 @@ You can use the ngx-login component
 or create your custom login template using OAuthService
 
 ```angular2html
-<form (submit)="oauthService.login()">
-  <div class="card">
-    <div class="card-header text-center">
-      <h2 class="m-0 p-3">
-        <strong>Login</strong>
-      </h2>
-    </div>
-    <div class="card-body">
-      <div class="form-group">
-        <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
-               placeholder="username">
-      </div>
-      <div class="form-group">
-        <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
-               placeholder="password">
-      </div>
-    </div>
-    <div class="card-footer">
-      <div class="text-center">
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </div>
-    </div>
-  </div>
-</form>
+<div class="login-component">
+  <oauth-login>
+    <ng-template #login let-li="login" let-s="status" let-lo="logout">
+        <form (submit)="li({username: username, password: password})">
+          <div class="card">
+            <div class="card-header text-center">
+              <h2 class="m-0 p-3">
+                <strong>Login</strong>
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
+                       placeholder="username">
+              </div>
+              <div class="form-group">
+                <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
+                       placeholder="password">
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+          </div>
+        </form>
+    </ng-template>
+  </oauth-login>
+</div>  
+
 ```
 
 and import OAuthService in your login component constructor

@@ -5,7 +5,7 @@ import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
 import {OAuthService} from './oauth.service';
 import {OAuthInterceptor} from './oauth.interceptor';
-import {OAuthConfig, OAuthConfigService} from './oauth.config';
+import {DefaultConfig, OAuthConfig, OAuthConfigService} from './oauth.config';
 import {OauthLoginComponent} from './components/login/oauth-login.component';
 
 @NgModule({
@@ -39,7 +39,10 @@ export class OAuthModule {
         },
         {
           provide: OAuthConfigService,
-          useValue: config
+          useValue: {
+            ...DefaultConfig,
+            ...config
+          }
         }
       ]
     };

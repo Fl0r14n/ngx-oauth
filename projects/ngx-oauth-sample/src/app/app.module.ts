@@ -8,12 +8,10 @@ import {RouterModule} from '@angular/router';
 const resourceFlowConfig = {
   flowType: OAuthFlows.RESOURCE,
   flowConfig: {
-    tokenPath: 'authorizationserver/oauth/token',
+    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
     clientSecret: 'secret',
     clientId: 'client-side'
-  },
-  storage: localStorage,
-  storageKey: 'token'
+  }
 };
 
 const implicitFlowConfig = {
@@ -21,20 +19,16 @@ const implicitFlowConfig = {
   flowConfig: {
     authorizePath: 'https://localhost:9002/authorizationserver/oauth/authorize',
     clientId: 'client-side'
-  },
-  storage: localStorage,
-  storageKey: 'token'
+  }
 };
 
 const clientCredentialFlowConfig = {
   flowType: OAuthFlows.CLIENT_CREDENTIAL,
   flowConfig: {
-    tokenPath: 'authorizationserver/oauth/token',
+    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
     clientId: 'client-side',
     clientSecret: 'secret',
-  },
-  storage: localStorage,
-  storageKey: 'token'
+  }
 };
 
 const authCodeFlowConfig = {
@@ -42,11 +36,9 @@ const authCodeFlowConfig = {
   flowConfig: {
     authorizePath: 'https://localhost:9002/authorizationserver/oauth/authorize',
     clientId: 'client-side',
-    tokenPath: 'authorizationserver/oauth/token',
+    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
     clientSecret: 'secret',
-  },
-  storage: localStorage,
-  storageKey: 'token'
+  }
 };
 
 @NgModule({
@@ -55,7 +47,7 @@ const authCodeFlowConfig = {
   ],
   imports: [
     BrowserModule,
-    OAuthModule.forRoot(resourceFlowConfig),
+    OAuthModule.forRoot(authCodeFlowConfig),
     RouterModule,
     FormsModule
   ],

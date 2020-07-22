@@ -21,7 +21,7 @@ export class OAuthService {
   private static readonly QUERY_ERROR = 'error';
 
   timer: any;
-  token: Token | null;
+  token: Token | null = null;
   status: BehaviorSubject<OAuthStatusTypes> = new BehaviorSubject<OAuthStatusTypes>(OAuthStatusTypes.NOT_AUTHORIZED);
 
   private static parseOauthUri(hash: string) {
@@ -48,22 +48,24 @@ export class OAuthService {
       this.setToken(currentToken);
       this.status.next(OAuthStatusTypes.AUTHORIZED);
     } else if (currentToken && currentToken.error) {
+      this.removeToken();
       this.status.next(OAuthStatusTypes.DENIED);
     }
-    const implicitRegex = new RegExp('access_token=');
-    const authCodeRegex = new RegExp('code=');
-    if (window.location.hash && implicitRegex.test(window.location.hash)) {
-      const parametersString = window.location.hash.substr(1);
+    const implicitRegex = new RegExp('(#access_token=)|(#error=)');
+    const authCodeRegex = new RegExp('(code=)|(error=)');
+    if (location.hash && implicitRegex.test(location.hash)) {
+      const parametersString = location.hash.substr(1);
       const parameters = OAuthService.parseOauthUri(parametersString);
       this.cleanLocationHash();
       if (!parameters || parameters[OAuthService.QUERY_ERROR]) {
+        this.removeToken();
         this.status.next(OAuthStatusTypes.DENIED);
       } else {
         this.setToken(parameters);
         this.status.next(OAuthStatusTypes.AUTHORIZED);
       }
-    } else if (window.location.search && authCodeRegex.test(window.location.search)) {
-      const parametersString = window.location.search.substr(1);
+    } else if (location.search && authCodeRegex.test(location.search)) {
+      const parametersString = location.search.substr(1);
       const parameters = OAuthService.parseOauthUri(parametersString);
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
@@ -72,7 +74,7 @@ export class OAuthService {
             code: parameters.code,
             client_id: this.config.flowConfig.clientId,
             client_secret: this.config.flowConfig.clientSecret,
-            redirect_uri: `${window.location.origin}/${newParametersString}`,
+            redirect_uri: `${location.origin}/${newParametersString}`,
             grant_type: 'authorization_code'
           }
         });
@@ -81,13 +83,13 @@ export class OAuthService {
           catchError(() => {
             this.setToken({error: 'error'});
             this.status.next(OAuthStatusTypes.DENIED);
-            window.location.href = `${window.location.origin}/${newParametersString}`;
+            location.href = `${location.origin}/${newParametersString}`;
             return EMPTY;
           })
         ).subscribe(token => {
           this.setToken(token);
           this.status.next(OAuthStatusTypes.AUTHORIZED);
-          window.location.href = `${window.location.origin}/${newParametersString}`;
+          location.href = `${location.origin}/${newParametersString}`;
         });
       } else {
         this.status.next(OAuthStatusTypes.DENIED);
@@ -108,8 +110,7 @@ export class OAuthService {
   }
 
   logout() {
-    delete this.config.storage[this.config.storageKey];
-    this.token = null;
+    this.removeToken();
     this.status.next(OAuthStatusTypes.NOT_AUTHORIZED);
   }
 
@@ -132,6 +133,10 @@ export class OAuthService {
     return this.config.flowType;
   }
 
+  getToken(): Token {
+    return this.token;
+  }
+
   private resourceFlowLogin(parameters: ResourceFlowLoginParameters) {
     const body = new HttpParams({fromObject: {
       client_id: this.config.flowConfig.clientId,
@@ -143,7 +148,7 @@ export class OAuthService {
     const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
     this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
       catchError( () => {
-        this.setToken({error: 'error'});
+        this.removeToken();
         this.status.next(OAuthStatusTypes.DENIED);
         return EMPTY;
       })
@@ -170,9 +175,10 @@ export class OAuthService {
       grant_type: 'client_credentials'
     }});
     const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
+
     this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
       catchError( () => {
-        this.setToken({error: 'error'});
+        this.removeToken();
         this.status.next(OAuthStatusTypes.DENIED);
         return EMPTY;
       })
@@ -216,9 +222,14 @@ export class OAuthService {
     this.startExpirationTimer();
   }
 
+  private removeToken() {
+    delete this.config.storage[this.config.storageKey];
+    this.token = null;
+  }
+
   private startExpirationTimer() {
     clearTimeout(this.timer);
-    if (this.token.expires_in) {
+    if (this.token && this.token.expires_in) {
       this.zone.runOutsideAngular(() => {
         this.timer = setTimeout(() => {
           this.zone.run(() => {

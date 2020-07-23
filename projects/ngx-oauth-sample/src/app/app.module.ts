@@ -8,16 +8,16 @@ import {RouterModule} from '@angular/router';
 const resourceFlowConfig = {
   flowType: OAuthFlows.RESOURCE,
   flowConfig: {
-    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
+    tokenPath: '/authorizationserver/oauth/token',
     clientSecret: 'secret',
-    clientId: 'client-side'
+    clientId: 'mobile_android'
   }
 };
 
 const implicitFlowConfig = {
   flowType: OAuthFlows.IMPLICIT,
   flowConfig: {
-    authorizePath: 'https://localhost:9002/authorizationserver/oauth/authorize',
+    authorizePath: '/authorizationserver/oauth/authorize',
     clientId: 'client-side'
   }
 };
@@ -25,8 +25,8 @@ const implicitFlowConfig = {
 const clientCredentialFlowConfig = {
   flowType: OAuthFlows.CLIENT_CREDENTIAL,
   flowConfig: {
-    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
-    clientId: 'client-side',
+    tokenPath: '/authorizationserver/oauth/token',
+    clientId: 'mobile_android',
     clientSecret: 'secret',
   }
 };
@@ -34,9 +34,9 @@ const clientCredentialFlowConfig = {
 const authCodeFlowConfig = {
   flowType: OAuthFlows.AUTHORIZATION_CODE,
   flowConfig: {
-    authorizePath: 'https://localhost:9002/authorizationserver/oauth/authorize',
-    clientId: 'client-side',
-    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
+    authorizePath: '/authorizationserver/oauth/authorize',
+    clientId: 'mobile_android',
+    tokenPath: '/authorizationserver/oauth/token',
     clientSecret: 'secret',
   }
 };

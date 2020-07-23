@@ -1,9 +1,45 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {NgModule} from '@angular/core';
+import {AppComponent} from './app.component';
+import {OAuthFlows, OAuthModule} from 'ngx-oauth';
+import {FormsModule} from '@angular/forms';
+import {RouterModule} from '@angular/router';
 
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { OAuthModule } from 'ngx-oauth';
+const resourceFlowConfig = {
+  flowType: OAuthFlows.RESOURCE,
+  flowConfig: {
+    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
+    clientSecret: 'secret',
+    clientId: 'client-side'
+  }
+};
+
+const implicitFlowConfig = {
+  flowType: OAuthFlows.IMPLICIT,
+  flowConfig: {
+    authorizePath: 'https://localhost:9002/authorizationserver/oauth/authorize',
+    clientId: 'client-side'
+  }
+};
+
+const clientCredentialFlowConfig = {
+  flowType: OAuthFlows.CLIENT_CREDENTIAL,
+  flowConfig: {
+    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
+    clientId: 'client-side',
+    clientSecret: 'secret',
+  }
+};
+
+const authCodeFlowConfig = {
+  flowType: OAuthFlows.AUTHORIZATION_CODE,
+  flowConfig: {
+    authorizePath: 'https://localhost:9002/authorizationserver/oauth/authorize',
+    clientId: 'client-side',
+    tokenPath: 'https://localhost:9002/authorizationserver/oauth/token',
+    clientSecret: 'secret',
+  }
+};
 
 @NgModule({
   declarations: [
@@ -11,8 +47,9 @@ import { OAuthModule } from 'ngx-oauth';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
-    OAuthModule
+    OAuthModule.forRoot(authCodeFlowConfig),
+    RouterModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

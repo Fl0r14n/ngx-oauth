@@ -1,96 +1,76 @@
 ## Angular OAuth
 
-OAuth client for angular which supports resource and implicit flows
+Ngx-oauth is an angular library for OAuth 2.0 login, the library supports all the 4 flows: resource, implicit, authorization code and client credentials.
 
 ### How to
+
+To start using the ngx-oauth you need to import and configure the ngx-oauth module.
+
+Example: 
+```typescript
+const resourceFlowConfig = {
+  flowType: OAuthFlows.RESOURCE,
+  flowConfig: {
+    tokenPath: 'authorizationserver/oauth/token',
+    clientSecret: 'secret',
+    clientId: 'client-side'
+  },
+  storage: localStorage, // Optional, default value is localStorage
+  storageKey: 'token' // Optional, default value is 'token'
+};
+
+
+@NgModule({
+  imports: [
+    OAuthModule.forRoot(resourceFlowConfig),
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+``` 
+
+You can use the ngx-login component
+
 ```angular2html
 <div class="login-component">
-  <oauth-implicit [oauthConfig]="this"></oauth-implicit>
+  <oauth-login></oauth-login>
 </div>  
 ```
-where
-
-```typescript
-export class ImplicitOauthSettings implements ImplicitOAuthConfig {
-  authorizePath = '/oauth/authorize';
-  profileUri = '/rest/v1/users/current';
-  clientId = 'clientID';
-  scope = 'basic';
-}
-
-@Component({
-  selector: 'my-login',
-  templateUrl: 'login.component.html',
-  styleUrls: ['login.component.scss']
-})
-export class LoginComponent extends ImplicitOauthSettings {
-
-  constructor() {
-    super()
-  }
-}
-```
-
-**or**
+or create your custom login template using OAuthService
 
 ```angular2html
 <div class="login-component">
-  <oauth-resource [oauthConfig]="this"></oauth-resource>
-</div>
-```
+  <oauth-login>
+    <ng-template #login let-li="login" let-s="status" let-lo="logout">
+        <form (submit)="li({username: username, password: password})">
+          <div class="card">
+            <div class="card-header text-center">
+              <h2 class="m-0 p-3">
+                <strong>Login</strong>
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
+                       placeholder="username">
+              </div>
+              <div class="form-group">
+                <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
+                       placeholder="password">
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+          </div>
+        </form>
+    </ng-template>
+  </oauth-login>
+</div>  
 
-where
-
-```typescript
-export class ResourceOAuthSettings implements ResourceOAuthConfig {
-  tokenPath = '/oauth/token';
-  profileUri = '/rest/v1/users/current';
-  clientId = 'clientID';
-  clientSecret = 'secret';
-  username = 'username';
-  password = 'password';
-}
-
-@Component({
-  selector: 'my-login',
-  templateUrl: 'login.component.html',
-  styleUrls: ['login.component.scss']
-})
-export class LoginComponent extends ResourceOAuthSettings {
-
-  constructor() {
-    super()
-  }
-}
-```
-
-**or create your custom login template using OAuthService**
-
-```angular2html
-<form (submit)="oauthService.login()">
-  <div class="card">
-    <div class="card-header text-center">
-      <h2 class="m-0 p-3">
-        <strong>Login</strong>
-      </h2>
-    </div>
-    <div class="card-body">
-      <div class="form-group">
-        <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
-               placeholder="username">
-      </div>
-      <div class="form-group">
-        <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
-               placeholder="password">
-      </div>
-    </div>
-    <div class="card-footer">
-      <div class="text-center">
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </div>
-    </div>
-  </div>
-</form>
 ```
 
 and import OAuthService in your login component constructor

@@ -1,0 +1,36 @@
+<ng-container *ngIf="loginTemplate; else defaultLogin"
+              [ngTemplateOutlet]="loginTemplate"
+              [ngTemplateOutletContext]="{login: loginFunction, logout: logoutFunction, status: status$ | async}">
+</ng-container>
+<ng-template #defaultLogin>
+  <ng-container *ngIf="status$ | async as status">
+    <ng-container *ngIf="flowType === FlowTypes.RESOURCE; else noResource">
+      <div class="oauth dropdown text-right p-3 {{collapse ? 'show': ''}}">
+        <button class="btn btn-link p-0 dropdown-toogle" [innerHtml]="buttonText$ | async"
+                (click)="status === StatusTypes.AUTHORIZED ? logout() : toggleCollapse()"></button>
+        <div class="dropdown-menu mr-3 {{collapse ? 'show': ''}}">
+          <form class="p-3"
+                *ngIf="status === StatusTypes.NOT_AUTHORIZED || status === StatusTypes.DENIED"
+                (submit)="login({username: username, password: password})">
+            <div class="form-group">
+              <input type="text" class="form-control" name="username" required [(ngModel)]="username" [placeholder]="'Username'">
+            </div>
+            <div class="form-group">
+              <input type="password" class="form-control" name="password" required [(ngModel)]="password" [placeholder]="'Password'">
+            </div>
+            <div class="text-right">
+              <button type="submit" class="btn btn-primary">Sign in</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #noResource>
+      <a href="#" class="oauth">
+        <span *ngIf="status === StatusTypes.NOT_AUTHORIZED" (click)="login({redirectUri: location, scope: 'basic'})">Sign In</span>
+        <span *ngIf="status === StatusTypes.AUTHORIZED" (click)="logout()">Logout&nbsp;<strong>{{name}}</strong></span>
+        <span *ngIf="status === StatusTypes.DENIED" (click)="login({redirectUri: location, scope: 'basic'})">Access Denied. Try again</span>
+      </a>
+    </ng-template>
+  </ng-container>
+</ng-template>

@@ -1,12 +1,12 @@
-import {NgModule} from '@angular/core';
+import {ModuleWithProviders, NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {ImplicitOAuthComponent} from './oauth-implicit.component';
-import {ResourceOAuthComponent} from './oauth-resource.component';
 import {OAuthService} from './oauth.service';
 import {OAuthInterceptor} from './oauth.interceptor';
+import {DefaultConfig, OAuthConfig, OAuthConfigService} from './oauth.config';
+import {OauthLoginComponent} from './components/login/oauth-login.component';
 
 @NgModule({
   imports: [
@@ -15,14 +15,8 @@ import {OAuthInterceptor} from './oauth.interceptor';
     HttpClientModule,
     RouterModule
   ],
-  declarations: [
-    ImplicitOAuthComponent,
-    ResourceOAuthComponent
-  ],
-  exports: [
-    ImplicitOAuthComponent,
-    ResourceOAuthComponent
-  ],
+  declarations: [OauthLoginComponent],
+  exports: [OauthLoginComponent],
   providers: [
     OAuthService,
     {
@@ -33,4 +27,24 @@ import {OAuthInterceptor} from './oauth.interceptor';
   ]
 })
 export class OAuthModule {
+  static forRoot(config: OAuthConfig): ModuleWithProviders<OAuthModule> {
+    return {
+      ngModule: OAuthModule,
+      providers: [
+        OAuthService,
+        {
+          provide: HTTP_INTERCEPTORS,
+          useClass: OAuthInterceptor,
+          multi: true,
+        },
+        {
+          provide: OAuthConfigService,
+          useValue: {
+            ...DefaultConfig,
+            ...config
+          }
+        }
+      ]
+    };
+  }
 }

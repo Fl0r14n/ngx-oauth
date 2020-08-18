@@ -1,7 +1,7 @@
 import {Inject, Injectable} from '@angular/core';
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {OAuthConfigService, Token} from '../models';
+import {OAuthConfigService, OAuthToken} from '../models';
 
 @Injectable()
 export class OAuthInterceptor implements HttpInterceptor {
@@ -10,7 +10,7 @@ export class OAuthInterceptor implements HttpInterceptor {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token: Token = this.config.storage && this.config.storage[this.config.storageKey] &&
+    const token: OAuthToken = this.config.storage && this.config.storage[this.config.storageKey] &&
       JSON.parse(this.config.storage[this.config.storageKey]);
     if (token && token.access_token) {
       req = req.clone({

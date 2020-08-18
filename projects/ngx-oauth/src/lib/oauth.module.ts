@@ -3,7 +3,7 @@ import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {DefaultConfig, OAuthConfig, OAuthConfigService} from './models';
+import {OAuthDefaultConfig, OAuthConfig, OAuthConfigService} from './models';
 import {OauthLoginComponent} from './components/login/oauth-login.component';
 import {OAuthInterceptor, OAuthService} from './services';
 
@@ -40,7 +40,7 @@ export class OAuthModule {
         {
           provide: OAuthConfigService,
           useValue: {
-            ...DefaultConfig,
+            ...OAuthDefaultConfig,
             ...config
           }
         }

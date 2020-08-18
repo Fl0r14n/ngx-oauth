@@ -4,10 +4,12 @@
 </ng-container>
 <ng-template #defaultLogin>
   <ng-container *ngIf="status$ | async as status">
-    <ng-container *ngIf="flowType === FlowTypes.RESOURCE; else noResource">
+    <ng-container *ngIf="type === FlowTypes.RESOURCE; else noResource">
       <div class="oauth dropdown text-right p-3 {{collapse ? 'show': ''}}">
-        <button class="btn btn-link p-0 dropdown-toggle" [innerHtml]="buttonText$ | async"
-                (click)="status === StatusTypes.AUTHORIZED ? logout() : toggleCollapse()"></button>
+        <button class="btn btn-link p-0 dropdown-toggle"
+                (click)="status === StatusTypes.AUTHORIZED ? logout() : toggleCollapse()">
+          <ng-container *ngTemplateOutlet="message"></ng-container>
+        </button>
         <div class="dropdown-menu mr-3 {{collapse ? 'show': ''}}">
           <form class="p-3"
                 *ngIf="status === StatusTypes.NOT_AUTHORIZED || status === StatusTypes.DENIED"
@@ -28,11 +30,21 @@
       </div>
     </ng-container>
     <ng-template #noResource>
-      <a href="#" class="oauth">
-        <span *ngIf="status === StatusTypes.NOT_AUTHORIZED" (click)="login({redirectUri: location, scope: 'basic'})">Sign In</span>
-        <span *ngIf="status === StatusTypes.AUTHORIZED" (click)="logout()">Logout&nbsp;<strong>{{name}}</strong></span>
-        <span *ngIf="status === StatusTypes.DENIED" (click)="login({redirectUri: location, scope: 'basic'})">Access Denied. Try again</span>
+      <a href="#" class="oauth"
+         (click)="status === StatusTypes.AUTHORIZED ? logout() : login({redirectUri: location, scope: 'basic'})">
+        <ng-container *ngTemplateOutlet="message"></ng-container>
       </a>
+    </ng-template>
+
+    <ng-template #message>
+      <span *ngIf="status === StatusTypes.NOT_AUTHORIZED">Sign In</span>
+      <span *ngIf="status === StatusTypes.AUTHORIZED">
+        <ng-container *ngIf="getProfileName() | async as name">
+          Logout&nbsp;<strong>{{name}}</strong>
+        </ng-container>
+      </span>
+      <span *ngIf="status === StatusTypes.DENIED">Access Denied. Try again</span>
     </ng-template>
   </ng-container>
 </ng-template>
+

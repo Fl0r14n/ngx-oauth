@@ -3,10 +3,9 @@ import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {OAuthService} from './oauth.service';
-import {OAuthInterceptor} from './oauth.interceptor';
-import {DefaultConfig, OAuthConfig, OAuthConfigService} from './oauth.config';
+import {DefaultConfig, OAuthConfig, OAuthConfigService} from './models';
 import {OauthLoginComponent} from './components/login/oauth-login.component';
+import {OAuthInterceptor, OAuthService} from './services';
 
 @NgModule({
   imports: [
@@ -27,6 +26,7 @@ import {OauthLoginComponent} from './components/login/oauth-login.component';
   ]
 })
 export class OAuthModule {
+
   static forRoot(config: OAuthConfig): ModuleWithProviders<OAuthModule> {
     return {
       ngModule: OAuthModule,

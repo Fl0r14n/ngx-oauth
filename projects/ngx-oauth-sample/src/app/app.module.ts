@@ -47,7 +47,7 @@ const authCodeFlowConfig = {
   ],
   imports: [
     BrowserModule,
-    OAuthModule.forRoot(authCodeFlowConfig),
+    OAuthModule.forRoot(resourceFlowConfig),
     RouterModule,
     FormsModule
   ],

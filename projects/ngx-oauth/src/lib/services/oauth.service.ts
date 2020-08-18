@@ -12,12 +12,13 @@ import {
   OAuthStatusTypes,
   ResourceFlowLoginParameters,
   Token
-} from './oauth.config';
+} from '../models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OAuthService {
+
   private static readonly QUERY_ERROR = 'error';
 
   timer: any;
@@ -138,16 +139,18 @@ export class OAuthService {
   }
 
   private resourceFlowLogin(parameters: ResourceFlowLoginParameters) {
-    const body = new HttpParams({fromObject: {
-      client_id: this.config.flowConfig.clientId,
-      client_secret: this.config.flowConfig.clientSecret,
-      grant_type: 'password',
-      username: parameters.username,
-      password: parameters.password
-    }});
+    const body = new HttpParams({
+      fromObject: {
+        client_id: this.config.flowConfig.clientId,
+        client_secret: this.config.flowConfig.clientSecret,
+        grant_type: 'password',
+        username: parameters.username,
+        password: parameters.password
+      }
+    });
     const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
     this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
-      catchError( () => {
+      catchError(() => {
         this.removeToken();
         this.status.next(OAuthStatusTypes.DENIED);
         return EMPTY;
@@ -169,15 +172,17 @@ export class OAuthService {
   }
 
   private clientCredentialFlowLogin() {
-    const body = new HttpParams({fromObject: {
-      client_id: this.config.flowConfig.clientId,
-      client_secret: this.config.flowConfig.clientSecret,
-      grant_type: 'client_credentials'
-    }});
+    const body = new HttpParams({
+      fromObject: {
+        client_id: this.config.flowConfig.clientId,
+        client_secret: this.config.flowConfig.clientSecret,
+        grant_type: 'client_credentials'
+      }
+    });
     const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
 
     this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
-      catchError( () => {
+      catchError(() => {
         this.removeToken();
         this.status.next(OAuthStatusTypes.DENIED);
         return EMPTY;
@@ -234,15 +239,17 @@ export class OAuthService {
         this.timer = setTimeout(() => {
           this.zone.run(() => {
             if (this.config.flowConfig.tokenPath && this.token.refresh_token) {
-              const body = new HttpParams({fromObject: {
+              const body = new HttpParams({
+                fromObject: {
                   client_id: this.config.flowConfig.clientId,
                   client_secret: this.config.flowConfig.clientSecret,
                   grant_type: 'refresh_token',
                   refresh_token: this.token.refresh_token
-                }});
+                }
+              });
               const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
               this.http.post(this.config.flowConfig.tokenPath, body, {headers}).pipe(
-                catchError( () => {
+                catchError(() => {
                   this.logout();
                   return EMPTY;
                 })

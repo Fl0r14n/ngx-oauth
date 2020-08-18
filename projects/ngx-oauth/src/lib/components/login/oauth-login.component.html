@@ -6,17 +6,19 @@
   <ng-container *ngIf="status$ | async as status">
     <ng-container *ngIf="flowType === FlowTypes.RESOURCE; else noResource">
       <div class="oauth dropdown text-right p-3 {{collapse ? 'show': ''}}">
-        <button class="btn btn-link p-0 dropdown-toogle" [innerHtml]="buttonText$ | async"
+        <button class="btn btn-link p-0 dropdown-toggle" [innerHtml]="buttonText$ | async"
                 (click)="status === StatusTypes.AUTHORIZED ? logout() : toggleCollapse()"></button>
         <div class="dropdown-menu mr-3 {{collapse ? 'show': ''}}">
           <form class="p-3"
                 *ngIf="status === StatusTypes.NOT_AUTHORIZED || status === StatusTypes.DENIED"
                 (submit)="login({username: username, password: password})">
             <div class="form-group">
-              <input type="text" class="form-control" name="username" required [(ngModel)]="username" [placeholder]="'Username'">
+              <input type="text" class="form-control" name="username" required [(ngModel)]="username"
+                     [placeholder]="'Username'">
             </div>
             <div class="form-group">
-              <input type="password" class="form-control" name="password" required [(ngModel)]="password" [placeholder]="'Password'">
+              <input type="password" class="form-control" name="password" required [(ngModel)]="password"
+                     [placeholder]="'Password'">
             </div>
             <div class="text-right">
               <button type="submit" class="btn btn-primary">Sign in</button>

@@ -1,8 +1,8 @@
 import {Component, ContentChild, HostListener, Input, OnInit, TemplateRef} from '@angular/core';
-import {OAuthService} from '../../oauth.service';
 import {Observable} from 'rxjs';
-import {OAuthFlows, OAuthStatusTypes} from '../../oauth.config';
 import {map} from 'rxjs/operators';
+import {OAuthFlows, OAuthStatusTypes} from '../../models';
+import {OAuthService} from '../../services';
 
 @Component({
   selector: 'oauth-login',
@@ -10,6 +10,7 @@ import {map} from 'rxjs/operators';
   styleUrls: ['oauth-login.component.scss']
 })
 export class OauthLoginComponent implements OnInit {
+
   @Input()
   name: string;
   @ContentChild('login', {static: false})
@@ -26,7 +27,9 @@ export class OauthLoginComponent implements OnInit {
   location = window.location.href;
   loginFunction = (p) => this.login(p);
   logoutFunction = () => this.logout();
-  constructor(private readonly oauthService: OAuthService) {}
+
+  constructor(private readonly oauthService: OAuthService) {
+  }
 
   ngOnInit() {
     this.status$ = this.oauthService.getStatus();

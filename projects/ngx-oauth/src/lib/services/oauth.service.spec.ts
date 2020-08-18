@@ -1,10 +1,10 @@
 import {OAuthService} from './oauth.service';
 import {cold} from 'jasmine-marbles';
-import {OAuthStatusTypes, OAuthFlows} from './oauth.config';
 import Spy = jasmine.Spy;
 import {of, throwError} from 'rxjs';
 import {fakeAsync, flush, tick} from '@angular/core/testing';
 import {NgZone} from '@angular/core';
+import {OAuthFlows, OAuthStatusTypes} from '../models';
 
 describe('OAuthService', () => {
   let oauthService: OAuthService;

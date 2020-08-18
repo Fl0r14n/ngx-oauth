@@ -68,6 +68,7 @@ export interface Token {
   error?: string;
   expires_in?: string;
 }
+
 export enum OAuthStatusTypes {
   NOT_AUTHORIZED = 'NOT_AUTHORIZED',
   AUTHORIZED = 'AUTHORIZED',

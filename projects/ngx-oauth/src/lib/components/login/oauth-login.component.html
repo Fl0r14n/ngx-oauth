@@ -4,46 +4,55 @@
 </ng-container>
 <ng-template #defaultLogin>
   <ng-container *ngIf="status$ | async as status">
-    <ng-container *ngIf="type === FlowTypes.RESOURCE; else noResource">
+    <ng-container *ngIf="type === OAuthType.RESOURCE; else noResource">
       <div class="oauth dropdown text-right p-3 {{collapse ? 'show': ''}}">
         <button class="btn btn-link p-0 dropdown-toggle"
-                (click)="status === StatusTypes.AUTHORIZED ? logout() : toggleCollapse()">
+                (click)="status === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
           <ng-container *ngTemplateOutlet="message"></ng-container>
         </button>
         <div class="dropdown-menu mr-3 {{collapse ? 'show': ''}}">
-          <form class="p-3"
-                *ngIf="status === StatusTypes.NOT_AUTHORIZED || status === StatusTypes.DENIED"
+          <form class="p-3" #form="ngForm"
+                *ngIf="status === OAuthStatus.NOT_AUTHORIZED || status === OAuthStatus.DENIED"
                 (submit)="login({username: username, password: password})">
             <div class="form-group">
-              <input type="text" class="form-control" name="username" required [(ngModel)]="username"
-                     [placeholder]="'Username'">
+              <input type="text"
+                     class="form-control"
+                     name="username"
+                     required
+                     [(ngModel)]="username"
+                     [placeholder]="i18n.username">
             </div>
             <div class="form-group">
-              <input type="password" class="form-control" name="password" required [(ngModel)]="password"
-                     [placeholder]="'Password'">
+              <input type="password"
+                     class="form-control"
+                     name="password"
+                     required
+                     [(ngModel)]="password"
+                     [placeholder]="i18n.password">
             </div>
             <div class="text-right">
-              <button type="submit" class="btn btn-primary">Sign in</button>
+              <button type="submit"
+                      class="btn btn-primary"
+                      [disabled]="form.invalid">{{i18n.submit}}</button>
             </div>
           </form>
         </div>
       </div>
     </ng-container>
+
     <ng-template #noResource>
       <a href="#" class="oauth"
-         (click)="status === StatusTypes.AUTHORIZED ? logout() : login({redirectUri: location, scope: 'basic'})">
+         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({redirectUri: location, scope: 'basic'})">
         <ng-container *ngTemplateOutlet="message"></ng-container>
       </a>
     </ng-template>
 
     <ng-template #message>
-      <span *ngIf="status === StatusTypes.NOT_AUTHORIZED">Sign In</span>
-      <span *ngIf="status === StatusTypes.AUTHORIZED">
-        <ng-container *ngIf="getProfileName() | async as name">
-          Logout&nbsp;<strong>{{name}}</strong>
-        </ng-container>
+      <span *ngIf="status === OAuthStatus.NOT_AUTHORIZED">{{i18n.notAuthorized}}</span>
+      <span *ngIf="status === OAuthStatus.AUTHORIZED">
+        {{i18n.authorized}}<strong>&nbsp;{{profileName}}</strong>
       </span>
-      <span *ngIf="status === StatusTypes.DENIED">Access Denied. Try again</span>
+      <span *ngIf="status === OAuthStatus.DENIED">{{i18n.denied}}</span>
     </ng-template>
   </ng-container>
 </ng-template>

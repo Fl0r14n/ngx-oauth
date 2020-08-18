@@ -8,9 +8,9 @@ To start using the ngx-oauth you need to import and configure the ngx-oauth modu
 
 Example: 
 ```typescript
-const resourceFlowConfig = {
-  flowType: OAuthFlows.RESOURCE,
-  flowConfig: {
+const resourceConfig = {
+  type: OAuthType.RESOURCE,
+  config: {
     tokenPath: 'authorizationserver/oauth/token',
     clientSecret: 'secret',
     clientId: 'client-side'
@@ -22,7 +22,7 @@ const resourceFlowConfig = {
 
 @NgModule({
   imports: [
-    OAuthModule.forRoot(resourceFlowConfig),
+    OAuthModule.forRoot(resourceConfig),
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -4,8 +4,9 @@ import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
 import {OAuthDefaultConfig, OAuthConfig, OAuthConfigService} from './models';
-import {OauthLoginComponent} from './components/login/oauth-login.component';
-import {OAuthInterceptor, OAuthService} from './services';
+import {OAuthService} from './services/oauth.service';
+import {OAuthInterceptor} from './services/oauth.interceptor';
+import {OAuthLoginComponent} from './components/login/oauth-login.component';
 
 @NgModule({
   imports: [
@@ -14,8 +15,8 @@ import {OAuthInterceptor, OAuthService} from './services';
     HttpClientModule,
     RouterModule
   ],
-  declarations: [OauthLoginComponent],
-  exports: [OauthLoginComponent],
+  declarations: [OAuthLoginComponent],
+  exports: [OAuthLoginComponent],
   providers: [
     OAuthService,
     {

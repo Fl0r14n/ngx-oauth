@@ -1,8 +1,8 @@
 import {Component, ContentChild, HostListener, Input, OnDestroy, OnInit, TemplateRef} from '@angular/core';
 import {Observable, Subscription} from 'rxjs';
 import {OAuthStatus, OAuthType} from '../../models';
-import {OAuthService} from '../../services';
 import {tap} from 'rxjs/operators';
+import {OAuthService} from '../../services/oauth.service';
 
 export interface OAuthLoginI18n {
   username?: string;
@@ -18,7 +18,7 @@ export interface OAuthLoginI18n {
   templateUrl: 'oauth-login.component.html',
   styleUrls: ['oauth-login.component.scss']
 })
-export class OauthLoginComponent implements OnInit, OnDestroy {
+export class OAuthLoginComponent implements OnInit, OnDestroy {
 
   private subscription = new Subscription();
   // tslint:disable-next-line:variable-name

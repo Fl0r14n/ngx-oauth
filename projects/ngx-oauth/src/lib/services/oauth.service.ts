@@ -1,17 +1,17 @@
 import {Inject, Injectable, NgZone} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {catchError} from 'rxjs/operators';
-import {BehaviorSubject, EMPTY} from 'rxjs';
+import {EMPTY, ReplaySubject} from 'rxjs';
 import {
   AuthorizationCodeParameters,
-  OAuthTypeConfig,
   ImplicitParameters,
-  OAuthParameters,
   OAuthConfigService,
-  OAuthType,
+  OAuthParameters,
   OAuthStatus,
-  ResourceParameters,
-  OAuthToken
+  OAuthToken,
+  OAuthType,
+  OAuthTypeConfig,
+  ResourceParameters
 } from '../models';
 
 const QUERY_ERROR = 'error';
@@ -37,40 +37,29 @@ export class OAuthService {
 
   // tslint:disable-next-line:variable-name
   private _token: OAuthToken | null = null;
-  timer: any;
-  status$: BehaviorSubject<OAuthStatus> = new BehaviorSubject(OAuthStatus.NOT_AUTHORIZED);
+  // tslint:disable-next-line:variable-name
+  private _status: OAuthStatus;
+  private timer: any;
+  status$: ReplaySubject<OAuthStatus> = new ReplaySubject(1);
 
   constructor(private http: HttpClient,
               private zone: NgZone,
               @Inject(OAuthConfigService) private authConfig) {
-    // do we have a saved token?
-    const currentToken = this.authConfig.storage && this.authConfig.storage[this.authConfig.storageKey] &&
+    const isImplicitRedirect = location.hash && new RegExp('(#access_token=)|(#error=)').test(location.hash);
+    const isAuthCodeRedirect = location.search && new RegExp('(code=)|(error=)').test(location.search);
+    const savedToken = this.authConfig.storage && this.authConfig.storage[this.authConfig.storageKey] &&
       JSON.parse(this.authConfig.storage[this.authConfig.storageKey]);
-    if (currentToken && currentToken.access_token) {
-      this.token = currentToken;
-      if (this.token.refresh_token) {
-        this.refreshToken();
-      } else {
-        this.status$.next(OAuthStatus.AUTHORIZED);
-      }
-    } else if (currentToken && currentToken.error) {
-      this.token = null;
-      this.status$.next(OAuthStatus.DENIED);
-    }
-    // check if we are redirected back from implicit or auth code flow
-    const implicitRegex = new RegExp('(#access_token=)|(#error=)');
-    const authCodeRegex = new RegExp('(code=)|(error=)');
-    if (location.hash && implicitRegex.test(location.hash)) {
+    if (isImplicitRedirect) {
       const parameters = parseOauthUri(location.hash.substr(1));
       this.cleanLocationHash();
       if (!parameters || parameters[QUERY_ERROR]) {
         this.token = null;
-        this.status$.next(OAuthStatus.DENIED);
+        this.status = OAuthStatus.DENIED;
       } else {
         this.token = parameters;
-        this.status$.next(OAuthStatus.AUTHORIZED);
+        this.status = OAuthStatus.AUTHORIZED;
       }
-    } else if (location.search && authCodeRegex.test(location.search)) {
+    } else if (isAuthCodeRedirect) {
       const parameters = parseOauthUri(location.search.substr(1));
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
@@ -86,18 +75,33 @@ export class OAuthService {
         }), {headers: REQUEST_HEADER}).pipe(
           catchError(() => {
             this.token = {error: 'error'};
-            this.status$.next(OAuthStatus.DENIED);
+            this.status = OAuthStatus.DENIED;
             location.href = `${location.origin}/${newParametersString}`;
             return EMPTY;
           })
         ).subscribe(token => {
           this.token = token;
-          this.status$.next(OAuthStatus.AUTHORIZED);
+          this.status = OAuthStatus.AUTHORIZED;
           location.href = `${location.origin}/${newParametersString}`;
         });
       } else {
-        this.status$.next(OAuthStatus.DENIED);
+        this.status = OAuthStatus.DENIED;
       }
+    } else if (savedToken) {
+      const {access_token, refresh_token, error} = savedToken;
+      if (error) {
+        this.token = null;
+        this.status = OAuthStatus.DENIED;
+      } else if (access_token) {
+        this.token = savedToken;
+        if (refresh_token) {
+          this.refreshToken();
+        } else {
+          this.status = OAuthStatus.AUTHORIZED;
+        }
+      }
+    } else {
+      this.status = OAuthStatus.NOT_AUTHORIZED;
     }
   }
 
@@ -115,11 +119,16 @@ export class OAuthService {
 
   logout() {
     this.token = null;
-    this.status$.next(OAuthStatus.NOT_AUTHORIZED);
+    this.status = OAuthStatus.NOT_AUTHORIZED;
   }
 
   get status(): OAuthStatus {
-    return this.status$.getValue();
+    return this._status;
+  }
+
+  set status(status) {
+    this._status = status;
+    this.status$.next(status);
   }
 
   set(type: OAuthType, config?: OAuthTypeConfig): void {
@@ -147,12 +156,12 @@ export class OAuthService {
     }), {headers: REQUEST_HEADER}).pipe(
       catchError(() => {
         this.token = null;
-        this.status$.next(OAuthStatus.DENIED);
+        this.status = OAuthStatus.DENIED;
         return EMPTY;
       })
     ).subscribe(params => {
       this.token = params;
-      this.status$.next(OAuthStatus.AUTHORIZED);
+      this.status = OAuthStatus.AUTHORIZED;
     });
   }
 
@@ -177,12 +186,12 @@ export class OAuthService {
     }), {headers: REQUEST_HEADER}).pipe(
       catchError(() => {
         this.token = null;
-        this.status$.next(OAuthStatus.DENIED);
+        this.status = OAuthStatus.DENIED;
         return EMPTY;
       })
     ).subscribe(params => {
       this.token = params;
-      this.status$.next(OAuthStatus.AUTHORIZED);
+      this.status = OAuthStatus.AUTHORIZED;
     });
   }
 
@@ -254,10 +263,8 @@ export class OAuthService {
         })
       ).subscribe(params => {
         this.token = params;
-        this.status$.next(OAuthStatus.AUTHORIZED);
+        this.status = OAuthStatus.AUTHORIZED;
       });
-    } else {
-      this.logout();
     }
   }
 

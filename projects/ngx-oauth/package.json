@@ -1,6 +1,6 @@
 {
   "name": "ngx-oauth",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "peerDependencies": {
     "@angular/common": "^10.0.0",
     "@angular/core": "^10.0.0"

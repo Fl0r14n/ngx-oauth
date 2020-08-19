@@ -70,7 +70,7 @@ export class OAuthService {
             client_id: clientId,
             client_secret: clientSecret,
             redirect_uri: `${location.origin}/${newParametersString}`,
-            grant_type: OAuthType.AUTHORIZATION_CODE
+            grant_type: 'authorization_code'
           }
         }), {headers: REQUEST_HEADER}).pipe(
           catchError(() => {

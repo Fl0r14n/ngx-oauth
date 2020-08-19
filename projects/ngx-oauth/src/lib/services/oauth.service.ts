@@ -43,15 +43,21 @@ export class OAuthService {
   constructor(private http: HttpClient,
               private zone: NgZone,
               @Inject(OAuthConfigService) private authConfig) {
+    // do we have a saved token?
     const currentToken = this.authConfig.storage && this.authConfig.storage[this.authConfig.storageKey] &&
       JSON.parse(this.authConfig.storage[this.authConfig.storageKey]);
     if (currentToken && currentToken.access_token) {
       this.token = currentToken;
-      this.status$.next(OAuthStatus.AUTHORIZED);
+      if (this.token.refresh_token) {
+        this.refreshToken();
+      } else {
+        this.status$.next(OAuthStatus.AUTHORIZED);
+      }
     } else if (currentToken && currentToken.error) {
       this.token = null;
       this.status$.next(OAuthStatus.DENIED);
     }
+    // check if we are redirected back from implicit or auth code flow
     const implicitRegex = new RegExp('(#access_token=)|(#error=)');
     const authCodeRegex = new RegExp('(code=)|(error=)');
     if (location.hash && implicitRegex.test(location.hash)) {
@@ -68,8 +74,8 @@ export class OAuthService {
       const parameters = parseOauthUri(location.search.substr(1));
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
-        const {clientId, clientSecret} = this.authConfig.config;
-        this.http.post(this.authConfig.config.tokenPath, new HttpParams({
+        const {clientId, clientSecret, tokenPath} = this.authConfig.config;
+        this.http.post(tokenPath, new HttpParams({
           fromObject: {
             code: parameters.code,
             client_id: clientId,
@@ -128,9 +134,9 @@ export class OAuthService {
   }
 
   private resourceLogin(parameters: ResourceParameters) {
-    const {clientId, clientSecret} = this.authConfig.config;
+    const {clientId, clientSecret, tokenPath} = this.authConfig.config;
     const {username, password} = parameters;
-    this.http.post(this.authConfig.config.tokenPath, new HttpParams({
+    this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
         client_secret: clientSecret,
@@ -151,18 +157,18 @@ export class OAuthService {
   }
 
   private authorizationCodeLogin(parameters: AuthorizationCodeParameters) {
-    const authUrl = this.getAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
+    const authUrl = this.toAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
     location.replace(authUrl);
   }
 
   private implicitLogin(parameters: ImplicitParameters) {
-    const authUrl = this.getAuthorizationUrl(parameters, OAuthType.IMPLICIT);
+    const authUrl = this.toAuthorizationUrl(parameters, OAuthType.IMPLICIT);
     location.replace(authUrl);
   }
 
   private clientCredentialLogin() {
-    const {clientId, clientSecret} = this.authConfig.config;
-    this.http.post(this.authConfig.config.tokenPath, new HttpParams({
+    const {clientId, clientSecret, tokenPath} = this.authConfig.config;
+    this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
         client_secret: clientSecret,
@@ -196,7 +202,7 @@ export class OAuthService {
     return this.authConfig.type === OAuthType.CLIENT_CREDENTIAL;
   }
 
-  private getAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType): string {
+  private toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType): string {
     const appendChar = this.authConfig.config.authorizePath.includes('?') ? '&' : '?';
     const clientId = `${appendChar}client_id=${this.authConfig.config.clientId}`;
     const redirectUri = `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`;
@@ -211,7 +217,16 @@ export class OAuthService {
     this._token = token;
     if (token) {
       this.authConfig.storage[this.authConfig.storageKey] = JSON.stringify(this.token);
-      this.startExpirationTimer();
+      clearTimeout(this.timer);
+      if (this.token && this.token.expires_in) {
+        this.zone.runOutsideAngular(() => {
+          this.timer = setTimeout(() => {
+            this.zone.run(() => {
+              this.refreshToken();
+            });
+          }, Number(this.token.expires_in) * 1000);
+        });
+      }
     } else {
       delete this.authConfig.storage[this.authConfig.storageKey];
     }
@@ -221,37 +236,28 @@ export class OAuthService {
     return this._token;
   }
 
-  private startExpirationTimer() {
-    clearTimeout(this.timer);
-    if (this.token && this.token.expires_in) {
-      this.zone.runOutsideAngular(() => {
-        this.timer = setTimeout(() => {
-          this.zone.run(() => {
-            if (this.authConfig.config.tokenPath && this.token.refresh_token) {
-              const body = new HttpParams({
-                fromObject: {
-                  client_id: this.authConfig.config.clientId,
-                  client_secret: this.authConfig.config.clientSecret,
-                  grant_type: 'refresh_token',
-                  refresh_token: this.token.refresh_token
-                }
-              });
-              const headers = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
-              this.http.post(this.authConfig.config.tokenPath, body, {headers}).pipe(
-                catchError(() => {
-                  this.logout();
-                  return EMPTY;
-                })
-              ).subscribe(params => {
-                this.token = params;
-                this.status$.next(OAuthStatus.AUTHORIZED);
-              });
-            } else {
-              this.logout();
-            }
-          });
-        }, Number(this.token.expires_in) * 1000);
+  refreshToken() {
+    const {tokenPath, clientId, clientSecret} = this.authConfig.config;
+    const {refresh_token} = this.token;
+    if (tokenPath && refresh_token) {
+      this.http.post(tokenPath, new HttpParams({
+        fromObject: {
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: 'refresh_token',
+          refresh_token
+        }
+      }), {headers: REQUEST_HEADER}).pipe(
+        catchError(() => {
+          this.logout();
+          return EMPTY;
+        })
+      ).subscribe(params => {
+        this.token = params;
+        this.status$.next(OAuthStatus.AUTHORIZED);
       });
+    } else {
+      this.logout();
     }
   }
 

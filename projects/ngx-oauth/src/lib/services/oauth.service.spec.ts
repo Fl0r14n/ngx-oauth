@@ -31,12 +31,13 @@ describe('OAuthService', () => {
   describe('When service initialize', () => {
 
     it('should set the token if the token is present in storage', () => {
-      localStorage.setItem('token', JSON.stringify({
+      const token = {
         access_token: 'access_token',
-        refresh_token: 'refresh_token',
         token_type: 'token_type',
         expires_in: '320'
-      }));
+      };
+      (http.post as Spy).and.returnValue(of(token));
+      localStorage.setItem('token', JSON.stringify(token));
       oauthService = new OAuthService(http, zone, {
         type: OAuthType.RESOURCE,
         config: {
@@ -49,12 +50,7 @@ describe('OAuthService', () => {
       });
       const status = cold('a', {a: OAuthStatus.AUTHORIZED});
       expect(oauthService.status$).toBeObservable(status);
-      expect(oauthService.token).toEqual({
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        token_type: 'token_type',
-        expires_in: '320'
-      });
+      expect(oauthService.token).toEqual(token);
     });
 
     it('should denied if the token contains error', () => {
@@ -120,19 +116,16 @@ describe('OAuthService', () => {
   describe('When user logs in', () => {
 
     it('should set token when resource login', fakeAsync(() => {
-      (http.post as Spy).and.returnValue(of({
+      const token = {
         access_token: 'token',
         token_type: 'bearer',
         expires_in: '43199'
-      }));
+      };
+      (http.post as Spy).and.returnValue(of(token));
       oauthService.login({username: 'username', password: 'password'});
       const status = cold('a', {a: OAuthStatus.AUTHORIZED});
       expect(oauthService.status$).toBeObservable(status);
-      expect(oauthService.token).toEqual({
-        access_token: 'token',
-        token_type: 'bearer',
-        expires_in: '43199'
-      });
+      expect(oauthService.token).toEqual(token);
       flush();
     }));
 
@@ -145,6 +138,11 @@ describe('OAuthService', () => {
     }));
 
     it('should refresh the token after the time expires', fakeAsync(() => {
+      const expected = {
+        access_token: 'token2',
+        token_type: 'bearer2',
+        expires_in: '3'
+      };
       (http.post as Spy).and.returnValues(
         of({
           access_token: 'token',
@@ -152,19 +150,11 @@ describe('OAuthService', () => {
           expires_in: '2',
           refresh_token: 'refresh_token'
         }),
-        of({
-          access_token: 'token2',
-          token_type: 'bearer2',
-          expires_in: '3'
-        })
+        of(expected)
       );
       oauthService.login({username: 'username', password: 'password'});
       tick(4000);
-      expect(oauthService.token).toEqual({
-        access_token: 'token2',
-        token_type: 'bearer2',
-        expires_in: '3'
-      });
+      expect(oauthService.token).toEqual(expected);
       flush();
     }));
   });

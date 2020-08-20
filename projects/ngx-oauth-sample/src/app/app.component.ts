@@ -12,6 +12,7 @@ export class AppComponent {
 
   constructor(private http: HttpClient,
               private oauthService: OAuthService) {
+    // this.oauthService.ignorePaths.push(/.+(users\/current)?.+/);
   }
 
   i18n = {

@@ -134,12 +134,19 @@ export class OAuthService {
   set(type: OAuthType, config?: OAuthTypeConfig): void {
     this.authConfig.type = type;
     if (config) {
-      this.authConfig.config = config;
+      this.authConfig.config = {
+        ...this.authConfig.config,
+        ...config
+      };
     }
   }
 
   get type(): OAuthType {
     return this.authConfig.type;
+  }
+
+  get ignorePaths(): RegExp[] {
+    return this.authConfig.ignorePaths;
   }
 
   private resourceLogin(parameters: ResourceParameters) {
@@ -245,7 +252,7 @@ export class OAuthService {
     return this._token;
   }
 
-  refreshToken() {
+  private refreshToken() {
     const {tokenPath, clientId, clientSecret} = this.authConfig.config;
     const {refresh_token} = this.token;
     if (tokenPath && refresh_token) {

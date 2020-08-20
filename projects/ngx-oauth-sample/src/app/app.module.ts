@@ -43,7 +43,7 @@ const authorizationCodeConfig = {
 @NgModule({
   imports: [
     BrowserModule,
-    OAuthModule.forRoot(authorizationCodeConfig),
+    OAuthModule.forRoot(resourceConfig),
     HttpClientModule
   ],
   declarations: [

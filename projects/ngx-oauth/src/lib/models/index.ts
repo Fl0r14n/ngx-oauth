@@ -14,6 +14,7 @@ export interface OAuthConfig {
   config: ResourceConfig | ImplicitConfig | AuthorizationCodeConfig | ClientCredentialConfig;
   storageKey?: string;
   storage?: Storage;
+  ignorePaths?: RegExp[];
 }
 
 export interface ResourceParameters {
@@ -77,5 +78,6 @@ export enum OAuthStatus {
 
 export const OAuthDefaultConfig = {
   storage: localStorage,
-  storageKey: 'token'
+  storageKey: 'token',
+  ignorePaths: []
 };

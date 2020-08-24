@@ -1,7 +1,10 @@
 import {OAuthInterceptor} from './oauth.interceptor';
-import {OAuthType} from '../models';
+import {OAuthStatus, OAuthType} from '../models';
 import {HttpHandler, HttpRequest} from '@angular/common/http';
 import createSpyObj = jasmine.createSpyObj;
+import {OAuthService} from './oauth.service';
+import {NgZone} from '@angular/core';
+import {throwError} from 'rxjs';
 
 describe('OAuthInterceptor', () => {
 
@@ -16,21 +19,24 @@ describe('OAuthInterceptor', () => {
     storageKey: 'token',
     ignorePaths: []
   };
-  let service: OAuthInterceptor;
+  let service: OAuthService;
+  let interceptor: OAuthInterceptor;
   let req;
   let next;
 
   beforeEach(() => {
     localStorage.clear();
-    service = new OAuthInterceptor(config);
+    service = new OAuthService(null, new NgZone({}), config);
+    interceptor = new OAuthInterceptor(service);
     req = createSpyObj<HttpRequest<any>>(['clone'], {
       url: 'localhost'
     });
     next = createSpyObj<HttpHandler>(['handle']);
+    next.handle.and.returnValue(throwError({status: 401}));
   });
 
   it('should not add authorization if it does not exist', () => {
-    service.intercept(req, next);
+    interceptor.intercept(req, next);
     expect(next.handle).toHaveBeenCalledWith(req);
   });
 
@@ -40,8 +46,8 @@ describe('OAuthInterceptor', () => {
       token_type: 'token_type',
       expires_in: '320'
     };
-    localStorage.setItem('token', JSON.stringify(token));
-    service.intercept(req, next);
+    service.token = token;
+    interceptor.intercept(req, next);
     expect(req.clone).toHaveBeenCalledWith({
       setHeaders: {
         Authorization: `Bearer ${token.access_token}`
@@ -50,14 +56,19 @@ describe('OAuthInterceptor', () => {
   });
 
   it('should exclude path from authorization', () => {
+    config.ignorePaths.push(/localhost/);
+    interceptor.intercept(req, next);
+    expect(next.handle).toHaveBeenCalledWith(req);
+  });
+
+  it('should return empty and throw denied if 401 response', () => {
     const token = {
       access_token: 'access_token',
       token_type: 'token_type',
       expires_in: '320'
     };
-    localStorage.setItem('token', JSON.stringify(token));
-    config.ignorePaths.push(/localhost/);
-    service.intercept(req, next);
-    expect(next.handle).toHaveBeenCalledWith(req);
+    service.token = token;
+    interceptor.intercept(req, next).subscribe();
+    expect(service.status).toBe(OAuthStatus.DENIED);
   });
 });

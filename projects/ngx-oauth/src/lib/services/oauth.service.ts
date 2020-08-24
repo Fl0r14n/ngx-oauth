@@ -85,6 +85,7 @@ export class OAuthService {
           location.href = `${location.origin}/${newParametersString}`;
         });
       } else {
+        this.token = null;
         this.status = OAuthStatus.DENIED;
       }
     } else if (savedToken) {

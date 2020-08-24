@@ -1,18 +1,19 @@
-import {Inject, Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {OAuthConfigService, OAuthToken} from '../models';
+import {EMPTY, Observable} from 'rxjs';
+import {catchError} from 'rxjs/operators';
+import {OAuthService} from './oauth.service';
+import {OAuthStatus} from '../models';
 
 @Injectable()
 export class OAuthInterceptor implements HttpInterceptor {
 
-  constructor(@Inject(OAuthConfigService) private config) {
+  constructor(private oauthService: OAuthService) {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (!this.isPathExcepted(req)) {
-      const token: OAuthToken = this.config.storage && this.config.storage[this.config.storageKey] &&
-        JSON.parse(this.config.storage[this.config.storageKey]);
+      const token = this.oauthService.token;
       if (token && token.access_token) {
         req = req.clone({
           setHeaders: {
@@ -21,11 +22,19 @@ export class OAuthInterceptor implements HttpInterceptor {
         });
       }
     }
-    return next.handle(req);
+    return next.handle(req).pipe(
+      catchError((err, caught) => {
+        if (err.status === 401) {
+          this.oauthService.token = null;
+          this.oauthService.status = OAuthStatus.DENIED;
+        }
+        return EMPTY;
+      })
+    );
   }
 
   private isPathExcepted(req: HttpRequest<any>) {
-    for (const ignorePath of this.config.ignorePaths) {
+    for (const ignorePath of this.oauthService.ignorePaths) {
       try {
         if (req.url.match(ignorePath)) {
           return true;

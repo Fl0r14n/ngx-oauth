@@ -1,52 +1,50 @@
 import {OAuthInterceptor} from './oauth.interceptor';
-import {OAuthStatus, OAuthType} from '../models';
-import {HttpHandler, HttpRequest} from '@angular/common/http';
-import createSpyObj = jasmine.createSpyObj;
+import {OAuthStatus} from '../models';
 import {OAuthService} from './oauth.service';
-import {NgZone} from '@angular/core';
-import {throwError} from 'rxjs';
+import {TestBed} from '@angular/core/testing';
+import createSpyObj = jasmine.createSpyObj;
+import {HttpHandler, HttpRequest, HttpResponse} from '@angular/common/http';
+import {of, throwError} from 'rxjs';
 
 describe('OAuthInterceptor', () => {
 
-  const config = {
-    type: OAuthType.RESOURCE,
-    config: {
-      tokenPath: '/token',
-      clientSecret: 'clentSecret',
-      clientId: 'clientId'
-    },
-    storage: localStorage,
-    storageKey: 'token',
-    ignorePaths: []
+  const token = {
+    access_token: 'access_token',
+    token_type: 'token_type',
+    expires_in: '320'
   };
-  let service: OAuthService;
+  let oauthService: OAuthService;
   let interceptor: OAuthInterceptor;
-  let req;
-  let next;
 
-  beforeEach(() => {
-    localStorage.clear();
-    service = new OAuthService(null, new NgZone({}), config);
-    interceptor = new OAuthInterceptor(service);
-    req = createSpyObj<HttpRequest<any>>(['clone'], {
-      url: 'localhost'
+  beforeEach((done) => {
+    oauthService = createSpyObj<OAuthService>([], {
+      ignorePaths: []
     });
-    next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(throwError({status: 401}));
+    TestBed.configureTestingModule({
+      providers: [
+        {provide: OAuthService, useValue: oauthService},
+        OAuthInterceptor,
+      ]
+    });
+    interceptor = TestBed.inject(OAuthInterceptor);
+    setTimeout(done, 50);
   });
 
   it('should not add authorization if it does not exist', () => {
+    const req = new HttpRequest('GET', 'https://localhost');
+    const next = createSpyObj<HttpHandler>(['handle']);
+    next.handle.and.returnValue(of(new HttpResponse()));
     interceptor.intercept(req, next);
     expect(next.handle).toHaveBeenCalledWith(req);
   });
 
   it('should add authorization to request', () => {
-    const token = {
-      access_token: 'access_token',
-      token_type: 'token_type',
-      expires_in: '320'
-    };
-    service.token = token;
+    const req = createSpyObj<HttpRequest<any>>(['clone'], {
+      url: 'localhost'
+    });
+    const next = createSpyObj<HttpHandler>(['handle']);
+    next.handle.and.returnValue(of(new HttpResponse()));
+    oauthService.token = token;
     interceptor.intercept(req, next);
     expect(req.clone).toHaveBeenCalledWith({
       setHeaders: {
@@ -56,19 +54,20 @@ describe('OAuthInterceptor', () => {
   });
 
   it('should exclude path from authorization', () => {
-    config.ignorePaths.push(/localhost/);
+    const req = new HttpRequest('GET', 'https://localhost');
+    const next = createSpyObj<HttpHandler>(['handle']);
+    next.handle.and.returnValue(of(new HttpResponse()));
+    oauthService.ignorePaths.push(/localhost/);
     interceptor.intercept(req, next);
     expect(next.handle).toHaveBeenCalledWith(req);
   });
 
   it('should return empty and throw denied if 401 response', () => {
-    const token = {
-      access_token: 'access_token',
-      token_type: 'token_type',
-      expires_in: '320'
-    };
-    service.token = token;
+    const req = new HttpRequest('GET', 'https://localhost');
+    const next = createSpyObj<HttpHandler>(['handle']);
+    next.handle.and.returnValue(throwError({status: 401}));
+    oauthService.token = token;
     interceptor.intercept(req, next).subscribe();
-    expect(service.status).toBe(OAuthStatus.DENIED);
+    expect(oauthService.status).toBe(OAuthStatus.DENIED);
   });
 });

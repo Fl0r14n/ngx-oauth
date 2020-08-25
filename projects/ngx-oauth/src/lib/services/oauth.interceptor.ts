@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, Injector} from '@angular/core';
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {EMPTY, Observable} from 'rxjs';
 import {catchError} from 'rxjs/operators';
@@ -8,29 +8,36 @@ import {OAuthStatus} from '../models';
 @Injectable()
 export class OAuthInterceptor implements HttpInterceptor {
 
-  constructor(private oauthService: OAuthService) {
+  private oauthService: OAuthService;
+
+  constructor(injector: Injector) {
+    setTimeout(() => this.oauthService = injector.get(OAuthService));
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!this.isPathExcepted(req)) {
-      const token = this.oauthService.token;
-      if (token && token.access_token) {
-        req = req.clone({
-          setHeaders: {
-            Authorization: `Bearer ${token.access_token}`
-          }
-        });
-      }
-    }
-    return next.handle(req).pipe(
-      catchError((err, caught) => {
-        if (err.status === 401) {
-          this.oauthService.token = null;
-          this.oauthService.status = OAuthStatus.DENIED;
+    if (this.oauthService) {
+      if (!this.isPathExcepted(req)) {
+        const token = this.oauthService.token;
+        if (token && token.access_token) {
+          req = req.clone({
+            setHeaders: {
+              Authorization: `Bearer ${token.access_token}`
+            }
+          });
         }
-        return EMPTY;
-      })
-    );
+      }
+      return next.handle(req).pipe(
+        catchError((err, caught) => {
+          if (err.status === 401) {
+            this.oauthService.token = null;
+            this.oauthService.status = OAuthStatus.DENIED;
+          }
+          return EMPTY;
+        })
+      );
+    } else {
+      return next.handle(req);
+    }
   }
 
   private isPathExcepted(req: HttpRequest<any>) {

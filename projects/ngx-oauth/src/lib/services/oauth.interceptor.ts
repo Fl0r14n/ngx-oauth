@@ -1,6 +1,6 @@
 import {Injectable, Injector} from '@angular/core';
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
-import {EMPTY, Observable} from 'rxjs';
+import {EMPTY, Observable, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {OAuthService} from './oauth.service';
 import {OAuthStatus} from '../models';
@@ -27,12 +27,13 @@ export class OAuthInterceptor implements HttpInterceptor {
         }
       }
       return next.handle(req).pipe(
-        catchError((err, caught) => {
+        catchError((err) => {
           if (err.status === 401) {
             this.oauthService.token = null;
             this.oauthService.status = OAuthStatus.DENIED;
+            return EMPTY;
           }
-          return EMPTY;
+          return throwError(err);
         })
       );
     } else {

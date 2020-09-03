@@ -30,9 +30,7 @@ const parseOauthUri = (hash: string) => {
   }
 };
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class OAuthService {
 
   // tslint:disable-next-line:variable-name

@@ -1,7 +1,8 @@
 import {Component} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {map} from 'rxjs/operators';
-import {OAuthService, OAuthType} from 'ngx-oauth';
+import {OAuthService, OAuthStatus, OAuthType} from 'ngx-oauth';
+import {Observable} from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -9,8 +10,11 @@ import {OAuthService, OAuthType} from 'ngx-oauth';
 })
 export class AppComponent {
 
+  status$: Observable<OAuthStatus>;
+
   constructor(private http: HttpClient,
               private oauthService: OAuthService) {
+    this.status$ = this.oauthService.status$;
     // this.oauthService.ignorePaths.push(/.+(users\/current)?.+/);
   }
 

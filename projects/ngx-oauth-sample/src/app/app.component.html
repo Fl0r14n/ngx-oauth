@@ -7,4 +7,5 @@
       </li>
     </ul>
   </nav>
+  <div class="alert alert-info text-center font-weight-bold" *ngIf="status$ | async as status">{{status}}</div>
 </header>

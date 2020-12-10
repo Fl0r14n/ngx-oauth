@@ -14,16 +14,20 @@ const OAuthInterceptorService = {
   multi: true,
 };
 
-const LocationService = {
-  provide: LOCATION,
-  useValue: typeof location !== 'undefined' ? location : {
+export function locationFactory() {
+  return typeof location !== 'undefined' && location || {
     origin: '',
     search: '',
     hash: '',
     href: '',
     replace(url: string) {
     }
-  } as Location,
+  } as Location;
+}
+
+const LocationService = {
+  provide: LOCATION,
+  useFactory: locationFactory
 };
 
 @NgModule({

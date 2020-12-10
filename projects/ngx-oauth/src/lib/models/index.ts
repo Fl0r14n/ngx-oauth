@@ -78,19 +78,23 @@ export enum OAuthStatus {
 }
 
 const mockStorage: Storage = {
-  clear: () => {
+  clear() {
   },
-  getItem: (key: string) => undefined as string,
-  key: (index: number) => undefined as string,
-  removeItem: (key: string) => {
+  getItem(key: string) {
+    return undefined as string;
   },
-  setItem: (key: string, value: string) => {
+  key(index: number) {
+    return undefined as string;
+  },
+  removeItem(key: string) {
+  },
+  setItem(key: string, value: string) {
   },
   length: 0
 };
 
 export const OAuthDefaultConfig = {
-  storage: typeof localStorage !== 'undefined' ? localStorage : mockStorage,
+  storage: typeof localStorage !== 'undefined' && localStorage || mockStorage,
   storageKey: 'token',
   ignorePaths: []
 };

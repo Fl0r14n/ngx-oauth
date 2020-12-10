@@ -42,7 +42,7 @@ const authorizationCodeConfig = {
 
 @NgModule({
   imports: [
-    BrowserModule,
+    BrowserModule.withServerTransition({ appId: 'serverApp' }),
     OAuthModule.forRoot(resourceConfig),
     HttpClientModule
   ],

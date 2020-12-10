@@ -57,7 +57,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/ngx-oauth-sample",
+            "outputPath": "dist/ngx-oauth-sample/browser",
             "index": "projects/ngx-oauth-sample/src/index.html",
             "main": "projects/ngx-oauth-sample/src/main.ts",
             "polyfills": "projects/ngx-oauth-sample/src/polyfills.ts",
@@ -144,7 +144,8 @@
             "tsConfig": [
               "projects/ngx-oauth-sample/tsconfig.app.json",
               "projects/ngx-oauth-sample/tsconfig.spec.json",
-              "projects/ngx-oauth-sample/e2e/tsconfig.json"
+              "projects/ngx-oauth-sample/e2e/tsconfig.json",
+              "projects/ngx-oauth-sample/tsconfig.server.json"
             ],
             "exclude": [
               "**/node_modules/**"
@@ -161,6 +162,53 @@
             "production": {
               "devServerTarget": "ngx-oauth-sample:serve:production"
             }
+          }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/ngx-oauth-sample/server",
+            "main": "projects/ngx-oauth-sample/server.ts",
+            "tsConfig": "projects/ngx-oauth-sample/tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media",
+              "fileReplacements": [
+                {
+                  "replace": "projects/ngx-oauth-sample/src/environments/environment.ts",
+                  "with": "projects/ngx-oauth-sample/src/environments/environment.prod.ts"
+                }
+              ],
+              "sourceMap": false,
+              "optimization": true
+            }
+          }
+        },
+        "serve-ssr": {
+          "builder": "@nguniversal/builders:ssr-dev-server",
+          "options": {
+            "browserTarget": "ngx-oauth-sample:build",
+            "serverTarget": "ngx-oauth-sample:server"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "ngx-oauth-sample:build:production",
+              "serverTarget": "ngx-oauth-sample:server:production"
+            }
+          }
+        },
+        "prerender": {
+          "builder": "@nguniversal/builders:prerender",
+          "options": {
+            "browserTarget": "ngx-oauth-sample:build:production",
+            "serverTarget": "ngx-oauth-sample:server:production",
+            "routes": [
+              "/"
+            ]
+          },
+          "configurations": {
+            "production": {}
           }
         }
       }

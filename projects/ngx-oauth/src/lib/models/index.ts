@@ -1,5 +1,6 @@
 import {InjectionToken} from '@angular/core';
 
+export const LOCATION = new InjectionToken<Location>('Location');
 export const OAuthConfigService = new InjectionToken<OAuthConfig>('OAuthConfig');
 
 export enum OAuthType {
@@ -76,8 +77,20 @@ export enum OAuthStatus {
   DENIED = 'DENIED'
 }
 
+const mockStorage: Storage = {
+  clear: () => {
+  },
+  getItem: (key: string) => undefined as string,
+  key: (index: number) => undefined as string,
+  removeItem: (key: string) => {
+  },
+  setItem: (key: string, value: string) => {
+  },
+  length: 0
+};
+
 export const OAuthDefaultConfig = {
-  storage: localStorage,
+  storage: typeof localStorage !== 'undefined' ? localStorage : mockStorage,
   storageKey: 'token',
   ignorePaths: []
 };

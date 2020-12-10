@@ -42,7 +42,7 @@
 
     <ng-template #noResource>
       <a href="#" class="oauth"
-         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({redirectUri: location, scope: 'basic'})">
+         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({redirectUri: redirectUri, scope: 'basic'})">
         <ng-container *ngTemplateOutlet="message"></ng-container>
       </a>
     </ng-template>

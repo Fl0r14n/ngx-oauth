@@ -4,6 +4,15 @@ import {AppComponent} from './app.component';
 import {OAuthType, OAuthModule} from 'ngx-oauth';
 import {HttpClientModule} from '@angular/common/http';
 
+const clientCredentialConfig = {
+  type: OAuthType.CLIENT_CREDENTIAL,
+  config: {
+    tokenPath: '/authorizationserver/oauth/token',
+    clientId: 'mobile_android',
+    clientSecret: 'secret',
+  }
+};
+
 const resourceConfig = {
   type: OAuthType.RESOURCE,
   config: {
@@ -18,15 +27,6 @@ const implicitConfig = {
   config: {
     authorizePath: '/authorizationserver/oauth/authorize',
     clientId: 'client-side'
-  }
-};
-
-const clientCredentialConfig = {
-  type: OAuthType.CLIENT_CREDENTIAL,
-  config: {
-    tokenPath: '/authorizationserver/oauth/token',
-    clientId: 'mobile_android',
-    clientSecret: 'secret',
   }
 };
 

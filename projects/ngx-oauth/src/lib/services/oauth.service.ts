@@ -5,6 +5,7 @@ import {EMPTY, ReplaySubject} from 'rxjs';
 import {
   AuthorizationCodeParameters,
   ImplicitParameters,
+  LOCATION,
   OAuthConfigService,
   OAuthParameters,
   OAuthStatus,
@@ -42,13 +43,15 @@ export class OAuthService {
 
   constructor(private http: HttpClient,
               private zone: NgZone,
-              @Inject(OAuthConfigService) private authConfig) {
-    const isImplicitRedirect = location.hash && new RegExp('(#access_token=)|(#error=)').test(location.hash);
-    const isAuthCodeRedirect = location.search && new RegExp('(code=)|(error=)').test(location.search);
+              @Inject(OAuthConfigService) private authConfig,
+              @Inject(LOCATION) private locationService) {
+    const {hash, search, origin} = this.locationService;
+    const isImplicitRedirect = hash && new RegExp('(#access_token=)|(#error=)').test(hash);
+    const isAuthCodeRedirect = search && new RegExp('(code=)|(error=)').test(search);
     const savedToken = this.authConfig.storage && this.authConfig.storage[this.authConfig.storageKey] &&
       JSON.parse(this.authConfig.storage[this.authConfig.storageKey]);
     if (isImplicitRedirect) {
-      const parameters = parseOauthUri(location.hash.substr(1));
+      const parameters = parseOauthUri(hash.substr(1));
       this.cleanLocationHash();
       if (!parameters || parameters[QUERY_ERROR]) {
         this.token = null;
@@ -58,7 +61,7 @@ export class OAuthService {
         this.status = OAuthStatus.AUTHORIZED;
       }
     } else if (isAuthCodeRedirect) {
-      const parameters = parseOauthUri(location.search.substr(1));
+      const parameters = parseOauthUri(search.substr(1));
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
         const {clientId, clientSecret, tokenPath} = this.authConfig.config;
@@ -67,20 +70,20 @@ export class OAuthService {
             code: parameters.code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: `${location.origin}/${newParametersString}`,
+            redirect_uri: `${origin}/${newParametersString}`,
             grant_type: 'authorization_code'
           }
         }), {headers: REQUEST_HEADER}).pipe(
           catchError(() => {
             this.token = {error: 'error'};
             this.status = OAuthStatus.DENIED;
-            location.href = `${location.origin}/${newParametersString}`;
+            this.locationService.href = `${origin}/${newParametersString}`;
             return EMPTY;
           })
         ).subscribe(token => {
           this.token = token;
-          this.status = OAuthStatus.AUTHORIZED;
-          location.href = `${location.origin}/${newParametersString}`;
+          // authorized event will be triggered after redirect
+          this.locationService.href = `${origin}/${newParametersString}`;
         });
       } else {
         this.token = null;
@@ -173,12 +176,12 @@ export class OAuthService {
 
   private authorizationCodeLogin(parameters: AuthorizationCodeParameters) {
     const authUrl = this.toAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
-    location.replace(authUrl);
+    this.locationService.replace(authUrl);
   }
 
   private implicitLogin(parameters: ImplicitParameters) {
     const authUrl = this.toAuthorizationUrl(parameters, OAuthType.IMPLICIT);
-    location.replace(authUrl);
+    this.locationService.replace(authUrl);
   }
 
   private clientCredentialLogin() {
@@ -275,7 +278,8 @@ export class OAuthService {
   }
 
   private getCleanedUnSearchParameters(): string {
-    let searchString = location.search.substr(1);
+    const {search} = this.locationService;
+    let searchString = search.substr(1);
     const hashKeys = ['code', 'state', 'error', 'error_description'];
     hashKeys.forEach((hashKey) => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
@@ -285,12 +289,13 @@ export class OAuthService {
   }
 
   private cleanLocationHash() {
-    let curHash = location.hash.substr(1);
+    const {hash} = this.locationService;
+    let curHash = hash.substr(1);
     const hashKeys = ['access_token', 'token_type', 'expires_in', 'scope', 'state', 'error', 'error_description'];
     hashKeys.forEach((hashKey) => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
       curHash = curHash.replace(re, '');
     });
-    location.hash = curHash;
+    this.locationService.hash = curHash;
   }
 }

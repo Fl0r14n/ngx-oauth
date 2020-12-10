@@ -3,10 +3,28 @@ import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {OAuthDefaultConfig, OAuthConfig, OAuthConfigService} from './models';
+import {OAuthDefaultConfig, OAuthConfig, OAuthConfigService, LOCATION} from './models';
 import {OAuthService} from './services/oauth.service';
 import {OAuthInterceptor} from './services/oauth.interceptor';
 import {OAuthLoginComponent} from './components/login/oauth-login.component';
+
+const OAuthInterceptorService = {
+  provide: HTTP_INTERCEPTORS,
+  useClass: OAuthInterceptor,
+  multi: true,
+};
+
+const LocationService = {
+  provide: LOCATION,
+  useValue: typeof location !== 'undefined' ? location : {
+    origin: '',
+    search: '',
+    hash: '',
+    href: '',
+    replace(url: string) {
+    }
+  } as Location,
+};
 
 @NgModule({
   imports: [
@@ -18,12 +36,9 @@ import {OAuthLoginComponent} from './components/login/oauth-login.component';
   declarations: [OAuthLoginComponent],
   exports: [OAuthLoginComponent],
   providers: [
+    LocationService,
     OAuthService,
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: OAuthInterceptor,
-      multi: true,
-    }
+    OAuthInterceptorService,
   ]
 })
 export class OAuthModule {
@@ -32,12 +47,9 @@ export class OAuthModule {
     return {
       ngModule: OAuthModule,
       providers: [
+        LocationService,
         OAuthService,
-        {
-          provide: HTTP_INTERCEPTORS,
-          useClass: OAuthInterceptor,
-          multi: true,
-        },
+        OAuthInterceptorService,
         {
           provide: OAuthConfigService,
           useValue: {

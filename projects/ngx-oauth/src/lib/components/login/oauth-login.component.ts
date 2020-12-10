@@ -1,6 +1,6 @@
-import {Component, ContentChild, HostListener, Input, OnDestroy, OnInit, TemplateRef} from '@angular/core';
+import {Component, ContentChild, HostListener, Inject, Input, OnDestroy, OnInit, TemplateRef} from '@angular/core';
 import {Observable, Subscription} from 'rxjs';
-import {OAuthStatus, OAuthType} from '../../models';
+import {LOCATION, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
 import {OAuthService} from '../../services/oauth.service';
 
@@ -55,11 +55,13 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
   profileName: string;
   OAuthStatus = OAuthStatus;
   OAuthType = OAuthType;
-  location = window.location.href;
+  redirectUri;
   loginFunction = (p) => this.login(p);
   logoutFunction = () => this.logout();
 
-  constructor(private readonly oauthService: OAuthService) {
+  constructor(private oauthService: OAuthService,
+              @Inject(LOCATION) location) {
+    this.redirectUri = location.href;
   }
 
   ngOnInit() {
@@ -92,10 +94,8 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
     this.collapse = !this.collapse;
   }
 
-  @HostListener('window:keyup', ['$event'])
+  @HostListener('window:keydown.escape', ['$event'])
   keyboardEvent(event: KeyboardEvent) {
-    if (event.keyCode === 27) {
-      this.collapse = false;
-    }
+    this.collapse = false;
   }
 }

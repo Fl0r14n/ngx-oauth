@@ -4,7 +4,7 @@ import Spy = jasmine.Spy;
 import {of, throwError} from 'rxjs';
 import {fakeAsync, flush, tick} from '@angular/core/testing';
 import {NgZone} from '@angular/core';
-import {OAuthType, OAuthStatus} from '../models';
+import {OAuthType, OAuthStatus, LocationFactory} from '../models';
 
 describe('OAuthService', () => {
   let oauthService: OAuthService;
@@ -23,7 +23,7 @@ describe('OAuthService', () => {
       },
       storage: localStorage,
       storageKey: 'token'
-    });
+    }, LocationFactory());
     localStorage.clear();
     location.hash = '';
   });
@@ -47,7 +47,7 @@ describe('OAuthService', () => {
         },
         storage: localStorage,
         storageKey: 'token'
-      });
+      }, LocationFactory());
       const status = cold('a', {a: OAuthStatus.AUTHORIZED});
       expect(oauthService.status$).toBeObservable(status);
       expect(oauthService.token).toEqual(token);
@@ -66,7 +66,7 @@ describe('OAuthService', () => {
         },
         storage: localStorage,
         storageKey: 'token'
-      });
+      }, LocationFactory());
       const status = cold('a', {a: OAuthStatus.DENIED});
       expect(oauthService.status$).toBeObservable(status);
       expect(oauthService.token).toEqual(null);
@@ -83,7 +83,7 @@ describe('OAuthService', () => {
         },
         storage: localStorage,
         storageKey: 'token'
-      });
+      }, LocationFactory());
       const status = cold('a', {a: OAuthStatus.AUTHORIZED});
       expect(oauthService.status$).toBeObservable(status);
       expect(oauthService.token).toEqual({
@@ -105,7 +105,7 @@ describe('OAuthService', () => {
         },
         storage: localStorage,
         storageKey: 'token'
-      });
+      }, LocationFactory());
       const status = cold('a', {a: OAuthStatus.DENIED});
       expect(oauthService.status$).toBeObservable(status);
       expect(oauthService.token).toEqual(null);

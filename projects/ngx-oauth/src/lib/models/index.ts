@@ -98,3 +98,14 @@ export const OAuthDefaultConfig = {
   storageKey: 'token',
   ignorePaths: []
 };
+
+export const LocationFactory = () => {
+  return typeof location !== 'undefined' && location || {
+    origin: 'http://localhost',
+    search: '',
+    hash: '',
+    href: 'http://localhost',
+    replace(url: string) {
+    }
+  } as Location;
+};

@@ -1,9 +1,9 @@
 {
   "name": "ngx-oauth",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "peerDependencies": {
-    "@angular/common": "^11.0.0",
-    "@angular/core": "^11.0.0"
+    "@angular/common": "^11.2.0",
+    "@angular/core": "^11.2.0"
   },
   "dependencies": {
     "tslib": "^2.0.0"

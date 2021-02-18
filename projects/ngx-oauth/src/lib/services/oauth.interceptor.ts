@@ -1,4 +1,4 @@
-import {Injectable, Injector} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {EMPTY, Observable, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
@@ -8,10 +8,7 @@ import {OAuthStatus} from '../models';
 @Injectable()
 export class OAuthInterceptor implements HttpInterceptor {
 
-  private oauthService: OAuthService;
-
-  constructor(injector: Injector) {
-    setTimeout(() => this.oauthService = injector.get(OAuthService));
+  constructor(private oauthService: OAuthService) {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

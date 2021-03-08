@@ -1,12 +1,12 @@
 import {Inject, Injectable, NgZone} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {catchError} from 'rxjs/operators';
-import {EMPTY, ReplaySubject} from 'rxjs';
+import {catchError, concatMap, delay, switchMap} from 'rxjs/operators';
+import {EMPTY, from, of, ReplaySubject} from 'rxjs';
 import {
   AuthorizationCodeParameters,
   ImplicitParameters,
   LOCATION,
-  OAuthConfigService,
+  OAUTH_CONFIG,
   OAuthParameters,
   OAuthStatus,
   OAuthToken,
@@ -15,12 +15,11 @@ import {
   ResourceParameters
 } from '../models';
 
-const QUERY_ERROR = 'error';
 const REQUEST_HEADER = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
 
-const parseOauthUri = (hash: string) => {
+const parseOauthUri = (hash: string): Record<string, string> => {
   const regex = /([^&=]+)=([^&]*)/g;
-  const params: any = {};
+  const params: Record<string, string> = {};
   let m;
   // tslint:disable-next-line:no-conditional-assignment
   while ((m = regex.exec(hash)) !== null) {
@@ -34,17 +33,20 @@ const parseOauthUri = (hash: string) => {
 @Injectable()
 export class OAuthService {
 
-  // tslint:disable-next-line:variable-name
   private _token: OAuthToken | null = null;
-  // tslint:disable-next-line:variable-name
   private _status: OAuthStatus;
   private timer: any;
+  state$: ReplaySubject<string> = new ReplaySubject(1);
   status$: ReplaySubject<OAuthStatus> = new ReplaySubject(1);
 
   constructor(private http: HttpClient,
               private zone: NgZone,
-              @Inject(OAuthConfigService) private authConfig,
+              @Inject(OAUTH_CONFIG) private authConfig,
               @Inject(LOCATION) private locationService) {
+    this.init();
+  }
+
+  protected init() {
     const {hash, search, origin} = this.locationService;
     const isImplicitRedirect = hash && new RegExp('(#access_token=)|(#error=)').test(hash);
     const isAuthCodeRedirect = search && new RegExp('(code=)|(error=)').test(search);
@@ -52,8 +54,9 @@ export class OAuthService {
       JSON.parse(this.authConfig.storage[this.authConfig.storageKey]);
     if (isImplicitRedirect) {
       const parameters = parseOauthUri(hash.substr(1));
+      this.emitState(parameters);
       this.cleanLocationHash();
-      if (!parameters || parameters[QUERY_ERROR]) {
+      if (!parameters || parameters.error) {
         this.token = null;
         this.status = OAuthStatus.DENIED;
       } else {
@@ -62,28 +65,31 @@ export class OAuthService {
       }
     } else if (isAuthCodeRedirect) {
       const parameters = parseOauthUri(search.substr(1));
+      this.emitState(parameters);
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
         const {clientId, clientSecret, tokenPath} = this.authConfig.config;
-        this.http.post(tokenPath, new HttpParams({
-          fromObject: {
-            code: parameters.code,
-            client_id: clientId,
-            client_secret: clientSecret,
-            redirect_uri: `${origin}/${newParametersString}`,
-            grant_type: 'authorization_code'
-          }
-        }), {headers: REQUEST_HEADER}).pipe(
-          catchError(() => {
-            this.token = {error: 'error'};
-            this.status = OAuthStatus.DENIED;
+        setTimeout(() => {
+          this.http.post(tokenPath, new HttpParams({
+            fromObject: {
+              code: parameters.code,
+              client_id: clientId,
+              client_secret: clientSecret,
+              redirect_uri: `${origin}/${newParametersString}`,
+              grant_type: 'authorization_code'
+            }
+          }), {headers: REQUEST_HEADER}).pipe(
+            catchError((err) => {
+              this.token = {error: 'error'};
+              this.status = OAuthStatus.DENIED;
+              this.locationService.href = `${origin}/${newParametersString}`;
+              return EMPTY;
+            })
+          ).subscribe(token => {
+            this.token = token;
+            // authorized event will be triggered after redirect
             this.locationService.href = `${origin}/${newParametersString}`;
-            return EMPTY;
-          })
-        ).subscribe(token => {
-          this.token = token;
-          // authorized event will be triggered after redirect
-          this.locationService.href = `${origin}/${newParametersString}`;
+          });
         });
       } else {
         this.token = null;
@@ -97,7 +103,9 @@ export class OAuthService {
       } else if (access_token) {
         this.token = savedToken;
         if (refresh_token) {
-          this.refreshToken();
+          setTimeout(() => {
+            this.refreshToken();
+          });
         } else {
           this.status = OAuthStatus.AUTHORIZED;
         }
@@ -120,8 +128,38 @@ export class OAuthService {
   }
 
   logout() {
+    this.revoke();
     this.token = null;
     this.status = OAuthStatus.NOT_AUTHORIZED;
+  }
+
+  revoke() {
+    const {revokePath, clientId, clientSecret} = this.authConfig.config;
+    if (revokePath) {
+      const {access_token, refresh_token} = this.token;
+      const toRevoke = [];
+      if (access_token) {
+        toRevoke.push({
+          ...clientId ? {client_id: clientId} : {},
+          ...clientSecret ? {client_secret: clientSecret} : {},
+          token: access_token,
+          token_type_hint: 'access_token'
+        });
+      }
+      if (refresh_token) {
+        toRevoke.push({
+          ...clientId ? {client_id: clientId} : {},
+          ...clientSecret ? {client_secret: clientSecret} : {},
+          token: refresh_token,
+          token_type_hint: 'refresh_token'
+        });
+      }
+      from(toRevoke).pipe(
+        concatMap(o => of(o).pipe(delay(300))), // space request to avoid cancellation
+        switchMap(o => this.http.post(revokePath, new HttpParams({fromObject: o}))),
+      ).subscribe(() => {
+      });
+    }
   }
 
   get status(): OAuthStatus {
@@ -148,7 +186,7 @@ export class OAuthService {
   }
 
   get ignorePaths(): RegExp[] {
-    return this.authConfig.ignorePaths;
+    return this.authConfig.ignorePaths || [];
   }
 
   private resourceLogin(parameters: ResourceParameters) {
@@ -204,20 +242,20 @@ export class OAuthService {
     });
   }
 
-  private isResourceType(parameters?: OAuthParameters): parameters is ResourceParameters {
-    return this.authConfig.type === OAuthType.RESOURCE && parameters && !!(parameters as ResourceParameters).password;
+  private isClientCredentialType(parameters?: OAuthParameters): parameters is undefined {
+    return this.authConfig.type === OAuthType.CLIENT_CREDENTIAL;
   }
 
-  private isAuthorizationCodeType(parameters?: OAuthParameters): parameters is AuthorizationCodeParameters {
-    return this.authConfig.type === OAuthType.AUTHORIZATION_CODE && parameters && !!(parameters as ImplicitParameters).redirectUri;
+  private isResourceType(parameters?: OAuthParameters): parameters is ResourceParameters {
+    return this.authConfig.type === OAuthType.RESOURCE && parameters && !!(parameters as ResourceParameters).password;
   }
 
   private isImplicitType(parameters?: OAuthParameters): parameters is ImplicitParameters {
     return this.authConfig.type === OAuthType.IMPLICIT && parameters && !!(parameters as ImplicitParameters).redirectUri;
   }
 
-  private isClientCredentialType(parameters?: OAuthParameters): parameters is undefined {
-    return this.authConfig.type === OAuthType.CLIENT_CREDENTIAL;
+  private isAuthorizationCodeType(parameters?: OAuthParameters): parameters is AuthorizationCodeParameters {
+    return this.authConfig.type === OAuthType.AUTHORIZATION_CODE && parameters && !!(parameters as ImplicitParameters).redirectUri;
   }
 
   private toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType): string {
@@ -266,7 +304,7 @@ export class OAuthService {
           refresh_token
         }
       }), {headers: REQUEST_HEADER}).pipe(
-        catchError(() => {
+        catchError((err) => {
           this.logout();
           return EMPTY;
         })
@@ -297,5 +335,12 @@ export class OAuthService {
       curHash = curHash.replace(re, '');
     });
     this.locationService.hash = curHash;
+  }
+
+  private emitState(parameters) {
+    const {state} = parameters;
+    if (state) {
+      this.state$.next(state);
+    }
   }
 }

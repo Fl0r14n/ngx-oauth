@@ -1,3 +1,4 @@
+<ng-container *ngIf="state$ | async"></ng-container>
 <ng-container *ngIf="loginTemplate; else defaultLogin"
               [ngTemplateOutlet]="loginTemplate"
               [ngTemplateOutletContext]="{login: loginFunction, logout: logoutFunction, status: status$ | async}">
@@ -42,7 +43,7 @@
 
     <ng-template #noResource>
       <a href="#" class="oauth"
-         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({redirectUri: redirectUri, scope: 'basic'})">
+         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({redirectUri: redirectUri, scope: scope, state:state})">
         <ng-container *ngTemplateOutlet="message"></ng-container>
       </a>
     </ng-template>

@@ -3,7 +3,10 @@
     <a class="navbar-brand">OAuth Demo</a>
     <ul class="nav">
       <li class="nav-item">
-        <oauth-login [getProfileName]="getProfileName" [i18n]="i18n"></oauth-login>
+        <oauth-login [profileName$]="profileName$"
+                     [i18n]="i18n"
+                     [scope]="scope"
+                     [(state)]="state"></oauth-login>
       </li>
     </ul>
   </nav>

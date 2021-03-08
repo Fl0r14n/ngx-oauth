@@ -1,4 +1,4 @@
-import {Component, ContentChild, HostListener, Inject, Input, OnDestroy, OnInit, TemplateRef} from '@angular/core';
+import {Component, ContentChild, EventEmitter, HostListener, Inject, Input, OnDestroy, OnInit, Output, TemplateRef} from '@angular/core';
 import {Observable, Subscription} from 'rxjs';
 import {LOCATION, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
@@ -21,7 +21,6 @@ export interface OAuthLoginI18n {
 export class OAuthLoginComponent implements OnInit, OnDestroy {
 
   private subscription = new Subscription();
-  // tslint:disable-next-line:variable-name
   private _i18n: OAuthLoginI18n = {
     username: 'Username',
     password: 'Password',
@@ -44,7 +43,14 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
   }
 
   @Input()
-  getProfileName: () => Observable<string>;
+  scope = '';
+  @Input()
+  state = '';
+  @Output()
+  stateChange: EventEmitter<string> = new EventEmitter();
+  @Input()
+  profileName$: Observable<string>;
+  state$;
   @ContentChild('login', {static: false})
   loginTemplate: TemplateRef<any>;
   status$: Observable<OAuthStatus>;
@@ -65,10 +71,13 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.state$ = this.oauthService.state$.pipe(
+      tap(s => this.stateChange.emit(s))
+    );
     this.status$ = this.oauthService.status$.pipe(
       tap(s => {
         if (s === OAuthStatus.AUTHORIZED) {
-          this.subscription.add(this.getProfileName().subscribe(n => this.profileName = n));
+          this.subscription.add(this.profileName$.subscribe(n => this.profileName = n));
         } else {
           this.profileName = '';
         }

@@ -1,7 +1,10 @@
 import {InjectionToken} from '@angular/core';
 
+export const SERVER_HOST = new InjectionToken<string>('SERVER_HOST');
+export const SERVER_PATH = new InjectionToken<string>('SERVER_PATH');
 export const LOCATION = new InjectionToken<Location>('Location');
-export const OAuthConfigService = new InjectionToken<OAuthConfig>('OAuthConfig');
+export const STORAGE = new InjectionToken<Storage>('Storage');
+export const OAUTH_CONFIG = new InjectionToken<OAuthConfig>('OAuthConfig');
 
 export enum OAuthType {
   RESOURCE = 'password',
@@ -18,28 +21,30 @@ export interface OAuthConfig {
   ignorePaths?: RegExp[];
 }
 
+export interface ClientCredentialConfig {
+  tokenPath: string;
+  revokePath?: string;
+  clientId: string;
+  clientSecret: string;
+}
+
+// tslint:disable-next-line:no-empty-interface
+export interface ResourceConfig extends ClientCredentialConfig {
+}
+
+export interface ImplicitConfig {
+  authorizePath: string;
+  revokePath?: string;
+  clientId: string;
+}
+
+export interface AuthorizationCodeConfig extends ResourceConfig {
+  authorizePath: string;
+}
+
 export interface ResourceParameters {
   username: string;
   password: string;
-}
-
-export interface ResourceConfig {
-  tokenPath: string;
-  clientId: string;
-  clientSecret: string;
-}
-
-export interface AuthorizationCodeParameters {
-  redirectUri: string;
-  scope?: string;
-  state?: string;
-}
-
-export interface AuthorizationCodeConfig {
-  authorizePath: string;
-  tokenPath: string;
-  clientId: string;
-  clientSecret: string;
 }
 
 export interface ImplicitParameters {
@@ -48,15 +53,8 @@ export interface ImplicitParameters {
   state?: string;
 }
 
-export interface ImplicitConfig {
-  authorizePath: string;
-  clientId: string;
-}
-
-export interface ClientCredentialConfig {
-  tokenPath: string;
-  clientId: string;
-  clientSecret: string;
+// tslint:disable-next-line:no-empty-interface
+export interface AuthorizationCodeParameters extends ImplicitParameters {
 }
 
 export type OAuthParameters = ResourceParameters | AuthorizationCodeParameters | ImplicitParameters;
@@ -76,36 +74,3 @@ export enum OAuthStatus {
   AUTHORIZED = 'AUTHORIZED',
   DENIED = 'DENIED'
 }
-
-const mockStorage: Storage = {
-  clear() {
-  },
-  getItem(key: string) {
-    return undefined as string;
-  },
-  key(index: number) {
-    return undefined as string;
-  },
-  removeItem(key: string) {
-  },
-  setItem(key: string, value: string) {
-  },
-  length: 0
-};
-
-export const OAuthDefaultConfig = {
-  storage: typeof localStorage !== 'undefined' && localStorage || mockStorage,
-  storageKey: 'token',
-  ignorePaths: []
-};
-
-export const LocationFactory = () => {
-  return typeof location !== 'undefined' && location || {
-    origin: 'http://localhost',
-    search: '',
-    hash: '',
-    href: 'http://localhost',
-    replace(url: string) {
-    }
-  } as Location;
-};

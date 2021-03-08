@@ -1,12 +1,20 @@
 import 'zone.js/dist/zone-node';
 
-import { ngExpressEngine } from '@nguniversal/express-engine';
+import {ngExpressEngine} from '@nguniversal/express-engine';
 import * as express from 'express';
-import { join } from 'path';
+import {join} from 'path';
 
-import { AppServerModule } from './src/main.server';
-import { APP_BASE_HREF } from '@angular/common';
-import { existsSync } from 'fs';
+import {AppServerModule} from './src/main.server';
+import {APP_BASE_HREF} from '@angular/common';
+import {existsSync} from 'fs';
+import {createProxyMiddleware} from 'http-proxy-middleware';
+import {SERVER_HOST, SERVER_PATH} from 'ngx-oauth';
+
+// import proxy.conf.js
+const PROXY_CONFIG = require('../../proxy.conf');
+
+// allow insecure connections for https://localhost. Remove in prod
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -29,9 +37,36 @@ export function app(): express.Express {
     maxAge: '1y'
   }));
 
+  for (const pConfig of PROXY_CONFIG) {
+    const {context, target, secure, changeOrigin} = pConfig;
+    if (context && context.length > 0) {
+      server.use(context, createProxyMiddleware({
+        target,
+        secure,
+        changeOrigin,
+      }));
+    }
+  }
+
   // All regular routes use the Universal engine
   server.get('*', (req, res) => {
-    res.render(indexHtml, { req, providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }] });
+    res.render(indexHtml, {
+      req,
+      providers: [
+        {
+          provide: APP_BASE_HREF,
+          useValue: req.baseUrl
+        },
+        {
+          provide: SERVER_HOST,
+          useValue: `${req.protocol}://${req.headers.host}`
+        },
+        {
+          provide: SERVER_PATH,
+          useValue: req.url
+        }
+      ]
+    });
   });
 
   return server;

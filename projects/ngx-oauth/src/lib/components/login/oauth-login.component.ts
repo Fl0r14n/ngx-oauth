@@ -76,7 +76,7 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
     );
     this.status$ = this.oauthService.status$.pipe(
       tap(s => {
-        if (s === OAuthStatus.AUTHORIZED) {
+        if (s === OAuthStatus.AUTHORIZED && this.profileName$) {
           this.subscription.add(this.profileName$.subscribe(n => this.profileName = n));
         } else {
           this.profileName = '';

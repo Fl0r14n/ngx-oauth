@@ -75,28 +75,34 @@ or create your custom login template using OAuthService
   <oauth-login>
     <ng-template #login let-li="login" let-s="status" let-lo="logout">
       <form (submit)="li({username: username, password: password})">
-        <div class="card">
-          <div class="card-header text-center">
-            <h2 class="m-0 p-3">
-              <strong>Login</strong>
-            </h2>
-          </div>
-          <div class="card-body">
-            <div class="form-group">
-              <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
-                     placeholder="username">
+        <ng-container *ngIf="s === OAuthStatus.AUTHORIZED; else loginTemplate">
+          <h2>profileName</h2>
+          <button (click)="lo()">Logout</button>
+        </ng-container>
+        <ng-template #loginTemplate>
+          <div class="card">
+            <div class="card-header text-center">
+              <h2 class="m-0 p-3">
+                <strong>Login</strong>
+              </h2>
             </div>
-            <div class="form-group">
-              <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
-                     placeholder="password">
+            <div class="card-body">
+              <div class="form-group">
+                <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
+                       placeholder="username">
+              </div>
+              <div class="form-group">
+                <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
+                       placeholder="password">
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
             </div>
           </div>
-          <div class="card-footer">
-            <div class="text-center">
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-          </div>
-        </div>
+        </ng-template>
       </form>
     </ng-template>
   </oauth-login>

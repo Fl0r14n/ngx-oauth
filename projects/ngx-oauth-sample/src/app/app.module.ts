@@ -50,7 +50,7 @@ const djangoAuthorizationCodeConfig = {
     clientSecret: 'client_secret',
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
-    revokePath: '/o/revoke_token/'
+    revokePath: '/o/revoke/'
   }
 };
 
@@ -60,7 +60,7 @@ const djangoResourceConfig = {
     clientId: 'client_password',
     clientSecret: 'client_secret',
     tokenPath: '/o/token/',
-    revokePath: '/o/revoke_token/'
+    revokePath: '/o/revoke/'
   }
 };
 

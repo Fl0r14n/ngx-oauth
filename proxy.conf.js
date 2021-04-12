@@ -5,12 +5,13 @@ const PROXY_CONFIG = [
       '/occ/v2/**',
       '/authorizationserver/**',
       '/o/**',
-      '/medias/**'
+      '/medias/**',
+      '/auth/**'
     ],
     // target: 'https://localhost:9002',
     // secure: false,
 
-    target: 'http://localhost:8000',
+    target: 'http://localhost:8080',
     secure: false,
 
     // target: 'https://some.domain',

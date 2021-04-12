@@ -4,7 +4,7 @@ import {AppComponent} from './app.component';
 import {OAuthType, OAuthModule} from 'ngx-oauth';
 import {HttpClientModule} from '@angular/common/http';
 
-const clientCredentialConfig = {
+const hybrisCredentialConfig = {
   type: OAuthType.CLIENT_CREDENTIAL,
   config: {
     tokenPath: '/authorizationserver/oauth/token',
@@ -14,7 +14,7 @@ const clientCredentialConfig = {
   }
 };
 
-const resourceConfig = {
+const hybrisResourceConfig = {
   type: OAuthType.RESOURCE,
   config: {
     tokenPath: '/authorizationserver/oauth/token',
@@ -24,7 +24,7 @@ const resourceConfig = {
   }
 };
 
-const implicitConfig = {
+const hybrisImplicitConfig = {
   type: OAuthType.IMPLICIT,
   config: {
     authorizePath: '/authorizationserver/oauth/authorize',
@@ -32,7 +32,7 @@ const implicitConfig = {
   }
 };
 
-const authorizationCodeConfig = {
+const hybrisAuthorizationCodeConfig = {
   type: OAuthType.AUTHORIZATION_CODE,
   config: {
     authorizePath: '/authorizationserver/oauth/authorize',
@@ -40,6 +40,7 @@ const authorizationCodeConfig = {
     clientId: 'mobile_android',
     tokenPath: '/authorizationserver/oauth/token',
     clientSecret: 'secret',
+    scope: 'basic'
   }
 };
 
@@ -50,7 +51,8 @@ const djangoAuthorizationCodeConfig = {
     clientSecret: 'client_secret',
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
-    revokePath: '/o/revoke/'
+    revokePath: '/o/revoke/',
+    scope: 'read'
   }
 };
 
@@ -72,10 +74,43 @@ const djangoImplicitConfig = {
   }
 };
 
+const keycloakCredentialConfig = {
+  type: OAuthType.CLIENT_CREDENTIAL,
+  config: {
+    tokenPath: '/auth/realms/oauth-server.test/protocol/openid-connect/token',
+    revokePath: '/auth/realms/oauth-server.test/protocol/openid-connect/revoke',
+    clientId: 'client_introspect',
+    clientSecret: 'be8dde74-8656-49b6-b446-818be69fa7c5',
+  }
+};
+
+const keycloakResourceConfig = {
+  type: OAuthType.RESOURCE,
+  config: {
+    clientId: 'client_password',
+    clientSecret: '92fff2b1-6a68-40af-aa31-4c850237c5b3',
+    tokenPath: '/auth/realms/oauth-server.test/protocol/openid-connect/token',
+    revokePath: '/auth/realms/oauth-server.test/protocol/openid-connect/revoke',
+    scope: 'openid'
+  }
+};
+
+const keycloakApplicationConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    clientId: 'client_application',
+    clientSecret: '3c18e4d1-bb2a-44a2-8ca2-777e64dd8d5b',
+    authorizePath: 'http://localhost:8080/auth/realms/oauth-server.test/protocol/openid-connect/auth',
+    tokenPath: 'http://localhost:8080/auth/realms/oauth-server.test/protocol/openid-connect/token',
+    revokePath: 'http://localhost:8080/auth/realms/oauth-server.test/protocol/openid-connect/revoke',
+    scope: 'openid email profile'
+  }
+};
+
 @NgModule({
   imports: [
     BrowserModule.withServerTransition({appId: 'serverApp'}),
-    OAuthModule.forRoot(djangoAuthorizationCodeConfig),
+    OAuthModule.forRoot(keycloakResourceConfig),
     HttpClientModule
   ],
   declarations: [

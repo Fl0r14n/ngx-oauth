@@ -10,8 +10,8 @@ describe('OAuthInterceptor', () => {
 
   const token = {
     access_token: 'access_token',
-    token_type: 'token_type',
-    expires_in: '320'
+    token_type: 'Bearer',
+    expires_in: 320
   };
   let oauthService: OAuthService;
   let interceptor: OAuthInterceptor;

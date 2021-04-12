@@ -43,7 +43,7 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
   }
 
   @Input()
-  scope = '';
+  scope = null;
   @Input()
   state = '';
   @Output()

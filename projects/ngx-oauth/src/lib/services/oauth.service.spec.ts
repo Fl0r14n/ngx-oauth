@@ -18,7 +18,7 @@ describe('OAuthService', () => {
       type: OAuthType.RESOURCE,
       config: {
         tokenPath: '/token',
-        clientSecret: 'clentSecret',
+        clientSecret: 'clientSecret',
         clientId: 'clientId'
       },
       storage: localStorage,
@@ -34,7 +34,7 @@ describe('OAuthService', () => {
       const token = {
         access_token: 'access_token',
         token_type: 'token_type',
-        expires_in: '320'
+        expires_in: 320
       };
       (http.post as Spy).and.returnValue(of(token));
       localStorage.setItem('token', JSON.stringify(token));
@@ -42,7 +42,7 @@ describe('OAuthService', () => {
         type: OAuthType.RESOURCE,
         config: {
           tokenPath: '/token',
-          clientSecret: 'clentSecret',
+          clientSecret: 'clientSecret',
           clientId: 'clientId'
         },
         storage: localStorage,
@@ -61,7 +61,7 @@ describe('OAuthService', () => {
         type: OAuthType.RESOURCE,
         config: {
           tokenPath: '/token',
-          clientSecret: 'clentSecret',
+          clientSecret: 'clientSecret',
           clientId: 'clientId'
         },
         storage: localStorage,
@@ -78,7 +78,7 @@ describe('OAuthService', () => {
         type: OAuthType.RESOURCE,
         config: {
           tokenPath: '/token',
-          clientSecret: 'clentSecret',
+          clientSecret: 'clientSecret',
           clientId: 'clientId'
         },
         storage: localStorage,
@@ -100,7 +100,7 @@ describe('OAuthService', () => {
         type: OAuthType.RESOURCE,
         config: {
           tokenPath: '/token',
-          clientSecret: 'clentSecret',
+          clientSecret: 'clientSecret',
           clientId: 'clientId'
         },
         storage: localStorage,
@@ -119,7 +119,7 @@ describe('OAuthService', () => {
       const token = {
         access_token: 'token',
         token_type: 'bearer',
-        expires_in: '43199'
+        expires_in: 43199
       };
       (http.post as Spy).and.returnValue(of(token));
       oauthService.login({username: 'username', password: 'password'});
@@ -141,13 +141,13 @@ describe('OAuthService', () => {
       const expected = {
         access_token: 'token2',
         token_type: 'bearer2',
-        expires_in: '3'
+        expires_in: 3
       };
       (http.post as Spy).and.returnValues(
         of({
           access_token: 'token',
           token_type: 'bearer',
-          expires_in: '2',
+          expires_in: 2,
           refresh_token: 'refresh_token'
         }),
         of(expected)

@@ -26,6 +26,7 @@ export interface ClientCredentialConfig {
   revokePath?: string;
   clientId: string;
   clientSecret: string;
+  scope?: string;
 }
 
 // tslint:disable-next-line:no-empty-interface
@@ -61,12 +62,15 @@ export type OAuthParameters = ResourceParameters | AuthorizationCodeParameters |
 export type OAuthTypeConfig = ResourceConfig | ImplicitConfig | AuthorizationCodeConfig | ClientCredentialConfig;
 
 export interface OAuthToken {
+  id_token?: string;
   access_token?: string;
   refresh_token?: string;
   token_type?: string;
   state?: string;
   error?: string;
-  expires_in?: string;
+  expires_in?: number | string;
+  refresh_expires_in?: number;
+  scope?: string;
 }
 
 export enum OAuthStatus {

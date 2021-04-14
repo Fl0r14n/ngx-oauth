@@ -52,7 +52,8 @@ const djangoAuthorizationCodeConfig = {
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
     revokePath: '/o/revoke/',
-    scope: 'openid'
+    scope: 'openid',
+    codeVerifier: 'M00AeaRfwOkpwQp8SK-8K-hHvPYu6OKgj1aCUOb6eSMcSZr2'
   }
 };
 

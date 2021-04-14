@@ -2,6 +2,10 @@
 
 > Ngx-oauth is an angular library for OAuth 2.0 login, the library supports all the 4 flows: resource, implicit, authorization code and client credentials.
 
+> Supports OIDC
+
+> `PKCE` support for authorization code with code verification
+
 ### How to
 
 To start using the `ngx-oauth` you need to import and configure the `OAuthModule` module.
@@ -12,7 +16,7 @@ Example for **resource owner** flow:
 const resourceConfig = {
   type: OAuthType.RESOURCE,
   config: {
-    tokenPath: 'authorizationserver/oauth/token',
+    tokenPath: '/authorizationserver/oauth/token',
     revokePath: '/authorizationserver/oauth/revoke', // optional
     clientSecret: 'secret',
     clientId: 'client-side'
@@ -33,6 +37,23 @@ export class AppModule {
 }
 ``` 
 
+Example for **authorization code** flow with `OIDC` and `PKCE`
+
+```shell
+const resourceConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    clientId: 'client_application',
+    clientSecret: 'client_secret',
+    authorizePath: '/o/authorize/',
+    tokenPath: '/o/token/',
+    revokePath: '/o/revoke/',
+    scope: 'openid',
+    codeVerifier: 'M00AeaRfwOkpwQp8SK-8K-hHvPYu6OKgj1aCUOb6eSMcSZr2'
+  },
+}
+```
+
 You can use the `oauth-login` component
 
 ```angular2html
@@ -50,7 +71,6 @@ or with params
   template: `
     <oauth-login [i18n]="i18n"
                  [profileName$]="profileName$"
-                 [scope]="scope"
                  [(state)]="state"></oauth-login>
   `
 })
@@ -58,11 +78,22 @@ export class LoginComponent {
   i18n: OAuthLoginI18n = {
     username: 'Username'
   };
-  scope = 'read';
   state = 'some_salt_hash_or_whatever';
+  status$: Observable<OAuthStatus>;
+
+  constructor(private oauthService: OAuthService) {
+    this.status$ = this.oauthService.status$;
+  }
 
   get profileName$(): Observable<string> {
-    return of('User');
+    // ex: get profile name form oidc id_token or get it from some user service 
+    return this.status$.pipe(
+      filter(s => s === OAuthStatus.AUTHORIZED),
+      map(() => this.oauthService.token.id_token),
+      filter(t => !!t),
+      map(t => JSON.parse(atob(t.split('.')[1]))),
+      map(t => t.name || t.username || t.email || t.sub)
+    );
   }
 }
 ```

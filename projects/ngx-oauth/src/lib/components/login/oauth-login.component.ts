@@ -43,8 +43,6 @@ export class OAuthLoginComponent implements OnInit, OnDestroy {
   }
 
   @Input()
-  scope = null;
-  @Input()
   state = '';
   @Output()
   stateChange: EventEmitter<string> = new EventEmitter();

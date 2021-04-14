@@ -37,10 +37,15 @@ export interface ImplicitConfig {
   authorizePath: string;
   revokePath?: string;
   clientId: string;
+  scope?: string;
 }
 
 export interface AuthorizationCodeConfig extends ResourceConfig {
   authorizePath: string;
+}
+
+export interface AuthorizationCodePKCEConfig extends AuthorizationCodeConfig {
+  codeVerifier: string;
 }
 
 export interface ResourceParameters {
@@ -50,7 +55,6 @@ export interface ResourceParameters {
 
 export interface ImplicitParameters {
   redirectUri: string;
-  scope?: string;
   state?: string;
 }
 
@@ -59,7 +63,12 @@ export interface AuthorizationCodeParameters extends ImplicitParameters {
 }
 
 export type OAuthParameters = ResourceParameters | AuthorizationCodeParameters | ImplicitParameters;
-export type OAuthTypeConfig = ResourceConfig | ImplicitConfig | AuthorizationCodeConfig | ClientCredentialConfig;
+export type OAuthTypeConfig =
+  ResourceConfig
+  | ImplicitConfig
+  | AuthorizationCodeConfig
+  | AuthorizationCodePKCEConfig
+  | ClientCredentialConfig;
 
 export interface OAuthToken {
   id_token?: string;

@@ -15,6 +15,16 @@ import {
   ResourceParameters
 } from '../models';
 
+const base64url = (str) => btoa(str)
+  .replace(/\+/g, '-')
+  .replace(/\//g, '_')
+  .replace(/=/g, '');
+
+const pkce = async (value: string) => {
+  const buff = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return base64url(new Uint8Array(buff).reduce((s, b) => s + String.fromCharCode(b), ''));
+};
+
 const REQUEST_HEADER = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
 
 const parseOauthUri = (hash: string): Record<string, string> => {
@@ -69,7 +79,7 @@ export class OAuthService {
       this.emitState(parameters);
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
-        const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config;
+        const {clientId, clientSecret, tokenPath, scope, codeVerifier} = this.authConfig.config;
         setTimeout(() => {
           this.http.post(tokenPath, new HttpParams({
             fromObject: {
@@ -79,6 +89,7 @@ export class OAuthService {
               redirect_uri: `${origin}/${newParametersString}`,
               grant_type: 'authorization_code',
               ...scope ? {scope} : {},
+              ...codeVerifier ? {code_verifier: codeVerifier} : {}
             }
           }), {headers: REQUEST_HEADER}).pipe(
             catchError((err) => {
@@ -121,9 +132,9 @@ export class OAuthService {
     if (this.isResourceType(parameters)) {
       this.resourceLogin(parameters);
     } else if (this.isAuthorizationCodeType(parameters)) {
-      this.authorizationCodeLogin(parameters);
+      this.authorizationCodeLogin(parameters).then();
     } else if (this.isImplicitType(parameters)) {
-      this.implicitLogin(parameters);
+      this.implicitLogin(parameters).then();
     } else if (this.isClientCredentialType(parameters)) {
       this.clientCredentialLogin();
     }
@@ -215,13 +226,13 @@ export class OAuthService {
     });
   }
 
-  private authorizationCodeLogin(parameters: AuthorizationCodeParameters) {
-    const authUrl = this.toAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
+  private async authorizationCodeLogin(parameters: AuthorizationCodeParameters) {
+    const authUrl = await this.toAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
     this.locationService.replace(authUrl);
   }
 
-  private implicitLogin(parameters: ImplicitParameters) {
-    const authUrl = this.toAuthorizationUrl(parameters, OAuthType.IMPLICIT);
+  private async implicitLogin(parameters: ImplicitParameters) {
+    const authUrl = await this.toAuthorizationUrl(parameters, OAuthType.IMPLICIT);
     this.locationService.replace(authUrl);
   }
 
@@ -262,17 +273,16 @@ export class OAuthService {
     return this.authConfig.type === OAuthType.AUTHORIZATION_CODE && parameters && !!(parameters as ImplicitParameters).redirectUri;
   }
 
-  private toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType): string {
+  private async toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType): Promise<string> {
     const appendChar = this.authConfig.config.authorizePath.includes('?') ? '&' : '?';
     const clientId = `${appendChar}client_id=${this.authConfig.config.clientId}`;
     const redirectUri = `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`;
     const responseTypeString = `&response_type=${responseType}`;
-    if (parameters.scope) {
-      this.authConfig.config.scope = parameters.scope;
-    }
     const scope = `&scope=${encodeURIComponent(this.authConfig.config.scope || '')}`;
     const state = `&state=${encodeURIComponent(parameters.state || '')}`;
-    const parametersString = `${clientId}${redirectUri}${responseTypeString}${scope}${state}`;
+    const {codeVerifier} = this.authConfig.config;
+    const codeChallenge = codeVerifier ? `&code_challenge=${await pkce(codeVerifier)}&code_challenge_method=S256` : '';
+    const parametersString = `${clientId}${redirectUri}${responseTypeString}${scope}${state}${codeChallenge}`;
     return `${this.authConfig.config.authorizePath}${parametersString}`;
   }
 

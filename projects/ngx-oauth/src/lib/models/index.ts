@@ -15,7 +15,7 @@ export enum OAuthType {
 
 export interface OAuthConfig {
   type: OAuthType;
-  config: ResourceConfig | ImplicitConfig | AuthorizationCodeConfig | ClientCredentialConfig;
+  config: OAuthTypeConfig;
   storageKey?: string;
   storage?: Storage;
   ignorePaths?: RegExp[];

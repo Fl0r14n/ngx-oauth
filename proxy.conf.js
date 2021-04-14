@@ -6,7 +6,8 @@ const PROXY_CONFIG = [
       '/authorizationserver/**',
       '/o/**',
       '/medias/**',
-      '/auth/**'
+      '/auth/**',
+      '/static/**',
     ],
     // target: 'https://localhost:9002',
     // secure: false,

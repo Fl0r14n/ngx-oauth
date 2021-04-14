@@ -141,7 +141,8 @@ describe('OAuthService', () => {
       const expected = {
         access_token: 'token2',
         token_type: 'bearer2',
-        expires_in: 3
+        expires_in: 10,
+        refresh_token: 'refresh_token2'
       };
       (http.post as Spy).and.returnValues(
         of({
@@ -155,6 +156,7 @@ describe('OAuthService', () => {
       oauthService.login({username: 'username', password: 'password'});
       tick(4000);
       expect(oauthService.token).toEqual(expected);
+      delete oauthService.token.refresh_token; // stop refresh token timer
       flush();
     }));
   });

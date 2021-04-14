@@ -69,7 +69,7 @@ export class OAuthService {
       this.emitState(parameters);
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
-        const {clientId, clientSecret, tokenPath} = this.authConfig.config;
+        const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config;
         setTimeout(() => {
           this.http.post(tokenPath, new HttpParams({
             fromObject: {
@@ -77,7 +77,8 @@ export class OAuthService {
               client_id: clientId,
               client_secret: clientSecret,
               redirect_uri: `${origin}/${newParametersString}`,
-              grant_type: 'authorization_code'
+              grant_type: 'authorization_code',
+              ...scope ? {scope} : {},
             }
           }), {headers: REQUEST_HEADER}).pipe(
             catchError((err) => {
@@ -266,7 +267,10 @@ export class OAuthService {
     const clientId = `${appendChar}client_id=${this.authConfig.config.clientId}`;
     const redirectUri = `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`;
     const responseTypeString = `&response_type=${responseType}`;
-    const scope = `&scope=${encodeURIComponent(parameters.scope || this.authConfig.config.scope || '')}`;
+    if (parameters.scope) {
+      this.authConfig.config.scope = parameters.scope;
+    }
+    const scope = `&scope=${encodeURIComponent(this.authConfig.config.scope || '')}`;
     const state = `&state=${encodeURIComponent(parameters.state || '')}`;
     const parametersString = `${clientId}${redirectUri}${responseTypeString}${scope}${state}`;
     return `${this.authConfig.config.authorizePath}${parametersString}`;
@@ -274,7 +278,7 @@ export class OAuthService {
 
   set token(token: OAuthToken | null) {
     this._token = token;
-    const storageKey = this.authConfig;
+    const {storageKey} = this.authConfig;
     if (token) {
       this.authConfig.storage[storageKey] = JSON.stringify(this.token);
       clearTimeout(this.timer);
@@ -297,7 +301,7 @@ export class OAuthService {
   }
 
   private refreshToken() {
-    const {tokenPath, clientId, clientSecret} = this.authConfig.config;
+    const {tokenPath, clientId, clientSecret, scope} = this.authConfig.config;
     const {refresh_token} = this.token;
     if (tokenPath && refresh_token) {
       this.http.post(tokenPath, new HttpParams({
@@ -305,7 +309,8 @@ export class OAuthService {
           client_id: clientId,
           client_secret: clientSecret,
           grant_type: 'refresh_token',
-          refresh_token
+          refresh_token,
+          ...scope ? {scope} : {},
         }
       }), {headers: REQUEST_HEADER}).pipe(
         catchError((err) => {
@@ -313,7 +318,10 @@ export class OAuthService {
           return EMPTY;
         })
       ).subscribe(params => {
-        this.token = params;
+        this.token = {
+          ...this.token,
+          ...params
+        };
         this.status = OAuthStatus.AUTHORIZED;
       });
     }

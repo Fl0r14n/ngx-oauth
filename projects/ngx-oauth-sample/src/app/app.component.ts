@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {filter, map} from 'rxjs/operators';
+import {filter, map, tap} from 'rxjs/operators';
 import {OAuthService, OAuthStatus} from 'ngx-oauth';
 import {Observable} from 'rxjs';
 
@@ -38,12 +38,7 @@ export class AppComponent {
       map(() => this.oauthService.token.id_token),
       filter(t => !!t),
       map(t => JSON.parse(atob(t.split('.')[1]))),
-      map(t => t.name)
+      map(t => t.name || t.username || t.email || t.sub)
     );
-    // return of('User');
-    // const user = this.oauthService.type === OAuthType.CLIENT_CREDENTIAL ? 'anonymous' : 'current';
-    // return this.http.get<any>(`/occ/v2/electronics/users/${user}`).pipe(
-    //   map(v => v.name)
-    // );
   }
 }

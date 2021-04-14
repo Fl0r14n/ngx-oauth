@@ -52,7 +52,7 @@ const djangoAuthorizationCodeConfig = {
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
     revokePath: '/o/revoke/',
-    scope: 'read'
+    scope: 'openid'
   }
 };
 
@@ -62,7 +62,7 @@ const djangoResourceConfig = {
     clientId: 'client_password',
     clientSecret: 'client_secret',
     tokenPath: '/o/token/',
-    revokePath: '/o/revoke/'
+    revokePath: '/o/revoke/',
   }
 };
 
@@ -110,7 +110,7 @@ const keycloakApplicationConfig = {
 @NgModule({
   imports: [
     BrowserModule.withServerTransition({appId: 'serverApp'}),
-    OAuthModule.forRoot(keycloakResourceConfig),
+    OAuthModule.forRoot(djangoAuthorizationCodeConfig),
     HttpClientModule
   ],
   declarations: [

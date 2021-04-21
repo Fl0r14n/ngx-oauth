@@ -88,22 +88,22 @@ const keycloakCredentialConfig = {
 const keycloakResourceConfig = {
   type: OAuthType.RESOURCE,
   config: {
-    clientId: 'client_password',
-    clientSecret: '92fff2b1-6a68-40af-aa31-4c850237c5b3',
-    tokenPath: '/auth/realms/oauth-server.test/protocol/openid-connect/token',
-    revokePath: '/auth/realms/oauth-server.test/protocol/openid-connect/revoke',
-    scope: 'openid'
+    clientId: 'spartacus',
+    clientSecret: '02746877-9efd-4ff3-a39d-7b7685bb3190',
+    tokenPath: '/auth/realms/commerce/protocol/openid-connect/token',
+    revokePath: '/auth/realms/commerce/protocol/openid-connect/revoke',
+    scope: 'openid email profile'
   }
 };
 
 const keycloakApplicationConfig = {
   type: OAuthType.AUTHORIZATION_CODE,
   config: {
-    clientId: 'client_application',
-    clientSecret: '3c18e4d1-bb2a-44a2-8ca2-777e64dd8d5b',
-    authorizePath: 'http://localhost:8080/auth/realms/oauth-server.test/protocol/openid-connect/auth',
-    tokenPath: 'http://localhost:8080/auth/realms/oauth-server.test/protocol/openid-connect/token',
-    revokePath: 'http://localhost:8080/auth/realms/oauth-server.test/protocol/openid-connect/revoke',
+    clientId: 'spartacus',
+    clientSecret: '02746877-9efd-4ff3-a39d-7b7685bb3190',
+    authorizePath: 'http://localhost:8080/auth/realms/commerce/protocol/openid-connect/auth',
+    tokenPath: 'http://localhost:8080/auth/realms/commerce/protocol/openid-connect/token',
+    revokePath: 'http://localhost:8080/auth/realms/commerce/protocol/openid-connect/revoke',
     scope: 'openid email profile'
   }
 };
@@ -111,7 +111,7 @@ const keycloakApplicationConfig = {
 @NgModule({
   imports: [
     BrowserModule.withServerTransition({appId: 'serverApp'}),
-    OAuthModule.forRoot(djangoAuthorizationCodeConfig),
+    OAuthModule.forRoot(keycloakApplicationConfig),
     HttpClientModule
   ],
   declarations: [

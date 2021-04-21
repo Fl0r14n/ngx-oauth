@@ -1,8 +1,8 @@
 import {Component} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
 import {filter, map, tap} from 'rxjs/operators';
 import {OAuthService, OAuthStatus} from 'ngx-oauth';
 import {Observable} from 'rxjs';
+import {IntrospectService} from './introspect.service';
 
 @Component({
   selector: 'app-root',
@@ -13,8 +13,8 @@ export class AppComponent {
   private _state: string;
   status$: Observable<OAuthStatus>;
 
-  constructor(private http: HttpClient,
-              private oauthService: OAuthService) {
+  constructor(private oauthService: OAuthService,
+              private introspectService: IntrospectService) {
     this.status$ = this.oauthService.status$;
     this.state = 'some_salt_dummy_state';
     // this.oauthService.ignorePaths.push(/.+(users\/current)?.+/);
@@ -38,7 +38,9 @@ export class AppComponent {
       map(() => this.oauthService.token.id_token),
       filter(t => !!t),
       map(t => JSON.parse(atob(t.split('.')[1]))),
-      map(t => t.name || t.username || t.email || t.sub)
+      tap(v => console.log(v)),
+      map(t => t.name || t.username || t.email || t.sub),
+      tap(() => this.introspectService.introspect().subscribe(v => console.log(v)))
     );
   }
 }

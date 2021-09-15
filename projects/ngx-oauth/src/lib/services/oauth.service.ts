@@ -1,12 +1,13 @@
 import {Inject, Injectable, NgZone} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {catchError, concatMap, delay, switchMap} from 'rxjs/operators';
-import {EMPTY, from, of, ReplaySubject} from 'rxjs';
+import {EMPTY, from, noop, of, ReplaySubject} from 'rxjs';
 import {
   AuthorizationCodeParameters,
   ImplicitParameters,
   LOCATION,
   OAUTH_CONFIG,
+  OAuthConfig,
   OAuthParameters,
   OAuthStatus,
   OAuthToken,
@@ -15,7 +16,7 @@ import {
   ResourceParameters
 } from '../models';
 
-const base64url = (str) => btoa(str)
+const base64url = (str: string) => btoa(str)
   .replace(/\+/g, '-')
   .replace(/\//g, '_')
   .replace(/=/g, '');
@@ -27,7 +28,7 @@ const pkce = async (value: string) => {
 
 const REQUEST_HEADER = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
 
-const parseOauthUri = (hash: string): Record<string, string> => {
+const parseOauthUri = (hash: string): Record<string, string> | null => {
   const regex = /([^&=]+)=([^&]*)/g;
   const params: Record<string, string> = {};
   let m;
@@ -38,25 +39,26 @@ const parseOauthUri = (hash: string): Record<string, string> => {
   if (Object.keys(params).length) {
     return params;
   }
+  return null;
 };
 
 @Injectable()
 export class OAuthService {
 
   private _token: OAuthToken | null = null;
-  private _status: OAuthStatus;
+  private _status = OAuthStatus.NOT_AUTHORIZED;
   private timer: any;
   state$: ReplaySubject<string> = new ReplaySubject(1);
   status$: ReplaySubject<OAuthStatus> = new ReplaySubject(1);
 
   constructor(private http: HttpClient,
               private zone: NgZone,
-              @Inject(OAUTH_CONFIG) private authConfig,
-              @Inject(LOCATION) private locationService) {
+              @Inject(OAUTH_CONFIG) private authConfig: OAuthConfig,
+              @Inject(LOCATION) private locationService: Location) {
     this.init();
   }
 
-  protected init() {
+  protected init(): void {
     const {hash, search, origin} = this.locationService;
     const isImplicitRedirect = hash && new RegExp('(#access_token=)|(#error=)').test(hash);
     const isAuthCodeRedirect = search && new RegExp('(code=)|(error=)').test(search);
@@ -79,7 +81,7 @@ export class OAuthService {
       this.emitState(parameters);
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
-        const {clientId, clientSecret, tokenPath, scope, codeVerifier} = this.authConfig.config;
+        const {clientId, clientSecret, tokenPath, scope, codeVerifier} = this.authConfig.config as any;
         setTimeout(() => {
           this.http.post(tokenPath, new HttpParams({
             fromObject: {
@@ -92,7 +94,7 @@ export class OAuthService {
               ...codeVerifier ? {code_verifier: codeVerifier} : {}
             }
           }), {headers: REQUEST_HEADER}).pipe(
-            catchError((err) => {
+            catchError(() => {
               this.token = {error: 'error'};
               this.status = OAuthStatus.DENIED;
               this.locationService.href = `${origin}/${newParametersString}`;
@@ -129,13 +131,13 @@ export class OAuthService {
   }
 
   login(parameters?: OAuthParameters) {
-    if (this.isResourceType(parameters)) {
-      this.resourceLogin(parameters);
-    } else if (this.isAuthorizationCodeType(parameters)) {
-      this.authorizationCodeLogin(parameters).then();
-    } else if (this.isImplicitType(parameters)) {
-      this.implicitLogin(parameters).then();
-    } else if (this.isClientCredentialType(parameters)) {
+    if (this.isResourceType(parameters as ResourceParameters)) {
+      this.resourceLogin(parameters as ResourceParameters);
+    } else if (this.isAuthorizationCodeType(parameters as AuthorizationCodeParameters)) {
+      this.authorizationCodeLogin(parameters as AuthorizationCodeParameters).then();
+    } else if (this.isImplicitType(parameters as ImplicitParameters)) {
+      this.implicitLogin(parameters as ImplicitParameters).then();
+    } else if (this.isClientCredentialType()) {
       this.clientCredentialLogin();
     }
   }
@@ -147,9 +149,9 @@ export class OAuthService {
   }
 
   revoke() {
-    const {revokePath, clientId, clientSecret} = this.authConfig.config;
+    const {revokePath, clientId, clientSecret} = this.authConfig.config as any;
     if (revokePath) {
-      const {access_token, refresh_token} = this.token;
+      const {access_token, refresh_token} = this.token as OAuthToken;
       const toRevoke = [];
       if (access_token) {
         toRevoke.push({
@@ -170,8 +172,7 @@ export class OAuthService {
       from(toRevoke).pipe(
         concatMap(o => of(o).pipe(delay(300))), // space request to avoid cancellation
         switchMap(o => this.http.post(revokePath, new HttpParams({fromObject: o}))),
-      ).subscribe(() => {
-      });
+      ).subscribe(noop);
     }
   }
 
@@ -203,7 +204,7 @@ export class OAuthService {
   }
 
   private resourceLogin(parameters: ResourceParameters) {
-    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config;
+    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
     const {username, password} = parameters;
     this.http.post(tokenPath, new HttpParams({
       fromObject: {
@@ -237,7 +238,7 @@ export class OAuthService {
   }
 
   private clientCredentialLogin() {
-    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config;
+    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
     this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
@@ -257,33 +258,34 @@ export class OAuthService {
     });
   }
 
-  private isClientCredentialType(parameters?: OAuthParameters): parameters is undefined {
+  private isClientCredentialType(): boolean {
     return this.authConfig.type === OAuthType.CLIENT_CREDENTIAL;
   }
 
-  private isResourceType(parameters?: OAuthParameters): parameters is ResourceParameters {
-    return this.authConfig.type === OAuthType.RESOURCE && parameters && !!(parameters as ResourceParameters).password;
+  private isResourceType(parameters?: ResourceParameters): boolean {
+    return this.authConfig.type === OAuthType.RESOURCE && !!parameters?.password;
   }
 
-  private isImplicitType(parameters?: OAuthParameters): parameters is ImplicitParameters {
-    return this.authConfig.type === OAuthType.IMPLICIT && parameters && !!(parameters as ImplicitParameters).redirectUri;
+  private isImplicitType(parameters?: ImplicitParameters): boolean {
+    return this.authConfig.type === OAuthType.IMPLICIT && !!parameters?.redirectUri;
   }
 
-  private isAuthorizationCodeType(parameters?: OAuthParameters): parameters is AuthorizationCodeParameters {
-    return this.authConfig.type === OAuthType.AUTHORIZATION_CODE && parameters && !!(parameters as ImplicitParameters).redirectUri;
+  private isAuthorizationCodeType(parameters?: AuthorizationCodeParameters): boolean {
+    return this.authConfig.type === OAuthType.AUTHORIZATION_CODE && !!parameters?.redirectUri;
   }
 
-  private async toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType): Promise<string> {
-    const appendChar = this.authConfig.config.authorizePath.includes('?') ? '&' : '?';
-    const clientId = `${appendChar}client_id=${this.authConfig.config.clientId}`;
+  private async toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType: OAuthType): Promise<string> {
+    const {config} = this.authConfig as any;
+    const appendChar = config.authorizePath.includes('?') ? '&' : '?';
+    const clientId = `${appendChar}client_id=${config.clientId}`;
     const redirectUri = `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`;
     const responseTypeString = `&response_type=${responseType}`;
-    const scope = `&scope=${encodeURIComponent(this.authConfig.config.scope || '')}`;
+    const scope = `&scope=${encodeURIComponent(config.scope || '')}`;
     const state = `&state=${encodeURIComponent(parameters.state || '')}`;
-    const {codeVerifier} = this.authConfig.config;
+    const {codeVerifier} = config;
     const codeChallenge = codeVerifier ? `&code_challenge=${await pkce(codeVerifier)}&code_challenge_method=S256` : '';
     const parametersString = `${clientId}${redirectUri}${responseTypeString}${scope}${state}${codeChallenge}`;
-    return `${this.authConfig.config.authorizePath}${parametersString}`;
+    return `${config.authorizePath}${parametersString}`;
   }
 
   set token(token: OAuthToken | null) {
@@ -298,7 +300,7 @@ export class OAuthService {
             this.zone.run(() => {
               this.refreshToken();
             });
-          }, Number(this.token.expires_in) * 1000);
+          }, Number(this.token?.expires_in) * 1000);
         });
       }
     } else {
@@ -311,8 +313,8 @@ export class OAuthService {
   }
 
   private refreshToken() {
-    const {tokenPath, clientId, clientSecret, scope} = this.authConfig.config;
-    const {refresh_token} = this.token;
+    const {tokenPath, clientId, clientSecret, scope} = this.authConfig.config as any;
+    const {refresh_token} = this.token as OAuthToken;
     if (tokenPath && refresh_token) {
       this.http.post(tokenPath, new HttpParams({
         fromObject: {
@@ -323,7 +325,7 @@ export class OAuthService {
           ...scope ? {scope} : {},
         }
       }), {headers: REQUEST_HEADER}).pipe(
-        catchError((err) => {
+        catchError(() => {
           this.logout();
           return EMPTY;
         })
@@ -359,8 +361,8 @@ export class OAuthService {
     this.locationService.hash = curHash;
   }
 
-  private emitState(parameters) {
-    const {state} = parameters;
+  private emitState(parameters: Record<string, string> | null) {
+    const {state} = parameters as any;
     if (state) {
       this.state$.next(state);
     }

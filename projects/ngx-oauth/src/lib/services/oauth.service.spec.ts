@@ -8,8 +8,8 @@ import {OAuthType, OAuthStatus} from '../models';
 
 describe('OAuthService', () => {
   let oauthService: OAuthService;
-  let http;
-  let zone;
+  let http: any;
+  let zone: any;
 
   beforeEach(() => {
     http = jasmine.createSpyObj(['post']);

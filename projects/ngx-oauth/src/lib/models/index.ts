@@ -16,8 +16,8 @@ export enum OAuthType {
 export interface OAuthConfig {
   type: OAuthType;
   config: OAuthTypeConfig;
-  storageKey?: string;
-  storage?: Storage;
+  storageKey: string;
+  storage: Storage;
   ignorePaths?: RegExp[];
 }
 
@@ -64,10 +64,10 @@ export interface AuthorizationCodeParameters extends ImplicitParameters {
 
 export type OAuthParameters = ResourceParameters | AuthorizationCodeParameters | ImplicitParameters;
 export type OAuthTypeConfig =
-  ResourceConfig
-  | ImplicitConfig
+  AuthorizationCodePKCEConfig
   | AuthorizationCodeConfig
-  | AuthorizationCodePKCEConfig
+  | ImplicitConfig
+  | ResourceConfig
   | ClientCredentialConfig;
 
 export interface OAuthToken {

@@ -30,7 +30,7 @@ export class OAuthInterceptor implements HttpInterceptor {
             this.oauthService.status = OAuthStatus.DENIED;
             return EMPTY;
           }
-          return throwError(err);
+          return throwError(() => new Error(err));
         })
       );
     } else {

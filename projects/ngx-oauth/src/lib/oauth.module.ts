@@ -18,7 +18,7 @@ const mockLocation = (serverHost: string, serverPath: string): Location => {
     },
     assign(u: string) {
     },
-    ancestorOrigins: null,
+    ancestorOrigins: {} as any,
     replace(u: string) {
     }
   };
@@ -26,7 +26,7 @@ const mockLocation = (serverHost: string, serverPath: string): Location => {
 
 const LocationService = {
   provide: LOCATION,
-  useFactory(platformId, serverHost?: string, serverPath?: string) {
+  useFactory(platformId: Object, serverHost: string, serverPath: string) {
     return isPlatformBrowser(platformId) ? location : mockLocation(serverHost, serverPath);
   },
   deps: [
@@ -40,10 +40,10 @@ const mockStorage: Storage = {
   clear() {
   },
   getItem(key: string) {
-    return undefined as string;
+    return null;
   },
   key(index: number) {
-    return undefined as string;
+    return null;
   },
   removeItem(key: string) {
   },
@@ -54,7 +54,7 @@ const mockStorage: Storage = {
 
 const StorageService = {
   provide: STORAGE,
-  useFactory(platformId) {
+  useFactory(platformId: Object) {
     return isPlatformBrowser(platformId) ? localStorage : mockStorage;
   },
   deps: [PLATFORM_ID]

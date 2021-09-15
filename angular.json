@@ -28,18 +28,6 @@
             "tsConfig": "projects/ngx-oauth/tsconfig.spec.json",
             "karmaConfig": "projects/ngx-oauth/karma.conf.js"
           }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "projects/ngx-oauth/tsconfig.lib.json",
-              "projects/ngx-oauth/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
         }
       }
     },
@@ -48,6 +36,9 @@
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
+        },
+        "@schematics/angular:application": {
+          "strict": true
         }
       },
       "root": "projects/ngx-oauth-sample",
@@ -62,7 +53,7 @@
             "main": "projects/ngx-oauth-sample/src/main.ts",
             "polyfills": "projects/ngx-oauth-sample/src/polyfills.ts",
             "tsConfig": "projects/ngx-oauth-sample/tsconfig.app.json",
-            "aot": true,
+            "inlineStyleLanguage": "scss",
             "assets": [
               "projects/ngx-oauth-sample/src/favicon.ico",
               "projects/ngx-oauth-sample/src/assets"
@@ -80,27 +71,30 @@
                   "with": "projects/ngx-oauth-sample/src/environments/environment.prod.ts"
                 }
               ],
-              "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kb",
-                  "maximumError": "10kb"
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
                 }
               ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
-          }
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
@@ -136,32 +130,6 @@
               "projects/ngx-oauth-sample/src/styles.scss"
             ],
             "scripts": []
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "projects/ngx-oauth-sample/tsconfig.app.json",
-              "projects/ngx-oauth-sample/tsconfig.spec.json",
-              "projects/ngx-oauth-sample/e2e/tsconfig.json",
-              "projects/ngx-oauth-sample/tsconfig.server.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "projects/ngx-oauth-sample/e2e/protractor.conf.js",
-            "devServerTarget": "ngx-oauth-sample:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "ngx-oauth-sample:serve:production"
-            }
           }
         },
         "server": {

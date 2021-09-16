@@ -10,13 +10,11 @@ import {IntrospectService} from './introspect.service';
 })
 export class AppComponent {
 
-  private _state: string;
-  status$: Observable<OAuthStatus>;
+  private _state = 'some_salt_dummy_state';
+  status$ = this.oauthService.status$;
 
   constructor(private oauthService: OAuthService,
               private introspectService: IntrospectService) {
-    this.status$ = this.oauthService.status$;
-    this.state = 'some_salt_dummy_state';
     // this.oauthService.ignorePaths.push(/.+(users\/current)?.+/);
   }
 
@@ -35,8 +33,9 @@ export class AppComponent {
   get profileName$(): Observable<string> {
     return this.status$.pipe(
       filter(s => s === OAuthStatus.AUTHORIZED),
-      map(() => this.oauthService.token.id_token),
+      map(() => this.oauthService.token?.id_token),
       filter(t => !!t),
+      // @ts-ignore
       map(t => JSON.parse(atob(t.split('.')[1]))),
       tap(v => console.log(v)),
       map(t => t.name || t.username || t.email || t.sub),

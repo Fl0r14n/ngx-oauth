@@ -292,6 +292,7 @@ export class OAuthService {
     this._token = token;
     const {storageKey} = this.authConfig;
     if (token) {
+      // @ts-ignore
       this.authConfig.storage[storageKey] = JSON.stringify(this.token);
       clearTimeout(this.timer);
       if (this.token && this.token.expires_in) {
@@ -304,6 +305,7 @@ export class OAuthService {
         });
       }
     } else {
+      // @ts-ignore
       delete this.authConfig.storage[storageKey];
     }
   }

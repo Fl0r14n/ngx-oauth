@@ -50,8 +50,8 @@ export class OAuthLoginComponent implements OnDestroy {
   profileName$: Observable<string> | undefined;
   @ContentChild('login', {static: false})
   loginTemplate: TemplateRef<any> | undefined;
-  username: string | undefined;
-  password: string | undefined;
+  username = '';
+  password = '';
   profileName: string | undefined;
   OAuthStatus = OAuthStatus;
   OAuthType = OAuthType;

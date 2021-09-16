@@ -12,14 +12,17 @@
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "tsConfig": "projects/ngx-oauth/tsconfig.lib.json",
             "project": "projects/ngx-oauth/ng-package.json"
           },
           "configurations": {
             "production": {
               "tsConfig": "projects/ngx-oauth/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-oauth/tsconfig.lib.json"
             }
-          }
+          },
+          "defaultConfiguration": "production"
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",

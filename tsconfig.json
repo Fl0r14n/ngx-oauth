@@ -21,10 +21,8 @@
     ],
     "paths": {
       "ngx-oauth": [
-        "dist/ngx-oauth"
-      ],
-      "ngx-oauth/*": [
-        "dist/ngx-oauth/*"
+        "dist/ngx-oauth",
+        "dist/ngx-oauth/ngx-oauth"
       ]
     }
   },

@@ -1,12 +1,11 @@
 import {ModuleWithProviders, NgModule, Optional, PLATFORM_ID} from '@angular/core';
-import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
 import {OAuthConfig, OAUTH_CONFIG, LOCATION, SERVER_HOST, SERVER_PATH, STORAGE} from './models';
 import {OAuthService} from './services/oauth.service';
 import {OAuthLoginComponent} from './components/login/oauth-login.component';
-import {isPlatformBrowser} from '@angular/common';
+import {CommonModule, isPlatformBrowser} from '@angular/common';
 import {OAuthInterceptor} from './services/oauth.interceptor';
 
 const mockLocation = (serverHost: string, serverPath: string): Location => {
@@ -76,10 +75,10 @@ const defaultConfig = (storage: Storage) => {
 
 @NgModule({
   imports: [
-    BrowserModule,
+    CommonModule,
     FormsModule,
     HttpClientModule,
-    RouterModule
+    RouterModule,
   ],
   declarations: [OAuthLoginComponent],
   exports: [OAuthLoginComponent],

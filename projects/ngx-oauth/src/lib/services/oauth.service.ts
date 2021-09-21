@@ -59,7 +59,7 @@ export class OAuthService {
   }
 
   protected init(): void {
-    const {hash, search, origin} = this.locationService;
+    const {hash, search, origin, pathname} = this.locationService;
     const isImplicitRedirect = hash && new RegExp('(#access_token=)|(#error=)').test(hash);
     const isAuthCodeRedirect = search && new RegExp('(code=)|(error=)').test(search);
     const {storageKey} = this.authConfig;
@@ -88,7 +88,7 @@ export class OAuthService {
               code: parameters.code,
               client_id: clientId,
               client_secret: clientSecret,
-              redirect_uri: `${origin}/${newParametersString}`,
+              redirect_uri: `${origin}${pathname}${newParametersString}`,
               grant_type: 'authorization_code',
               ...scope ? {scope} : {},
               ...codeVerifier ? {code_verifier: codeVerifier} : {}
@@ -97,13 +97,13 @@ export class OAuthService {
             catchError(() => {
               this.token = {error: 'error'};
               this.status = OAuthStatus.DENIED;
-              this.locationService.href = `${origin}/${newParametersString}`;
+              this.locationService.href = `${origin}${pathname}${newParametersString}`;
               return EMPTY;
             })
           ).subscribe(token => {
             this.token = token;
             // authorized event will be triggered after redirect
-            this.locationService.href = `${origin}/${newParametersString}`;
+            this.locationService.href = `${origin}${pathname}${newParametersString}`;
           });
         });
       } else {

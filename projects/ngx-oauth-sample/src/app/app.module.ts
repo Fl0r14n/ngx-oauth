@@ -108,10 +108,22 @@ const keycloakApplicationConfig = {
   }
 };
 
+const keycloakApplicationPKCEConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    clientId: 'spartacus',
+    authorizePath: 'http://localhost:8080/auth/realms/commerce/protocol/openid-connect/auth',
+    tokenPath: 'http://localhost:8080/auth/realms/commerce/protocol/openid-connect/token',
+    revokePath: 'http://localhost:8080/auth/realms/commerce/protocol/openid-connect/revoke',
+    scope: 'openid email profile',
+    pkce: true
+  }
+};
+
 @NgModule({
   imports: [
     BrowserModule.withServerTransition({appId: 'serverApp'}),
-    OAuthModule.forRoot(keycloakApplicationConfig),
+    OAuthModule.forRoot(keycloakApplicationPKCEConfig),
     HttpClientModule
   ],
   declarations: [

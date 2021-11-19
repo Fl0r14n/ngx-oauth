@@ -1,6 +1,10 @@
 ## Angular OAuth
 
-> Ngx-oauth is an angular library for OAuth 2.0 login, the library supports all the 4 flows: resource, implicit, authorization code and client credentials.
+> Ngx-oauth is an angular library for OAuth 2.0 login, the library supports all the 4 flows:
+> * **resource**
+> * **implicit**
+> * **authorization code**
+> * **client credentials**
 
 > Supports OIDC
 
@@ -38,6 +42,7 @@ export class AppModule {
 ``` 
 
 Example for **authorization code** flow with `OIDC` and `PKCE`
+For public oauth clients `clientSecret` can be removed since is not used
 
 ```shell
 const resourceConfig = {
@@ -49,7 +54,7 @@ const resourceConfig = {
     tokenPath: '/o/token/',
     revokePath: '/o/revoke/',
     scope: 'openid',
-    codeVerifier: 'M00AeaRfwOkpwQp8SK-8K-hHvPYu6OKgj1aCUOb6eSMcSZr2'
+    pkce: true'
   },
 }
 ```
@@ -86,7 +91,7 @@ export class LoginComponent {
   }
 
   get profileName$(): Observable<string> {
-      // ex: get profile name form oidc id_token or get it from some user service 
+    // ex: get profile name form oidc id_token or get it from some user service 
     return this.status$.pipe(
       filter(s => s === OAuthStatus.AUTHORIZED),
       map(() => this.oauthService.token.id_token),

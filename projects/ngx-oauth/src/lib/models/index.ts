@@ -25,7 +25,7 @@ export interface ClientCredentialConfig {
   tokenPath: string;
   revokePath?: string;
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string;
   scope?: string;
 }
 
@@ -45,7 +45,7 @@ export interface AuthorizationCodeConfig extends ResourceConfig {
 }
 
 export interface AuthorizationCodePKCEConfig extends AuthorizationCodeConfig {
-  codeVerifier: string;
+  pkce: boolean;
 }
 
 export interface ResourceParameters {
@@ -80,6 +80,7 @@ export interface OAuthToken {
   expires_in?: number | string;
   refresh_expires_in?: number;
   scope?: string;
+  codeVerifier?: string;
 }
 
 export enum OAuthStatus {

@@ -16,14 +16,21 @@ import {
   ResourceParameters
 } from '../models';
 
+const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '');
+
 const base64url = (str: string) => btoa(str)
   .replace(/\+/g, '-')
   .replace(/\//g, '_')
   .replace(/=/g, '');
 
+const randomString = (length: number = 48) => {
+  const buff = arrToString(crypto.getRandomValues(new Uint8Array(length * 2)));
+  return base64url(buff).substring(0, length);
+};
+
 const pkce = async (value: string) => {
   const buff = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-  return base64url(new Uint8Array(buff).reduce((s, b) => s + String.fromCharCode(b), ''));
+  return base64url(arrToString(new Uint8Array(buff)));
 };
 
 const REQUEST_HEADER = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
@@ -60,8 +67,8 @@ export class OAuthService {
 
   protected init(): void {
     const {hash, search, origin, pathname} = this.locationService;
-    const isImplicitRedirect = hash && new RegExp('(#access_token=)|(#error=)').test(hash);
-    const isAuthCodeRedirect = search && new RegExp('(code=)|(error=)').test(search);
+    const isImplicitRedirect = hash && /(#access_token=)|(#error=)/.test(hash);
+    const isAuthCodeRedirect = search && /(code=)|(error=)/.test(search);
     const {storageKey} = this.authConfig;
     const savedToken = storageKey && this.authConfig.storage && this.authConfig.storage[storageKey] &&
       JSON.parse(this.authConfig.storage[storageKey]);
@@ -81,17 +88,18 @@ export class OAuthService {
       this.emitState(parameters);
       const newParametersString = this.getCleanedUnSearchParameters();
       if (parameters && parameters.code) {
-        const {clientId, clientSecret, tokenPath, scope, codeVerifier} = this.authConfig.config as any;
+        const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
+        const codeVerifier = savedToken && savedToken.codeVerifier;
         setTimeout(() => {
           this.http.post(tokenPath, new HttpParams({
             fromObject: {
               code: parameters.code,
               client_id: clientId,
-              client_secret: clientSecret,
+              ...clientSecret && {client_secret: clientSecret} || {},
               redirect_uri: `${origin}${pathname}${newParametersString}`,
               grant_type: 'authorization_code',
-              ...scope ? {scope} : {},
-              ...codeVerifier ? {code_verifier: codeVerifier} : {}
+              ...scope && {scope} || {},
+              ...codeVerifier && {code_verifier: codeVerifier} || {}
             }
           }), {headers: REQUEST_HEADER}).pipe(
             catchError(() => {
@@ -155,16 +163,16 @@ export class OAuthService {
       const toRevoke = [];
       if (access_token) {
         toRevoke.push({
-          ...clientId ? {client_id: clientId} : {},
-          ...clientSecret ? {client_secret: clientSecret} : {},
+          ...clientId && {client_id: clientId} || {},
+          ...clientSecret && {client_secret: clientSecret} || {},
           token: access_token,
           token_type_hint: 'access_token'
         });
       }
       if (refresh_token) {
         toRevoke.push({
-          ...clientId ? {client_id: clientId} : {},
-          ...clientSecret ? {client_secret: clientSecret} : {},
+          ...clientId && {client_id: clientId} || {},
+          ...clientSecret && {client_secret: clientSecret} || {},
           token: refresh_token,
           token_type_hint: 'refresh_token'
         });
@@ -282,7 +290,10 @@ export class OAuthService {
     const responseTypeString = `&response_type=${responseType}`;
     const scope = `&scope=${encodeURIComponent(config.scope || '')}`;
     const state = `&state=${encodeURIComponent(parameters.state || '')}`;
-    const {codeVerifier} = config;
+    const codeVerifier = config.pkce && randomString() || null;
+    if (codeVerifier) {
+      this.token = {codeVerifier}; //save the code verifier before we redirect
+    }
     const codeChallenge = codeVerifier ? `&code_challenge=${await pkce(codeVerifier)}&code_challenge_method=S256` : '';
     const parametersString = `${clientId}${redirectUri}${responseTypeString}${scope}${state}${codeChallenge}`;
     return `${config.authorizePath}${parametersString}`;
@@ -321,7 +332,7 @@ export class OAuthService {
       this.http.post(tokenPath, new HttpParams({
         fromObject: {
           client_id: clientId,
-          client_secret: clientSecret,
+          ...clientSecret ? {client_secret: clientSecret} : {},
           grant_type: 'refresh_token',
           refresh_token,
           ...scope ? {scope} : {},

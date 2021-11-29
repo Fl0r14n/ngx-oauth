@@ -69,8 +69,7 @@ const defaultConfig = (storage: Storage) => {
   return {
     storage,
     storageKey: 'token',
-    ignorePaths: [],
-    pkce: false
+    ignorePaths: []
   };
 };
 

@@ -1,8 +1,7 @@
-import {Component} from '@angular/core';
-import {filter, map, tap} from 'rxjs/operators';
-import {OAuthService, OAuthStatus} from 'ngx-oauth';
+import {Component, Inject} from '@angular/core';
+import {OAuthService} from 'ngx-oauth';
 import {Observable} from 'rxjs';
-import {IntrospectService} from './introspect.service';
+import {PROFILE_SERVICE, ProfileService} from './service';
 
 @Component({
   selector: 'app-root',
@@ -14,8 +13,7 @@ export class AppComponent {
   status$ = this.oauthService.status$;
 
   constructor(private oauthService: OAuthService,
-              private introspectService: IntrospectService) {
-    // this.oauthService.ignorePaths.push(/.+(users\/current)?.+/);
+              @Inject(PROFILE_SERVICE) private profileService: ProfileService) {
   }
 
   i18n = {
@@ -30,16 +28,7 @@ export class AppComponent {
     this._state = value;
   }
 
-  get profileName$(): Observable<string> {
-    return this.status$.pipe(
-      filter(s => s === OAuthStatus.AUTHORIZED),
-      map(() => this.oauthService.token?.id_token),
-      filter(t => !!t),
-      // @ts-ignore
-      map(t => JSON.parse(atob(t.split('.')[1]))),
-      tap(v => console.log(v)),
-      map(t => t.name || t.username || t.email || t.sub),
-      tap(() => this.introspectService.introspect().subscribe(v => console.log(v)))
-    );
+  get profileName$(): Observable<string | undefined> | undefined {
+    return this.profileService.profileName$;
   }
 }

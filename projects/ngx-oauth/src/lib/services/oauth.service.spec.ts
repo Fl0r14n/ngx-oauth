@@ -6,17 +6,20 @@ import {NgZone} from '@angular/core';
 import {OAuthType, OAuthStatus} from '../models';
 import createSpyObj = jasmine.createSpyObj;
 import {TestScheduler} from 'rxjs/testing';
+import {Location as Location2} from '@angular/common';
 
 describe('OAuthService', () => {
   let oauthService: OAuthService;
   let http: any;
   let zone: any;
   let testScheduler: TestScheduler;
+  let location2: Location2;
 
   beforeEach(() => {
     testScheduler = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
     http = createSpyObj(['post']);
     zone = new NgZone({});
+    location2 = createSpyObj([]);
     oauthService = new OAuthService(http, zone, {
       type: OAuthType.RESOURCE,
       config: {
@@ -26,7 +29,7 @@ describe('OAuthService', () => {
       },
       storage: localStorage,
       storageKey: 'token'
-    }, location);
+    }, location, location2);
     localStorage.clear();
     location.hash = '';
   });
@@ -51,7 +54,7 @@ describe('OAuthService', () => {
           },
           storage: localStorage,
           storageKey: 'token'
-        }, location);
+        }, location, location2);
         expectObservable(oauthService.status$).toBe('a', {a: OAuthStatus.AUTHORIZED});
         expect(oauthService.token).toEqual(token);
       });
@@ -71,7 +74,7 @@ describe('OAuthService', () => {
           },
           storage: localStorage,
           storageKey: 'token'
-        }, location);
+        }, location, location2);
         expectObservable(oauthService.status$).toBe('a', {a: OAuthStatus.DENIED});
         expect(oauthService.token).toEqual(null);
       });
@@ -89,7 +92,7 @@ describe('OAuthService', () => {
           },
           storage: localStorage,
           storageKey: 'token'
-        }, location);
+        }, location, location2);
         expectObservable(oauthService.status$).toBe('a', {a: OAuthStatus.AUTHORIZED});
         expect(oauthService.token).toEqual({
           access_token: 'token',
@@ -112,7 +115,7 @@ describe('OAuthService', () => {
           },
           storage: localStorage,
           storageKey: 'token'
-        }, location);
+        }, location, location2);
         expectObservable(oauthService.status$).toBe('a', {a: OAuthStatus.DENIED});
         expect(oauthService.token).toEqual(null);
         expect(window.location.hash).toEqual('');

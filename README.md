@@ -1,9 +1,9 @@
 ## Angular OAuth
 
-> Ngx-oauth is an angular library for OAuth 2.0 login, the library supports all the 4 flows: 
+> `Ngx-oauth` is a fully **OAuth 2.1** angular library compliant. The library supports all the 4 flows:
 > * **resource**
-> * **implicit** 
-> * **authorization code** 
+> * **implicit**
+> * **authorization code**
 > * **client credentials**
 
 > Supports OIDC
@@ -17,7 +17,7 @@ To start using the `ngx-oauth` you need to import and configure the `OAuthModule
 Example for **resource owner** flow:
 
 ```typescript
-const resourceConfig = {
+const oauthConfig = {
   type: OAuthType.RESOURCE,
   config: {
     tokenPath: '/authorizationserver/oauth/token',
@@ -32,7 +32,7 @@ const resourceConfig = {
 
 @NgModule({
   imports: [
-    OAuthModule.forRoot(resourceConfig),
+    OAuthModule.forRoot(oauthConfig),
   ],
   providers: [],
   bootstrap: [AppComponent]
@@ -44,8 +44,8 @@ export class AppModule {
 Example for **authorization code** flow with `OIDC` and `PKCE`
 For public oauth clients `clientSecret` can be removed since is not used
 
-```shell
-const resourceConfig = {
+```typescript
+const oauthConfig = {
   type: OAuthType.AUTHORIZATION_CODE,
   config: {
     clientId: 'client_application',
@@ -53,10 +53,34 @@ const resourceConfig = {
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
     revokePath: '/o/revoke/',
-    scope: 'openid',
-    pkce: true'
+    scope: 'openid email profile',
+    pkce: true
   },
 }
+```
+
+***Keycloak*** example for **oidc** implicit flow
+
+```typescript
+const keycloakOpenIDConfig = {
+  type: OAuthType.IMPLICIT,
+  config: {
+    issuerPath: 'http://localhost:8080/auth/realms/commerce',
+    clientId: 'spartacus',
+  }
+};
+```
+
+***Keycloak*** example for **oidc** with issuer url
+
+```typescript
+const keycloakOpenIDConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    issuerPath: 'http://localhost:8080/auth/realms/commerce',
+    clientId: 'spartacus',
+  }
+};
 ```
 
 You can use the `oauth-login` component
@@ -123,11 +147,11 @@ or create your custom login template using OAuthService
               </h2>
             </div>
             <div class="card-body">
-              <div class="form-group">
+              <div class="mb-3">
                 <input type="text" class="form-control" name="username" required [(ngModel)]="oauthService.username"
                        placeholder="username">
               </div>
-              <div class="form-group">
+              <div class="mb-3">
                 <input type="password" class="form-control" name="password" required [(ngModel)]="oauthService.password"
                        placeholder="password">
               </div>

@@ -1,8 +1,20 @@
-import {Component, ContentChild, EventEmitter, HostListener, Inject, Input, OnDestroy, Output, TemplateRef} from '@angular/core';
-import {Observable, Subscription} from 'rxjs';
+import {
+  Component,
+  ContentChild,
+  EventEmitter,
+  HostListener,
+  Inject,
+  Input,
+  OnDestroy,
+  Output,
+  TemplateRef,
+  ViewEncapsulation
+} from '@angular/core';
+import {Observable, Subscription, take} from 'rxjs';
 import {LOCATION, OAuthParameters, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
 import {OAuthService} from '../../services/oauth.service';
+import {Location as Location2} from '@angular/common';
 
 export interface OAuthLoginI18n {
   username?: string;
@@ -16,10 +28,12 @@ export interface OAuthLoginI18n {
 @Component({
   selector: 'oauth-login',
   templateUrl: 'oauth-login.component.html',
-  styleUrls: ['oauth-login.component.scss']
+  styleUrls: ['oauth-login.component.scss'],
+  encapsulation: ViewEncapsulation.None,
 })
 export class OAuthLoginComponent implements OnDestroy {
 
+  private _redirectUri: string | undefined;
   private subscription = new Subscription();
   private _i18n: OAuthLoginI18n = {
     username: 'Username',
@@ -43,11 +57,22 @@ export class OAuthLoginComponent implements OnDestroy {
   }
 
   @Input()
+  set redirectUri(redirectUri: string) {
+    if (redirectUri) {
+      this._redirectUri = redirectUri;
+    }
+  }
+
+  get redirectUri() {
+    return this._redirectUri || `${this.location.origin}${this.locationService.path(true) || '/'}`;
+  }
+
+  @Input()
   state = '';
   @Output()
   stateChange: EventEmitter<string> = new EventEmitter();
   @Input()
-  profileName$: Observable<string> | undefined;
+  profileName$: Observable<string | undefined> | undefined;
   @ContentChild('login', {static: false})
   loginTemplate: TemplateRef<any> | undefined;
   username = '';
@@ -57,16 +82,17 @@ export class OAuthLoginComponent implements OnDestroy {
   OAuthType = OAuthType;
   collapse = false;
   type = this.oauthService.type;
-  redirectUri = this.location.href;
   state$ = this.oauthService.state$.pipe(
     tap(s => this.stateChange.emit(s))
   );
   status$ = this.oauthService.status$.pipe(
     tap(s => {
       if (s === OAuthStatus.AUTHORIZED && this.profileName$) {
-        this.subscription.add(this.profileName$.subscribe(n => this.profileName = n));
+        this.subscription.add(this.profileName$.pipe(take(1)).subscribe(n => this.profileName = n));
       } else {
-        this.profileName = '';
+        const {token} = this.oauthService;
+        const userInfo = token && token.id_token && JSON.parse(atob(token.id_token.split('.')[1])) || {};
+        this.profileName = userInfo.name || userInfo.username || userInfo.email || userInfo.sub || '';
       }
     })
   );
@@ -74,6 +100,7 @@ export class OAuthLoginComponent implements OnDestroy {
   logoutFunction = () => this.logout();
 
   constructor(private oauthService: OAuthService,
+              private locationService: Location2,
               @Inject(LOCATION) private location: Location) {
   }
 

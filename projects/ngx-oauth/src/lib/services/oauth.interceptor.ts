@@ -14,7 +14,7 @@ export class OAuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (this.oauthService) {
       if (!this.isPathExcepted(req)) {
-        const token = this.oauthService.token;
+        const {token} = this.oauthService;
         if (token && token.access_token) {
           req = req.clone({
             setHeaders: {
@@ -39,12 +39,15 @@ export class OAuthInterceptor implements HttpInterceptor {
   }
 
   private isPathExcepted(req: HttpRequest<any>) {
-    for (const ignorePath of this.oauthService.ignorePaths) {
-      try {
-        if (req.url.match(ignorePath)) {
-          return true;
+    const {ignorePaths} = this.oauthService;
+    if (ignorePaths) {
+      for (const ignorePath of this.oauthService.ignorePaths) {
+        try {
+          if (req.url.match(ignorePath)) {
+            return true;
+          }
+        } catch (err) {
         }
-      } catch (err) {
       }
     }
     return false;

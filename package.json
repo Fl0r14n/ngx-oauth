@@ -1,6 +1,27 @@
 {
   "name": "ngx-oauth",
-  "version": "2.1.0",
+  "version": "2.1.1",
+  "author": "Fl0r14n <florian.chis@gmail.com>",
+  "homepage": "https://github.com/Fl0r14n/ngx-oauth",
+  "description": "A fully OAuth2.1 compliant angular library",
+  "license": "MIT",
+  "keywords": [
+    "angular",
+    "angular13",
+    "Angular 13",
+    "ng2",
+    "oauth",
+    "oauth2",
+    "oidc",
+    "pkce",
+    "authorization",
+    "openid",
+    "openid connect"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Fl0r14n/ngx-datatable-bootstrap4.git"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

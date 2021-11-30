@@ -1,6 +1,6 @@
 ## Angular OAuth
 
-> `Ngx-oauth` is a fully **OAuth 2.1** angular library compliant. The library supports all the 4 flows:
+> `Ngx-oauth` is a fully **OAuth 2.1** compliant angular library. The library supports all the 4 flows:
 > * **resource**
 > * **implicit**
 > * **authorization code**

@@ -156,16 +156,15 @@ export class OAuthService {
           });
         }
       } else if (savedToken) {
+        this._token = savedToken;
         const {access_token, refresh_token, error} = savedToken;
         if (access_token) {
-          this.token = savedToken;
           if (refresh_token) { // force refresh since might be a manual page refresh
             this.refreshToken();
           } else {
             this.status = OAuthStatus.AUTHORIZED;
           }
         } else {
-          this.token = null;
           this.status = error && OAuthStatus.DENIED || OAuthStatus.NOT_AUTHORIZED;
         }
       } else {
@@ -174,13 +173,13 @@ export class OAuthService {
     });
   }
 
-  login(parameters?: OAuthParameters) {
+  async login(parameters?: OAuthParameters) {
     if (this.isResourceType(parameters as ResourceParameters)) {
       this.resourceLogin(parameters as ResourceParameters);
     } else if (this.isAuthorizationCodeType(parameters as AuthorizationCodeParameters)) {
-      this.authorizationCodeLogin(parameters as AuthorizationCodeParameters).then();
+      await this.authorizationCodeLogin(parameters as AuthorizationCodeParameters);
     } else if (this.isImplicitType(parameters as ImplicitParameters)) {
-      this.implicitLogin(parameters as ImplicitParameters).then();
+      await this.implicitLogin(parameters as ImplicitParameters);
     } else if (this.isClientCredentialType()) {
       this.clientCredentialLogin();
     }
@@ -253,15 +252,15 @@ export class OAuthService {
     this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
-        client_secret: clientSecret,
+        ...clientSecret && {client_secret: clientSecret} || {},
         grant_type: OAuthType.RESOURCE,
         ...scope && {scope} || {},
         username,
         password
       }
     }), {headers: REQUEST_HEADER}).pipe(
-      catchError(() => {
-        this.token = null;
+      catchError(err => {
+        this.token = err;
         this.status = OAuthStatus.DENIED;
         return EMPTY;
       })

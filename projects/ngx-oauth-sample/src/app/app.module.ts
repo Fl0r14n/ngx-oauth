@@ -32,10 +32,11 @@ const djangoConfig = {
 };
 
 const keycloakOpenIDConfig = {
-  type: OAuthType.RESOURCE,
+  type: OAuthType.AUTHORIZATION_CODE,
   config: {
     issuerPath: 'http://localhost:8080/auth/realms/commerce',
     clientId: 'spartacus',
+    // clientSecret: '02746877-9efd-4ff3-a39d-7b7685bb3190',
   }
 };
 

@@ -112,8 +112,8 @@ export class OAuthLoginComponent implements OnDestroy {
     this.oauthService.logout();
   }
 
-  login(parameters: OAuthParameters) {
-    this.oauthService.login(parameters);
+  async login(parameters: OAuthParameters) {
+    await this.oauthService.login(parameters);
     this.collapse = false;
   }
 

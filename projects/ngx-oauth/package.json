@@ -1,6 +1,6 @@
 {
   "name": "ngx-oauth",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": "Fl0r14n <florian.chis@gmail.com>",
   "homepage": "https://github.com/Fl0r14n/ngx-oauth",
   "description": "A fully OAuth2.1 compliant angular library",
@@ -20,7 +20,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:Fl0r14n/ngx-datatable-bootstrap4.git"
+    "url": "https://github.com/Fl0r14n/ngx-oauth"
   },
   "peerDependencies": {
     "@angular/common": "^13.0.0",

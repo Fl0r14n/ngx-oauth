@@ -96,6 +96,7 @@ export class OAuthService {
             ...v.code_challenge_methods_supported && {pkce: v.code_challenge_methods_supported.indexOf('S256') > -1} || {},
             ...v.userinfo_endpoint && {userPath: v.userinfo_endpoint} || {},
             ...v.introspection_endpoint && {introspectionPath: v.introspection_endpoint} || {},
+            ...v.end_session_endpoint && {logoutPath: v.end_session_endpoint} || {},
             ...scope && {} || {scope: 'openid'}
           } as any)),
           map(() => this.authConfig.config)
@@ -137,7 +138,7 @@ export class OAuthService {
               code: parameters?.code,
               client_id: clientId,
               ...clientSecret && {client_secret: clientSecret} || {},
-              redirect_uri: `${origin}${pathname}${newParametersString}`,
+              redirect_uri: `${origin}${pathname}`,
               grant_type: 'authorization_code',
               ...scope && {scope} || {},
               ...codeVerifier && {code_verifier: codeVerifier} || {}
@@ -185,10 +186,16 @@ export class OAuthService {
     }
   }
 
-  logout() {
+  logout(useLogoutUrl?: boolean) {
     this.revoke();
     this.token = null;
     this.status = OAuthStatus.NOT_AUTHORIZED;
+    const {logoutPath, logoutRedirectUri} = this.authConfig.config as any;
+    if (useLogoutUrl && logoutPath) {
+      const {origin, pathname} = this.location;
+      const currentPath = `${origin}${pathname}`;
+      this.location.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
+    }
   }
 
   revoke() {
@@ -416,7 +423,7 @@ export class OAuthService {
   private getCleanedUnSearchParameters(): string {
     const {search} = this.location;
     let searchString = search.substr(1);
-    const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state'];
+    const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt'];
     hashKeys.forEach((hashKey) => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
       searchString = searchString.replace(re, '');

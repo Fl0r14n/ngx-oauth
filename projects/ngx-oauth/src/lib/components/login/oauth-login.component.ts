@@ -68,6 +68,8 @@ export class OAuthLoginComponent implements OnDestroy {
   }
 
   @Input()
+  useLogoutUrl = false;
+  @Input()
   state = '';
   @Output()
   stateChange: EventEmitter<string> = new EventEmitter();
@@ -109,7 +111,7 @@ export class OAuthLoginComponent implements OnDestroy {
   }
 
   logout() {
-    this.oauthService.logout();
+    this.oauthService.logout(this.useLogoutUrl);
   }
 
   async login(parameters: OAuthParameters) {

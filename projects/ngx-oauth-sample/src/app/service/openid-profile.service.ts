@@ -17,7 +17,11 @@ export class OpenidProfileService implements ProfileService {
 
   get profileName$(): Observable<string | undefined> {
     return this.oauthService.userInfo$.pipe(
-      map(v => v.name)
+      map(v => `${v.name}&nbsp;${this.getPicture(v.picture)}`)
     );
+  }
+
+  getPicture(picture?: string) {
+    return picture && `<img class="rounded-circle img-thumbnail" src="${picture}">` || ''
   }
 }

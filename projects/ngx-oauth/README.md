@@ -22,8 +22,8 @@ const oauthConfig = {
   config: {
     tokenPath: '/authorizationserver/oauth/token',
     revokePath: '/authorizationserver/oauth/revoke', // optional
-    clientSecret: 'secret',
-    clientId: 'client-side'
+    clientId: '<your_client_id>',
+    clientSecret: '<your_client_secret>'
   },
   storage: localStorage, // Optional, default value is localStorage
   storageKey: 'token' // Optional, default value is 'token'
@@ -48,8 +48,8 @@ For public oauth clients `clientSecret` can be removed since is not used
 const oauthConfig = {
   type: OAuthType.AUTHORIZATION_CODE,
   config: {
-    clientId: 'client_application',
-    clientSecret: 'client_secret',
+    clientId: '<your_client_id>',
+    clientSecret: '<your_client_secret>',
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
     revokePath: '/o/revoke/',
@@ -66,7 +66,7 @@ const keycloakOpenIDConfig = {
   type: OAuthType.IMPLICIT,
   config: {
     issuerPath: 'http://localhost:8080/auth/realms/commerce',
-    clientId: 'spartacus',
+    clientId: '<your_client_id>',
   }
 };
 ```
@@ -78,14 +78,42 @@ const keycloakOpenIDConfig = {
   type: OAuthType.AUTHORIZATION_CODE,
   config: {
     issuerPath: 'http://localhost:8080/auth/realms/commerce',
-    clientId: 'spartacus',
+    clientId: '<your_client_id>',
   }
 };
 ```
 
+***Azure*** example
+
+```typescript
+const azureOpenIDConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    issuerPath: 'https://login.microsoftonline.com/common/v2.0', // for common make sure you app has "signInAudience": "AzureADandPersonalMicrosoftAccount",
+    clientId: '<your_client_id>',
+    scope: 'openid profile email offline_access',
+    pkce: true // manually since is required but code_challenge_methods_supported is not in openid configuration
+  }
+}
+```
+
+***Google*** example
+
+```typescript
+const googleOpenIDConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    issuerPath: 'https://accounts.google.com',
+    clientId: '<your_client_id>',
+    clientSecret: '<your_client_secret>',
+    scope: 'openid profile email'
+  }
+}
+```
+
 You can use the `oauth-login` component
 
-```angular2html
+```html
 
 <div class="login-component">
   <oauth-login></oauth-login>
@@ -100,6 +128,7 @@ or with params
   template: `
     <oauth-login [i18n]="i18n"
                  [profileName$]="profileName$"
+                 [useLogoutUrl]="useLogoutUrl"
                  [(state)]="state"></oauth-login>
   `
 })
@@ -109,27 +138,31 @@ export class LoginComponent {
   };
   state = 'some_salt_hash_or_whatever';
   status$: Observable<OAuthStatus>;
+  // not only revoke tokens but also access the logout page if defined.
+  // logoutPath needs to be defined. logoutRedirectUri is optional. Current url will be used if undefined
+  useLogoutUrl = true;
 
   constructor(private oauthService: OAuthService) {
     this.status$ = this.oauthService.status$;
   }
 
   get profileName$(): Observable<string> {
-    // ex: get profile name form oidc id_token or get it from some user service 
-    return this.status$.pipe(
-      filter(s => s === OAuthStatus.AUTHORIZED),
-      map(() => this.oauthService.token.id_token),
-      filter(t => !!t),
-      map(t => JSON.parse(atob(t.split('.')[1]))),
-      map(t => t.name || t.username || t.email || t.sub)
+    // ex: get profile name form oidc user_info endpoint or get it from some user service 
+    return this.oauthService.userInfo$.pipe(
+      map(v => `${v.name}&nbsp;${this.getPicture(v.picture)}`)
     );
+  }
+
+  // show profile picture if user info provides thumbnail url
+  getPicture(picture?: string) {
+    return picture && `<img class="rounded-circle img-thumbnail" src="${picture}">` || ''
   }
 }
 ```
 
 or create your custom login template using OAuthService
 
-```angular2html
+```html
 
 <div class="login-component">
   <oauth-login>

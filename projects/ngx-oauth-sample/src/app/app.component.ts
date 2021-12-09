@@ -10,6 +10,7 @@ import {PROFILE_SERVICE, ProfileService} from './service';
 export class AppComponent {
 
   private _state = 'some_salt_dummy_state';
+  useLogoutUrl = true;
   status$ = this.oauthService.status$;
 
   constructor(private oauthService: OAuthService,

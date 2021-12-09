@@ -39,6 +39,8 @@ export interface ImplicitConfig {
   revokePath?: string;
   clientId: string;
   scope?: string;
+  logoutPath?: string;
+  logoutRedirectUri?: string;
 }
 
 export interface AuthorizationCodeConfig extends ResourceConfig {
@@ -120,6 +122,8 @@ export interface UserInfo {
   preferred_username?: string;
   sub?: string;
   address?: object;
+  picture?: string;
+  locale?: string;
 }
 
 export interface IntrospectInfo extends UserInfo {

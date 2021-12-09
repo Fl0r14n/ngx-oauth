@@ -36,9 +36,29 @@ const keycloakOpenIDConfig = {
   config: {
     issuerPath: 'http://localhost:8080/auth/realms/commerce',
     clientId: 'spartacus',
-    // clientSecret: '02746877-9efd-4ff3-a39d-7b7685bb3190',
+    logoutRedirectUri: 'http://google.com'
   }
 };
+
+const azureOpenIDConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    issuerPath: 'https://login.microsoftonline.com/common/v2.0', // for common make sure you app has "signInAudience": "AzureADandPersonalMicrosoftAccount",
+    clientId: 'clientId',
+    scope: 'openid profile email offline_access',
+    pkce: true // manually since is required but code_challenge_methods_supported is not in openid configuration
+  }
+}
+
+const googleOpenIDConfig = {
+  type: OAuthType.AUTHORIZATION_CODE,
+  config: {
+    issuerPath: 'https://accounts.google.com',
+    clientId: 'clientId',
+    clientSecret: 'clientSecret',
+    scope: 'openid profile email'
+  }
+}
 
 
 @NgModule({

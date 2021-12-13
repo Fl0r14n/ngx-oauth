@@ -226,4 +226,4 @@ Import ```OAuthModule``` in your angular app
 
 #### Licensing
 
-MIT License
+[MIT License](LICENSE)

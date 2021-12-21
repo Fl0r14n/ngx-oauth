@@ -297,8 +297,8 @@ export class OAuthService {
         ...scope ? {scope} : {},
       }
     }), {headers: REQUEST_HEADER}).pipe(
-      catchError(() => {
-        this.token = null;
+      catchError((err) => {
+        this.token = err;
         this.status = OAuthStatus.DENIED;
         return EMPTY;
       })

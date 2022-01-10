@@ -62,7 +62,16 @@ describe('OAuthInterceptor', () => {
     expect(next.handle).toHaveBeenCalledWith(req);
   });
 
-  it('should return empty and throw denied if 401 response', () => {
+  it('should return empty and throw undefined if 401 response && ignored Paths set', () => {
+    const req = new HttpRequest('GET', 'https://localhost');
+    const next = createSpyObj<HttpHandler>(['handle']);
+    next.handle.and.returnValue(throwError({status: 401}));
+    oauthService.ignorePaths.push(/localhost/);
+    oauthService.token = token;
+    interceptor.intercept(req, next).subscribe();
+    expect(oauthService.status).toBe(undefined as any);
+  });
+  it('should return empty and throw DENIED if 401 response && ignored Paths unset', () => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpyObj<HttpHandler>(['handle']);
     next.handle.and.returnValue(throwError({status: 401}));

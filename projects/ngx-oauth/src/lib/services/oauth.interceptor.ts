@@ -28,9 +28,6 @@ export class OAuthInterceptor implements HttpInterceptor {
           if (err.status === 401) {
             this.oauthService.token = null;
             this.oauthService.status = OAuthStatus.DENIED;
-            if (!this.isPathExcepted(req)) {
-              return EMPTY;
-            }
           }
           return throwError(err);
         })

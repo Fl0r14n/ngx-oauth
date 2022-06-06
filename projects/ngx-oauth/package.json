@@ -1,14 +1,14 @@
 {
   "name": "ngx-oauth",
-  "version": "2.2.2",
+  "version": "3.0.0",
   "author": "Fl0r14n <florian.chis@gmail.com>",
   "homepage": "https://github.com/Fl0r14n/ngx-oauth",
   "description": "A fully OAuth2.1 compliant angular library",
   "license": "MIT",
   "keywords": [
     "angular",
-    "angular13",
-    "Angular 13",
+    "angular14",
+    "Angular 14",
     "ng2",
     "oauth",
     "oauth2",
@@ -23,8 +23,8 @@
     "url": "https://github.com/Fl0r14n/ngx-oauth"
   },
   "peerDependencies": {
-    "@angular/common": "^13.0.0",
-    "@angular/core": "^13.0.0"
+    "@angular/common": "^14.0.0",
+    "@angular/core": "^14.0.0"
   },
   "dependencies": {
     "tslib": "^2.0.0"

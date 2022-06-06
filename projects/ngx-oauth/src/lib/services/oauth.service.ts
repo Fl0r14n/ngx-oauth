@@ -135,7 +135,7 @@ export class OAuthService {
           const codeVerifier = savedToken && savedToken.codeVerifier;
           this.http.post(tokenPath, new HttpParams({
             fromObject: {
-              code: parameters?.code,
+              code: parameters?.['code'],
               client_id: clientId,
               ...clientSecret && {client_secret: clientSecret} || {},
               redirect_uri: `${origin}${pathname}`,
@@ -357,14 +357,14 @@ export class OAuthService {
   private checkResponse(token: any, parameters: Record<string, string> | null) {
     this.emitState(parameters);
     this.cleanLocationHash();
-    if (!parameters || parameters.error) {
+    if (!parameters || parameters['error']) {
       return false;
     }
-    if (token && token.nonce && parameters.access_token) {
-      const jwtToken = jwt(parameters.access_token);
+    if (token && token.nonce && parameters['access_token']) {
+      const jwtToken = jwt(parameters['access_token']);
       return token.nonce === jwtToken.nonce;
     }
-    return parameters.access_token || parameters.code;
+    return parameters['access_token'] || parameters['code'];
   }
 
   set token(token: OAuthToken | null) {

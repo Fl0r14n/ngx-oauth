@@ -71,6 +71,7 @@ describe('OAuthInterceptor', () => {
     interceptor.intercept(req, next).subscribe();
     expect(oauthService.status).toBe(undefined as any);
   });
+
   it('should throw DENIED if 401 response && ignored Paths unset', () => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpyObj<HttpHandler>(['handle']);

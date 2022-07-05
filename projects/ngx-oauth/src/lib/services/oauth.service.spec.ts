@@ -2,7 +2,7 @@ import {OAuthService} from './oauth.service';
 import Spy = jasmine.Spy;
 import {of, throwError} from 'rxjs';
 import {fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
-import {OAuthType, OAuthStatus, OAUTH_CONFIG} from '../models';
+import {OAuthType, OAuthStatus, OAuthConfig} from '../models';
 import createSpyObj = jasmine.createSpyObj;
 import {TestScheduler} from 'rxjs/testing';
 import {OAuthModule} from '../oauth.module';
@@ -224,7 +224,7 @@ describe('OAuthService', () => {
       });
       oauthService = TestBed.inject(OAuthService);
       tick(50);
-      const oauthConfig = TestBed.inject(OAUTH_CONFIG);
+      const oauthConfig = TestBed.inject(OAuthConfig);
       expect(oauthConfig.config).toEqual(config);
     }));
 
@@ -261,7 +261,7 @@ describe('OAuthService', () => {
       });
       oauthService = TestBed.inject(OAuthService);
       tick(50);
-      const oauthConfig = TestBed.inject(OAUTH_CONFIG);
+      const oauthConfig = TestBed.inject(OAuthConfig);
       expect(oauthConfig.config).toEqual(expected);
     }));
   });

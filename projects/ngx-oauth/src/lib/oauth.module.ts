@@ -2,7 +2,7 @@ import {ModuleWithProviders, NgModule, Optional, PLATFORM_ID} from '@angular/cor
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {OAuthConfig, OAUTH_CONFIG, LOCATION, SERVER_HOST, SERVER_PATH, STORAGE} from './models';
+import {OAuthConfig, LOCATION, SERVER_HOST, SERVER_PATH, STORAGE, provideOAuthConfigFactory} from './models';
 import {OAuthService} from './services/oauth.service';
 import {OAuthLoginComponent} from './components/login/oauth-login.component';
 import {CommonModule, isPlatformBrowser} from '@angular/common';
@@ -81,17 +81,11 @@ const defaultConfig = (storage: Storage) => {
     RouterModule,
   ],
   declarations: [OAuthLoginComponent],
-  exports: [OAuthLoginComponent],
-  providers: [
-    LocationService,
-    StorageService,
-    OAuthService,
-    OAuthInterceptorService,
-  ]
+  exports: [OAuthLoginComponent]
 })
 export class OAuthModule {
 
-  static forRoot(config: OAuthConfig): ModuleWithProviders<OAuthModule> {
+  static forRoot(config: OAuthConfig = {}): ModuleWithProviders<OAuthModule> {
     return {
       ngModule: OAuthModule,
       providers: [
@@ -99,18 +93,10 @@ export class OAuthModule {
         StorageService,
         OAuthService,
         OAuthInterceptorService,
-        {
-          provide: OAUTH_CONFIG,
-          useFactory(storage: Storage) {
-            return {
-              ...defaultConfig(storage),
-              ...config,
-            };
-          },
-          deps: [
-            STORAGE
-          ]
-        }
+        provideOAuthConfigFactory((storage: Storage) => ({
+          ...defaultConfig(storage),
+          ...config
+        }), [STORAGE]),
       ]
     };
   }

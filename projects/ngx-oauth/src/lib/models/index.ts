@@ -1,25 +1,42 @@
-import {InjectionToken} from '@angular/core';
+import {FactoryProvider, inject, Injectable, InjectionToken, ValueProvider} from '@angular/core';
 
 export const SERVER_HOST = new InjectionToken<string>('SERVER_HOST');
 export const SERVER_PATH = new InjectionToken<string>('SERVER_PATH');
 export const LOCATION = new InjectionToken<Location>('Location');
 export const STORAGE = new InjectionToken<Storage>('Storage');
-export const OAUTH_CONFIG = new InjectionToken<OAuthConfig>('OAuthConfig');
+export const OAUTH_CONFIG = new InjectionToken<OAuthConfig[]>('OAuthConfig');
 export const OAUTH_TOKEN = new InjectionToken<OAuthToken>('OAuthToken');
+
+@Injectable({
+  providedIn: 'root',
+  useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({...p, ...c}), {})
+})
+export abstract class OAuthConfig {
+  type?: OAuthType;
+  config?: OAuthTypeConfig;
+  storageKey?: string;
+  storage?: Storage;
+  ignorePaths?: RegExp[];
+}
+
+export const provideOAuthConfig = (config: OAuthConfig = {}): ValueProvider => ({
+  provide: OAUTH_CONFIG,
+  useValue: config,
+  multi: true
+})
+
+export const provideOAuthConfigFactory = (factory: Function, deps?: any[]): FactoryProvider => ({
+  provide: OAUTH_CONFIG,
+  useFactory: factory,
+  deps: deps,
+  multi: true
+});
 
 export enum OAuthType {
   RESOURCE = 'password',
   AUTHORIZATION_CODE = 'code',
   IMPLICIT = 'token',
   CLIENT_CREDENTIAL = 'client_credentials'
-}
-
-export interface OAuthConfig {
-  type: OAuthType;
-  config: OAuthTypeConfig;
-  storageKey?: string;
-  storage?: Storage;
-  ignorePaths?: RegExp[];
 }
 
 export interface ClientCredentialConfig {

@@ -1,6 +1,6 @@
 {
   "name": "ngx-oauth",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "Fl0r14n <florian.chis@gmail.com>",
   "homepage": "https://github.com/Fl0r14n/ngx-oauth",
   "description": "A fully OAuth2.1 compliant angular library",

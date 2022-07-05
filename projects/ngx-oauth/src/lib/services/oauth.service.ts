@@ -6,7 +6,6 @@ import {
   AuthorizationCodeParameters,
   ImplicitParameters,
   LOCATION,
-  OAUTH_CONFIG,
   OAuthConfig,
   OAuthParameters,
   OAuthStatus,
@@ -73,7 +72,7 @@ export class OAuthService {
 
   constructor(private http: HttpClient,
               private zone: NgZone,
-              @Inject(OAUTH_CONFIG) private authConfig: OAuthConfig,
+              private authConfig: OAuthConfig,
               @Inject(LOCATION) private location: Location,
               private locationService: Location2) {
     setTimeout(() => this.init()); // decouple for http interceptor
@@ -89,7 +88,7 @@ export class OAuthService {
       const {issuerPath, scope} = config as OpenIdConfig;
       if (issuerPath) {
         return this.http.get<OpenIdConfiguration>(`${issuerPath}/.well-known/openid-configuration`).pipe(
-          tap(v => this.set(this.type, {
+          tap(v => this.type && this.set(this.type, {
             ...v.authorization_endpoint && {authorizePath: v.authorization_endpoint} || {},
             ...v.token_endpoint && {tokenPath: v.token_endpoint} || {},
             ...v.revocation_endpoint && {revokePath: v.revocation_endpoint} || {},
@@ -245,7 +244,7 @@ export class OAuthService {
     }
   }
 
-  get type(): OAuthType {
+  get type() {
     return this.authConfig.type;
   }
 

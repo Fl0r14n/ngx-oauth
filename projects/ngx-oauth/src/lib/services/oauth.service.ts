@@ -11,8 +11,11 @@ import {
   OAuthStatus,
   OAuthToken,
   OAuthType,
-  OAuthTypeConfig, OpenIdConfig, OpenIdConfiguration,
-  ResourceParameters, UserInfo
+  OAuthTypeConfig,
+  OpenIdConfig,
+  OpenIdConfiguration,
+  ResourceParameters,
+  UserInfo
 } from '../models';
 import {Location as Location2} from '@angular/common';
 
@@ -121,7 +124,10 @@ export class OAuthService {
     this.config$.subscribe(config => {
       if (isImplicitRedirect) {
         const parameters = parseOauthUri(hash.substr(1));
-        this.token = parameters;
+        this.token = {
+          ...parameters,
+          type: OAuthType.IMPLICIT,
+        };
         this.status = this.checkResponse(savedToken, parameters) && OAuthStatus.AUTHORIZED || OAuthStatus.DENIED;
       } else if (isAuthCodeRedirect) {
         const parameters = parseOauthUri(search.substr(1));
@@ -150,7 +156,10 @@ export class OAuthService {
               return EMPTY;
             })
           ).subscribe(token => {
-            this.token = token;
+            this.token = {
+              ...token,
+              type: OAuthType.AUTHORIZATION_CODE
+            };
             this.status = OAuthStatus.AUTHORIZED;
             this.locationService.replaceState(`${pathname}${newParametersString}`);
           });
@@ -268,7 +277,10 @@ export class OAuthService {
         return EMPTY;
       }),
       tap(params => {
-        this.token = params;
+        this.token = {
+          ...params,
+          type: OAuthType.CLIENT_CREDENTIAL,
+        };
         this.status = OAuthStatus.AUTHORIZED;
       })
     ));
@@ -293,7 +305,10 @@ export class OAuthService {
         return EMPTY;
       }),
       tap(params => {
-        this.token = params;
+        this.token = {
+          ...params,
+          type: OAuthType.RESOURCE,
+        };
         this.status = OAuthStatus.AUTHORIZED;
       })
     ));
@@ -310,19 +325,19 @@ export class OAuthService {
   }
 
   private isClientCredentialType(): boolean {
-    return this.authConfig.type === OAuthType.CLIENT_CREDENTIAL;
+    return this.type === OAuthType.CLIENT_CREDENTIAL;
   }
 
   private isResourceType(parameters?: ResourceParameters): boolean {
-    return this.authConfig.type === OAuthType.RESOURCE && !!parameters?.password;
+    return this.type === OAuthType.RESOURCE && !!parameters?.password;
   }
 
   private isImplicitType(parameters?: ImplicitParameters): boolean {
-    return this.authConfig.type === OAuthType.IMPLICIT && !!parameters?.redirectUri;
+    return this.type === OAuthType.IMPLICIT && !!parameters?.redirectUri;
   }
 
   private isAuthorizationCodeType(parameters?: AuthorizationCodeParameters): boolean {
-    return this.authConfig.type === OAuthType.AUTHORIZATION_CODE && !!parameters?.redirectUri;
+    return this.type === OAuthType.AUTHORIZATION_CODE && !!parameters?.redirectUri;
   }
 
   private async toAuthorizationUrl(parameters: AuthorizationCodeParameters | ImplicitParameters, responseType: OAuthType): Promise<string> {

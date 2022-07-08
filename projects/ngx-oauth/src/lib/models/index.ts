@@ -110,6 +110,7 @@ export interface OAuthToken {
   scope?: string;
   codeVerifier?: string;
   nonce?: string;
+  type?: OAuthType
 }
 
 export enum OAuthStatus {

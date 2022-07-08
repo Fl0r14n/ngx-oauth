@@ -2,11 +2,12 @@ import {ModuleWithProviders, NgModule, Optional, PLATFORM_ID} from '@angular/cor
 import {FormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {OAuthConfig, LOCATION, SERVER_HOST, SERVER_PATH, STORAGE, provideOAuthConfigFactory} from './models';
+import {LOCATION, OAuthConfig, provideOAuthConfigFactory, SERVER_HOST, SERVER_PATH, STORAGE} from './models';
 import {OAuthService} from './services/oauth.service';
 import {OAuthLoginComponent} from './components/login/oauth-login.component';
 import {CommonModule, isPlatformBrowser} from '@angular/common';
 import {OAuthInterceptor} from './services/oauth.interceptor';
+import {TokenService} from './services/token.service';
 
 const mockLocation = (serverHost: string, serverPath: string): Location => {
   const url = new URL(serverHost && serverPath ? `${serverHost}${serverPath}` : 'http://localhost');
@@ -15,10 +16,10 @@ const mockLocation = (serverHost: string, serverPath: string): Location => {
     href, origin, protocol, host, hostname, port, pathname, search, hash,
     reload() {
     },
-    assign(u: string) {
+    assign(_: string) {
     },
     ancestorOrigins: {} as any,
-    replace(u: string) {
+    replace(_: string) {
     }
   };
 };
@@ -61,7 +62,7 @@ const StorageService = {
 
 const OAuthInterceptorService = {
   provide: HTTP_INTERCEPTORS,
-  useClass: OAuthInterceptor,
+  useExisting: OAuthInterceptor,
   multi: true,
 };
 
@@ -91,6 +92,7 @@ export class OAuthModule {
       providers: [
         LocationService,
         StorageService,
+        TokenService,
         OAuthService,
         OAuthInterceptorService,
         provideOAuthConfigFactory((storage: Storage) => ({

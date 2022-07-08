@@ -1,4 +1,5 @@
 import {FactoryProvider, inject, Injectable, InjectionToken, ValueProvider} from '@angular/core';
+import {HttpHeaders} from '@angular/common/http';
 
 export const SERVER_HOST = new InjectionToken<string>('SERVER_HOST');
 export const SERVER_PATH = new InjectionToken<string>('SERVER_PATH');
@@ -6,6 +7,7 @@ export const LOCATION = new InjectionToken<Location>('Location');
 export const STORAGE = new InjectionToken<Storage>('Storage');
 export const OAUTH_CONFIG = new InjectionToken<OAuthConfig[]>('OAuthConfig');
 export const OAUTH_TOKEN = new InjectionToken<OAuthToken>('OAuthToken');
+export const HEADER_APPLICATION = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +25,7 @@ export const provideOAuthConfig = (config: OAuthConfig = {}): ValueProvider => (
   provide: OAUTH_CONFIG,
   useValue: config,
   multi: true
-})
+});
 
 export const provideOAuthConfigFactory = (factory: Function, deps?: any[]): FactoryProvider => ({
   provide: OAUTH_CONFIG,
@@ -106,11 +108,12 @@ export interface OAuthToken {
   error?: string;
   error_description?: string;
   expires_in?: number | string;
-  refresh_expires_in?: number;
+  refresh_expires_in?: number | string;
   scope?: string;
   codeVerifier?: string;
   nonce?: string;
-  type?: OAuthType
+  type?: OAuthType;
+  expires?: number;
 }
 
 export enum OAuthStatus {

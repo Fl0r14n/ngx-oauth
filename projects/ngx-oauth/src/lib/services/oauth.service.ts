@@ -1,7 +1,7 @@
 import {Inject, Injectable, NgZone} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {catchError, concatMap, delay, filter, map, shareReplay, switchMap, tap} from 'rxjs/operators';
-import {EMPTY, from, noop, Observable, of, ReplaySubject} from 'rxjs';
+import {EMPTY, firstValueFrom, from, noop, Observable, of, ReplaySubject} from 'rxjs';
 import {
   AuthorizationCodeParameters,
   ImplicitParameters,
@@ -175,13 +175,13 @@ export class OAuthService {
 
   async login(parameters?: OAuthParameters) {
     if (this.isResourceType(parameters as ResourceParameters)) {
-      this.resourceLogin(parameters as ResourceParameters);
+      await this.resourceLogin(parameters as ResourceParameters);
     } else if (this.isAuthorizationCodeType(parameters as AuthorizationCodeParameters)) {
       await this.authorizationCodeLogin(parameters as AuthorizationCodeParameters);
     } else if (this.isImplicitType(parameters as ImplicitParameters)) {
       await this.implicitLogin(parameters as ImplicitParameters);
     } else if (this.isClientCredentialType()) {
-      this.clientCredentialLogin();
+      await this.clientCredentialLogin();
     }
   }
 
@@ -252,10 +252,32 @@ export class OAuthService {
     return this.authConfig.ignorePaths || [];
   }
 
-  private resourceLogin(parameters: ResourceParameters) {
+  private async clientCredentialLogin() {
+    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
+    await firstValueFrom(this.http.post(tokenPath, new HttpParams({
+      fromObject: {
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: OAuthType.CLIENT_CREDENTIAL,
+        ...scope ? {scope} : {},
+      }
+    }), {headers: REQUEST_HEADER}).pipe(
+      catchError((err) => {
+        this.token = err;
+        this.status = OAuthStatus.DENIED;
+        return EMPTY;
+      }),
+      tap(params => {
+        this.token = params;
+        this.status = OAuthStatus.AUTHORIZED;
+      })
+    ));
+  }
+
+  private async resourceLogin(parameters: ResourceParameters) {
     const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
     const {username, password} = parameters;
-    this.http.post(tokenPath, new HttpParams({
+    await firstValueFrom(this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
         ...clientSecret && {client_secret: clientSecret} || {},
@@ -269,16 +291,12 @@ export class OAuthService {
         this.token = err;
         this.status = OAuthStatus.DENIED;
         return EMPTY;
+      }),
+      tap(params => {
+        this.token = params;
+        this.status = OAuthStatus.AUTHORIZED;
       })
-    ).subscribe(params => {
-      this.token = params;
-      this.status = OAuthStatus.AUTHORIZED;
-    });
-  }
-
-  private async authorizationCodeLogin(parameters: AuthorizationCodeParameters) {
-    const authUrl = await this.toAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
-    this.location.replace(authUrl);
+    ));
   }
 
   private async implicitLogin(parameters: ImplicitParameters) {
@@ -286,25 +304,9 @@ export class OAuthService {
     this.location.replace(authUrl);
   }
 
-  private clientCredentialLogin() {
-    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
-    this.http.post(tokenPath, new HttpParams({
-      fromObject: {
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: OAuthType.CLIENT_CREDENTIAL,
-        ...scope ? {scope} : {},
-      }
-    }), {headers: REQUEST_HEADER}).pipe(
-      catchError((err) => {
-        this.token = err;
-        this.status = OAuthStatus.DENIED;
-        return EMPTY;
-      })
-    ).subscribe(params => {
-      this.token = params;
-      this.status = OAuthStatus.AUTHORIZED;
-    });
+  private async authorizationCodeLogin(parameters: AuthorizationCodeParameters) {
+    const authUrl = await this.toAuthorizationUrl(parameters, OAuthType.AUTHORIZATION_CODE);
+    this.location.replace(authUrl);
   }
 
   private isClientCredentialType(): boolean {

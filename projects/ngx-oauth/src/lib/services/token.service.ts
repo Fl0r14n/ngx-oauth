@@ -1,7 +1,7 @@
 import {Injectable, NgZone} from '@angular/core';
-import {BehaviorSubject, distinctUntilChanged, EMPTY, of, switchMap} from 'rxjs';
+import {BehaviorSubject, distinctUntilChanged, Observable, of, switchMap} from 'rxjs';
 import {HEADER_APPLICATION, OAuthConfig, OAuthToken} from '../models';
-import {catchError} from 'rxjs/operators';
+import {catchError, map, shareReplay} from 'rxjs/operators';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 const isExpiredToken = (token?: OAuthToken) => token && token.expires && Date.now() > token.expires || false;
@@ -9,10 +9,11 @@ const isExpiredToken = (token?: OAuthToken) => token && token.expires && Date.no
 @Injectable()
 export class TokenService {
 
-  #token$ = new BehaviorSubject<OAuthToken | undefined>(this.saved);
+  #token$ = new BehaviorSubject<OAuthToken>(this.saved);
   token$ = this.#token$.pipe(
     distinctUntilChanged((p, c) => JSON.stringify(p || null) === JSON.stringify(c || null)),
     switchMap(token => !isExpiredToken(token) && of(token) || this.refreshToken(token)),
+    shareReplay(1)
   );
 
   constructor(protected authConfig: OAuthConfig,
@@ -25,22 +26,21 @@ export class TokenService {
   }
 
   set token(token) {
-    if (token) {
-      const {expires_in} = token;
-      this.saved = {
-        ...token,
-        ...expires_in && {expires: Date.now() + Number(token.expires_in) * 1000} || {}
-      };
-      this.#token$.next(token);
-    }
+    const expiresIn = Number(token.expires_in) || 0;
+    const result = {
+      ...token,
+      ...expiresIn && {expires: Date.now() + expiresIn * 1000} || {}
+    };
+    this.saved = result;
+    this.#token$.next(result);
   }
 
-  protected get saved() {
+  get saved() {
     const {storageKey, storage} = this.authConfig;
-    return storageKey && storage && storage[storageKey] && JSON.parse(storage[storageKey]);
+    return storageKey && storage && storage[storageKey] && JSON.parse(storage[storageKey]) || {};
   }
 
-  protected set saved(token: OAuthToken | undefined) {
+  set saved(token: OAuthToken) {
     const {storageKey, storage} = this.authConfig;
     if (storage && storageKey) {
       if (token) {
@@ -51,10 +51,10 @@ export class TokenService {
     }
   }
 
-  protected refreshToken(token?: OAuthToken) {
+  protected refreshToken(token?: OAuthToken): Observable<OAuthToken> {
     const {tokenPath, clientId, clientSecret, scope} = this.authConfig.config as any;
     const {refresh_token} = token || {};
-    return tokenPath && refresh_token && this.http.post(tokenPath, new HttpParams({
+    return tokenPath && refresh_token && this.http.post<OAuthToken>(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
         ...clientSecret && {client_secret: clientSecret} || {},
@@ -66,16 +66,16 @@ export class TokenService {
       headers: HEADER_APPLICATION
     }).pipe(
       catchError(() => {
-        this.token = undefined;
-        return EMPTY;
+        this.token = {};
+        return of(this.token);
       }),
-      switchMap(token => {
+      map(token => {
         this.token = {
           ...this.token,
           ...token
         };
-        return EMPTY;
+        return this.token;
       })
-    );
+    ) || of(token);
   }
 }

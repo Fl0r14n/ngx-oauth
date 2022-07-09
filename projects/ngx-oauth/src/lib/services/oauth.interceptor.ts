@@ -15,7 +15,7 @@ export class OAuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler) {
     return this.tokenService.token$.pipe(
       map(token => {
-        if (!this.isPathExcepted(req) && token?.access_token) {
+        if (token?.access_token && !this.isPathExcepted(req)) {
           req = req.clone({
             setHeaders: {
               Authorization: `${token.token_type} ${token.access_token}`
@@ -27,7 +27,7 @@ export class OAuthInterceptor implements HttpInterceptor {
       switchMap(req => next.handle(req)),
       catchError(err => {
         if (err.status === 401 && !this.isPathExcepted(req)) {
-          this.tokenService.token = undefined;
+          this.tokenService.token = {};
         }
         return throwError(err);
       })

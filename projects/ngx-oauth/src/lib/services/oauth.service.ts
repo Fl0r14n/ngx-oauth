@@ -46,10 +46,7 @@ const parseOauthUri = (hash: string) => {
   while ((m = regex.exec(hash)) !== null) {
     params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
   }
-  if (Object.keys(params).length) {
-    return params;
-  }
-  return undefined;
+  return Object.keys(params).length && params || {};
 };
 
 const jwt = (token: string) => JSON.parse(atob(token.split('.')[1]));
@@ -194,7 +191,7 @@ export class OAuthService {
 
   logout(useLogoutUrl?: boolean) {
     this.revoke();
-    this.token = undefined;
+    this.token = {};
     this.status = OAuthStatus.NOT_AUTHORIZED;
     const {logoutPath, logoutRedirectUri} = this.authConfig.config as any;
     if (useLogoutUrl && logoutPath) {

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
+import {HttpErrorResponse, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {switchMap, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {OAuthConfig} from '../models';
@@ -25,11 +25,13 @@ export class OAuthInterceptor implements HttpInterceptor {
         return req;
       }),
       switchMap(req => next.handle(req)),
-      catchError(err => {
+      catchError((err: HttpErrorResponse) => {
         if (err.status === 401 && !this.isPathExcepted(req)) {
-          this.tokenService.token = {};
+          this.tokenService.token = {
+            error: err.message
+          };
         }
-        return throwError(err);
+        return throwError(() => err);
       })
     );
   }

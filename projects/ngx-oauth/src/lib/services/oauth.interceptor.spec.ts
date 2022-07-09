@@ -1,7 +1,7 @@
 import {OAuthInterceptor} from './oauth.interceptor';
 import {OAuthConfig, provideOAuthConfig} from '../models';
 import {TestBed} from '@angular/core/testing';
-import {HttpClient, HttpHandler, HttpRequest, HttpResponse} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpHandler, HttpRequest, HttpResponse} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import {TokenService} from './token.service';
 import {catchError} from 'rxjs/operators';
@@ -87,7 +87,10 @@ describe('OAuthInterceptor', () => {
   it('should throw if 401 response && ignored Paths set', done => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(throwError(() => ({status: 401})));
+    next.handle.and.returnValue(throwError(() => ({
+      status: 401,
+      message: 'not authorized'
+    } as HttpErrorResponse)));
     config.ignorePaths?.push(/localhost/);
     tokenService.token = token;
     interceptor.intercept(req, next).pipe(
@@ -101,7 +104,10 @@ describe('OAuthInterceptor', () => {
   it('should clear token on 401', done => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(throwError(() => ({status: 401})));
+    next.handle.and.returnValue(throwError(() => ({
+      status: 401,
+      message: 'not authorized'
+    } as HttpErrorResponse)));
     tokenService.token = token;
     interceptor.intercept(req, next).pipe(
       catchError(err => of(err))

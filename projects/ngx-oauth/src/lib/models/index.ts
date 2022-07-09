@@ -14,7 +14,6 @@ export const HEADER_APPLICATION = new HttpHeaders({'Content-Type': 'application/
   useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({...p, ...c}), {})
 })
 export abstract class OAuthConfig {
-  type?: OAuthType;
   config?: OAuthTypeConfig;
   storageKey?: string;
   storage?: Storage;
@@ -82,16 +81,13 @@ export interface ResourceParameters {
   password: string;
 }
 
-export interface ImplicitParameters {
+export interface AuthorizationParameters {
   redirectUri: string;
+  responseType: OAuthType.IMPLICIT | OAuthType.AUTHORIZATION_CODE;
   state?: string;
 }
 
-// tslint:disable-next-line:no-empty-interface
-export interface AuthorizationCodeParameters extends ImplicitParameters {
-}
-
-export type OAuthParameters = ResourceParameters | AuthorizationCodeParameters | ImplicitParameters;
+export type OAuthParameters = ResourceParameters | AuthorizationParameters;
 export type OAuthTypeConfig = OpenIdConfig
   | AuthorizationCodePKCEConfig
   | AuthorizationCodeConfig

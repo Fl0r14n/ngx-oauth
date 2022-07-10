@@ -164,9 +164,9 @@ export class OAuthService {
   }
 
   async login(parameters?: OAuthParameters) {
-    if ((parameters as ResourceParameters).password) {
+    if (!!parameters && (parameters as ResourceParameters).password) {
       await this.resourceLogin(parameters as ResourceParameters);
-    } else if ((parameters as AuthorizationParameters).responseType && (parameters as AuthorizationParameters).redirectUri) {
+    } else if (!!parameters && (parameters as AuthorizationParameters).responseType && (parameters as AuthorizationParameters).redirectUri) {
       await this.toAuthorizationUrl(parameters as AuthorizationParameters);
     } else {
       await this.clientCredentialLogin();
@@ -307,7 +307,7 @@ export class OAuthService {
 
   private getCleanedUnSearchParameters() {
     const {search} = this.location;
-    let searchString = search.substring(1);
+    let searchString = search && search.substring(1) || '';
     const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt'];
     hashKeys.forEach(hashKey => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
@@ -318,7 +318,7 @@ export class OAuthService {
 
   private cleanLocationHash() {
     const {hash} = this.location;
-    let curHash = hash.substring(1);
+    let curHash = hash && hash.substring(1) || '';
     const hashKeys = ['access_token', 'token_type', 'expires_in', 'scope', 'state', 'error', 'error_description', 'session_state', 'nonce'];
     hashKeys.forEach(hashKey => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');

@@ -28,7 +28,8 @@ export class OAuthInterceptor implements HttpInterceptor {
       catchError((err: HttpErrorResponse) => {
         if (err.status === 401 && !this.isPathExcepted(req)) {
           this.tokenService.token = {
-            error: err.message
+            error: `${err.status}`,
+            error_description: err.message
           };
         }
         return throwError(() => err);

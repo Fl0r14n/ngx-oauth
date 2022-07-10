@@ -114,7 +114,10 @@ describe('OAuthInterceptor', () => {
     interceptor.intercept(req, next).pipe(
       catchError(err => of(err))
     ).subscribe(() => {
-      expect(tokenService.token).toEqual(objectContaining({error: 'not_authorized'}));
+      expect(tokenService.token).toEqual(objectContaining({
+        error: '401',
+        error_description: 'not_authorized'
+      }));
       done();
     });
   });

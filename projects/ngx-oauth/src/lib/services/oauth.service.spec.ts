@@ -1,7 +1,7 @@
 import {OAuthService} from './oauth.service';
 import {of, throwError} from 'rxjs';
 import {TestBed} from '@angular/core/testing';
-import {OAuthConfig, OAuthStatus} from '../models';
+import {LOCATION, OAuthConfig, OAuthStatus, OAuthType} from '../models';
 import {OAuthModule} from '../oauth.module';
 import {HttpClient} from '@angular/common/http';
 import Spy = jasmine.Spy;
@@ -12,22 +12,19 @@ describe('OAuthService', () => {
 
   describe('When service initialize', () => {
 
-    const authConfig: OAuthConfig = {
-      config: {
-        tokenPath: '/token',
-        clientSecret: 'clientSecret',
-        clientId: 'clientId'
-      }
+    const config = {
+      tokenPath: '/token',
+      clientSecret: 'clientSecret',
+      clientId: 'clientId'
     };
 
     beforeEach(() => {
       localStorage.clear();
-      location.hash = '';
     });
 
     it('shoud be not authorized if no token', done => {
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot(authConfig)]
+        imports: [OAuthModule.forRoot({config})]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -44,7 +41,7 @@ describe('OAuthService', () => {
       };
       localStorage.setItem('token', JSON.stringify(token));
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot(authConfig)]
+        imports: [OAuthModule.forRoot({config})]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -59,7 +56,7 @@ describe('OAuthService', () => {
       };
       localStorage.setItem('token', JSON.stringify(token));
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot(authConfig)]
+        imports: [OAuthModule.forRoot({config})]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -71,12 +68,53 @@ describe('OAuthService', () => {
 
   describe('When ClientCredential', () => {
 
-    it('should be authorized if client credential login', () => {
+    const config = {
+      tokenPath: '/token',
+      clientSecret: 'clientSecret',
+      clientId: 'clientId'
+    };
+    let oauthService: OAuthService;
+    let http: HttpClient;
 
+    beforeEach(() => {
+      localStorage.clear();
+      http = createSpyObj(['post']);
+      TestBed.configureTestingModule({
+        imports: [OAuthModule.forRoot({config})],
+        providers: [{provide: HttpClient, useValue: http}]
+      });
+      oauthService = TestBed.inject(OAuthService);
     });
 
-    it('should be denied if client credential login error', () => {
+    it('should be authorized if client credential login', done => {
+      const expected = {
+        access_token: 'token',
+        token_type: 'bearer',
+        expires_in: 43199
+      };
+      (http.post as Spy).and.returnValue(of(expected));
+      oauthService.login();
+      oauthService.status$.subscribe(status => {
+        expect(status).toBe(OAuthStatus.AUTHORIZED);
+        const {token} = oauthService;
+        expect(token).toEqual(objectContaining(expected));
+        expect(token.type).toBe(OAuthType.CLIENT_CREDENTIAL);
+        done();
+      });
+    });
 
+    it('should be denied if client credential login error', done => {
+      const expected = {
+        error: 'access_denied',
+        error_description: 'error_description'
+      };
+      (http.post as Spy).and.returnValue(throwError(() => expected));
+      oauthService.login();
+      oauthService.status$.subscribe(status => {
+        expect(status).toBe(OAuthStatus.DENIED);
+        expect(oauthService.token).toEqual(objectContaining(expected));
+        done();
+      });
     });
   });
 
@@ -94,7 +132,6 @@ describe('OAuthService', () => {
 
     beforeEach(() => {
       localStorage.clear();
-      location.hash = '';
       http = createSpyObj(['post']);
       TestBed.configureTestingModule({
         imports: [OAuthModule.forRoot(authConfig)],
@@ -113,7 +150,9 @@ describe('OAuthService', () => {
       oauthService.login({username: 'username', password: 'password'});
       oauthService.status$.subscribe(status => {
         expect(status).toBe(OAuthStatus.AUTHORIZED);
-        expect(oauthService.token).toEqual(objectContaining(expected));
+        const {token} = oauthService;
+        expect(token).toEqual(objectContaining(expected));
+        expect(token.type).toBe(OAuthType.RESOURCE);
         done();
       });
     });
@@ -135,11 +174,9 @@ describe('OAuthService', () => {
 
   describe('When Implicit', () => {
 
-    const authConfig: OAuthConfig = {
-      config: {
-        tokenPath: '/token',
-        clientId: 'clientId'
-      }
+    const config = {
+      tokenPath: '/token',
+      clientId: 'clientId'
     };
 
     beforeEach(() => {
@@ -150,17 +187,19 @@ describe('OAuthService', () => {
     it('should be authorized if implicit login', done => {
       location.hash = '#access_token=token&token_type=bearer&expires_in=43199';
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot(authConfig)]
+        imports: [OAuthModule.forRoot({config})]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
         expect(status).toBe(OAuthStatus.AUTHORIZED);
         expect(location.hash).toEqual('');
-        expect(oauthService.token).toEqual(objectContaining({
+        const {token} = oauthService;
+        expect(token).toEqual(objectContaining({
           access_token: 'token',
           token_type: 'bearer',
           expires_in: '43199'
         }));
+        expect(token.type).toBe(OAuthType.IMPLICIT);
         done();
       });
     });
@@ -168,7 +207,7 @@ describe('OAuthService', () => {
     it('should be denied if implicit login error', done => {
       location.hash = '#error=access_denied&error_description=error_description';
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot(authConfig)]
+        imports: [OAuthModule.forRoot({config})]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -185,12 +224,69 @@ describe('OAuthService', () => {
 
   describe('When AuthorizationCode', () => {
 
-    it('should be authorized if authorization code login', () => {
+    const config = {
+      tokenPath: '/token',
+      clientId: 'clientId'
+    };
+    const token = {
+      access_token: 'token',
+      token_type: 'bearer',
+      expires_in: 43199
+    };
+    let http: HttpClient;
 
+
+    beforeEach(() => {
+      localStorage.clear();
+      http = createSpyObj(['post']);
+      //token after redirect and token request
+      (http.post as Spy).and.returnValue(of(token));
     });
 
-    it('should be denied if authorization code login error', () => {
+    it('should be authorized if authorization code login', done => {
+      TestBed.configureTestingModule({
+        imports: [OAuthModule.forRoot({config})],
+        providers: [{
+          provide: LOCATION,
+          useValue: {
+            search: '?code=code'
+          }
+        }, {
+          provide: HttpClient,
+          useValue: http
+        }]
+      });
+      const oauthService = TestBed.inject(OAuthService);
+      oauthService.status$.subscribe(status => {
+        expect(status).toBe(OAuthStatus.AUTHORIZED);
+        expect(location.search).toEqual('');
+        const {token} = oauthService;
+        expect(token).toEqual(objectContaining(token));
+        expect(token.type).toBe(OAuthType.AUTHORIZATION_CODE);
+        done();
+      });
+    });
 
+    it('should be denied if authorization code login error', done => {
+      TestBed.configureTestingModule({
+        imports: [OAuthModule.forRoot({config})],
+        providers: [{
+          provide: LOCATION,
+          useValue: {
+            search: '?error=access_denied&error_description=error_description'
+          }
+        }]
+      });
+      const oauthService = TestBed.inject(OAuthService);
+      oauthService.status$.subscribe(status => {
+        expect(status).toBe(OAuthStatus.DENIED);
+        expect(location.search).toEqual('');
+        expect(oauthService.token).toEqual(objectContaining({
+          error: 'access_denied',
+          error_description: 'error_description'
+        }));
+        done();
+      });
     });
   });
 

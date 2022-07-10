@@ -15,6 +15,14 @@ export class TokenService {
     switchMap(token => !isExpiredToken(token) && of(token) || this.refreshToken(token)),
     shareReplay(1)
   );
+  type$ = this.token$.pipe(
+    map(token => token?.type),
+    shareReplay(1)
+  );
+  accessToken$ = this.token$.pipe(
+    map(token => token?.access_token),
+    shareReplay(1),
+  );
 
   constructor(protected authConfig: OAuthConfig,
               protected http: HttpClient,

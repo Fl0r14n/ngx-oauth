@@ -1,15 +1,4 @@
-import {
-  Component,
-  ContentChild,
-  EventEmitter,
-  HostListener,
-  Inject,
-  Input,
-  OnDestroy,
-  Output,
-  TemplateRef,
-  ViewEncapsulation
-} from '@angular/core';
+import {Component, ContentChild, HostListener, Inject, Input, OnDestroy, Output, TemplateRef, ViewEncapsulation} from '@angular/core';
 import {Observable, Subscription, take} from 'rxjs';
 import {LOCATION, OAuthParameters, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
@@ -33,9 +22,9 @@ export interface OAuthLoginI18n {
 })
 export class OAuthLoginComponent implements OnDestroy {
 
-  private _redirectUri: string | undefined;
-  private subscription = new Subscription();
-  private _i18n: OAuthLoginI18n = {
+  #subscription = new Subscription();
+  #redirectUri?: string;
+  #i18n: OAuthLoginI18n = {
     username: 'Username',
     password: 'Password',
     submit: 'Sign in',
@@ -45,26 +34,26 @@ export class OAuthLoginComponent implements OnDestroy {
   };
 
   get i18n() {
-    return this._i18n;
+    return this.#i18n;
   }
 
   @Input()
   set i18n(i18n) {
-    this._i18n = {
-      ...this._i18n,
+    this.#i18n = {
+      ...this.#i18n,
       ...i18n
     };
+  }
+
+  get redirectUri() {
+    return this.#redirectUri || `${this.location.origin}${this.locationService.path(true) || '/'}`;
   }
 
   @Input()
   set redirectUri(redirectUri: string) {
     if (redirectUri) {
-      this._redirectUri = redirectUri;
+      this.#redirectUri = redirectUri;
     }
-  }
-
-  get redirectUri() {
-    return this._redirectUri || `${this.location.origin}${this.locationService.path(true) || '/'}`;
   }
 
   @Input()
@@ -72,25 +61,25 @@ export class OAuthLoginComponent implements OnDestroy {
   @Input()
   state = '';
   @Output()
-  stateChange: EventEmitter<string> = new EventEmitter();
+  stateChange = this.oauthService.state$.asObservable();
   @Input()
   profileName$: Observable<string | undefined> | undefined;
   @ContentChild('login', {static: false})
   loginTemplate: TemplateRef<any> | undefined;
   username = '';
   password = '';
-  profileName: string | undefined;
+  profileName?: string;
   OAuthStatus = OAuthStatus;
   OAuthType = OAuthType;
   collapse = false;
-  type = this.oauthService.type;
-  state$ = this.oauthService.state$.pipe(
-    tap(s => this.stateChange.emit(s))
-  );
+  @Input()
+  type = OAuthType.RESOURCE;
   status$ = this.oauthService.status$.pipe(
     tap(s => {
       if (s === OAuthStatus.AUTHORIZED && this.profileName$) {
-        this.subscription.add(this.profileName$.pipe(take(1)).subscribe(n => this.profileName = n));
+        this.#subscription.add(this.profileName$.pipe(
+          take(1)
+        ).subscribe(n => this.profileName = n));
       } else {
         const {token} = this.oauthService;
         const userInfo = token && token.id_token && JSON.parse(atob(token.id_token.split('.')[1])) || {};
@@ -107,16 +96,16 @@ export class OAuthLoginComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.subscription.unsubscribe();
+    this.#subscription.unsubscribe();
   }
 
   logout() {
     this.oauthService.logout(this.useLogoutUrl);
   }
 
-  async login(parameters: OAuthParameters) {
-    await this.oauthService.login(parameters);
+  login(parameters: OAuthParameters) {
     this.collapse = false;
+    return this.oauthService.login(parameters);
   }
 
   toggleCollapse() {
@@ -126,5 +115,9 @@ export class OAuthLoginComponent implements OnDestroy {
   @HostListener('window:keydown.escape')
   keyboardEvent() {
     this.collapse = false;
+  }
+
+  get responseType() {
+    return this.type as OAuthType.AUTHORIZATION_CODE; //avoid complains
   }
 }

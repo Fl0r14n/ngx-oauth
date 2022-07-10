@@ -96,7 +96,7 @@ describe('TokenService', () => {
     (httpClient.post as Spy).and.returnValue(of(expected));
     const tokenService = TestBed.inject(TokenService);
     tokenService.token = initial;
-    tick(1500);
+    tick(1100);
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(jasmine.objectContaining(expected));
       expect(tokenService.saved).toEqual(jasmine.objectContaining(expected));
@@ -115,7 +115,7 @@ describe('TokenService', () => {
     (httpClient.post as Spy).and.returnValue(throwError(() => new Error('refresh failed')));
     const tokenService = TestBed.inject(TokenService);
     tokenService.token = initial;
-    tick(1500);
+    tick(1100);
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(expected);
       expect(tokenService.saved).toEqual(expected);

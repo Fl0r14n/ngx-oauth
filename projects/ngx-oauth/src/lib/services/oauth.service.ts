@@ -54,13 +54,13 @@ const jwt = (token: string) => JSON.parse(atob(token.split('.')[1]));
 @Injectable()
 export class OAuthService {
 
-  state$: ReplaySubject<string> = new ReplaySubject(1);
-  config$ = of(this.authConfig.config).pipe(
+  state$ = new ReplaySubject<string>(1);
+  config$ = of(this.config).pipe(
     filter(Boolean),
     filter(config => !!config?.clientId),
     map(config => config as OpenIdConfig),
     switchMap(config => !config.issuerPath && of(config) || this.http.get<OpenIdConfiguration>(`${config.issuerPath}/.well-known/openid-configuration`).pipe(
-      tap(v => this.set({
+      tap(v => this.config = {
         ...v.authorization_endpoint && {authorizePath: v.authorization_endpoint} || {},
         ...v.token_endpoint && {tokenPath: v.token_endpoint} || {},
         ...v.revocation_endpoint && {revokePath: v.revocation_endpoint} || {},
@@ -69,8 +69,8 @@ export class OAuthService {
         ...v.introspection_endpoint && {introspectionPath: v.introspection_endpoint} || {},
         ...v.end_session_endpoint && {logoutPath: v.end_session_endpoint} || {},
         ...{scope: config.scope || 'openid'}
-      } as any)),
-      map(() => this.authConfig.config)
+      } as any),
+      map(() => this.config)
     )),
     shareReplay(1)
   );
@@ -132,6 +132,8 @@ export class OAuthService {
     switchMap(path => this.http.get<UserInfo>(path)),
     shareReplay(1)
   );
+  type$ = this.tokenService.type$;
+  ignorePaths = this.authConfig.ignorePaths || [];
 
   get token() {
     return this.tokenService.token;
@@ -141,20 +143,33 @@ export class OAuthService {
     this.tokenService.token = token;
   }
 
-  constructor(protected http: HttpClient,
-              protected authConfig: OAuthConfig,
+  get config() {
+    return this.authConfig.config;
+  }
+
+  set config(config: OAuthTypeConfig | undefined) {
+    if (config) {
+      this.authConfig.config = {
+        ...this.authConfig.config,
+        ...config
+      };
+    }
+  }
+
+  constructor(protected authConfig: OAuthConfig,
               protected tokenService: TokenService,
+              protected http: HttpClient,
               @Inject(LOCATION) protected location: Location,
               protected locationService: Location2) {
   }
 
-  login(parameters?: OAuthParameters) {
+  async login(parameters?: OAuthParameters) {
     if ((parameters as ResourceParameters).password) {
-      return this.resourceLogin(parameters as ResourceParameters);
+      await this.resourceLogin(parameters as ResourceParameters);
     } else if ((parameters as AuthorizationParameters).responseType && (parameters as AuthorizationParameters).redirectUri) {
-      return this.toAuthorizationUrl(parameters as AuthorizationParameters);
+      await this.toAuthorizationUrl(parameters as AuthorizationParameters);
     } else {
-      return this.clientCredentialLogin();
+      await this.clientCredentialLogin();
     }
   }
 
@@ -169,7 +184,7 @@ export class OAuthService {
     }
   }
 
-  revoke() {
+  protected revoke() {
     const {revokePath, clientId, clientSecret} = this.authConfig.config as any;
     if (revokePath) {
       const {access_token, refresh_token} = this.token || {};
@@ -197,22 +212,9 @@ export class OAuthService {
     }
   }
 
-  set(config?: OAuthTypeConfig) {
-    if (config) {
-      this.authConfig.config = {
-        ...this.authConfig.config,
-        ...config
-      };
-    }
-  }
-
-  get ignorePaths(): RegExp[] {
-    return this.authConfig.ignorePaths || [];
-  }
-
-  private async clientCredentialLogin() {
+  protected clientCredentialLogin() {
     const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
-    await firstValueFrom(this.http.post(tokenPath, new HttpParams({
+    return firstValueFrom(this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
         client_secret: clientSecret,
@@ -233,10 +235,10 @@ export class OAuthService {
     ));
   }
 
-  private async resourceLogin(parameters: ResourceParameters) {
+  protected resourceLogin(parameters: ResourceParameters) {
     const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
     const {username, password} = parameters;
-    await firstValueFrom(this.http.post(tokenPath, new HttpParams({
+    return firstValueFrom(this.http.post(tokenPath, new HttpParams({
       fromObject: {
         client_id: clientId,
         ...clientSecret && {client_secret: clientSecret} || {},
@@ -259,7 +261,7 @@ export class OAuthService {
     ));
   }
 
-  private async toAuthorizationUrl(parameters: AuthorizationParameters) {
+  protected async toAuthorizationUrl(parameters: AuthorizationParameters) {
     const {config} = this.authConfig as any;
     let authorizationUrl = `${config.authorizePath}`;
     authorizationUrl += config.authorizePath.includes('?') && '&' || '?';
@@ -271,7 +273,7 @@ export class OAuthService {
     return this.location.replace(`${authorizationUrl}${this.generateNonce(config)}${await this.generateCodeChallenge(config)}`);
   }
 
-  private async generateCodeChallenge(config: any) {
+  protected async generateCodeChallenge(config: any) {
     if (config.pkce) {
       const codeVerifier = randomString();
       this.token = {...this.token, codeVerifier};
@@ -280,7 +282,7 @@ export class OAuthService {
     return '';
   }
 
-  private generateNonce(config: any) {
+  protected generateNonce(config: any) {
     if (config && config.scope && config.scope.indexOf('openid') > -1) {
       const nonce = randomString(10);
       this.token = {...this.token, nonce};

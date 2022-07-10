@@ -1,4 +1,3 @@
-<ng-container *ngIf="state$ | async"></ng-container>
 <ng-container *ngIf="loginTemplate; else defaultLogin"
               [ngTemplateOutlet]="loginTemplate"
               [ngTemplateOutletContext]="{login: loginFunction, logout: logoutFunction, status: status$ | async}">
@@ -43,18 +42,24 @@
 
     <ng-template #noResource>
       <a role="button" class="oauth"
-         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({redirectUri: redirectUri, state:state})">
+         (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({responseType: responseType,  redirectUri: redirectUri, state:state})">
         <ng-container *ngTemplateOutlet="message"></ng-container>
       </a>
     </ng-template>
 
     <ng-template #message>
-      <span *ngIf="status === OAuthStatus.NOT_AUTHORIZED" class="not-authorized">{{i18n.notAuthorized}}</span>
-      <span *ngIf="status === OAuthStatus.AUTHORIZED" class="authorized">
-        <span class="welcome">{{i18n.authorized}}&nbsp;</span>
-        <strong class="profile-name" [innerHTML]="profileName"></strong>
+      <span class="not-authorized"
+            *ngIf="status === OAuthStatus.NOT_AUTHORIZED"
+            [innerHTML]="i18n.notAuthorized"></span>
+      <span class="authorized"
+            *ngIf="status === OAuthStatus.AUTHORIZED">
+        <span class="welcome" [innerHTML]="i18n.authorized + '&nbsp;'"></span>
+        <strong class="profile-name"
+                [innerHTML]="profileName"></strong>
       </span>
-      <span *ngIf="status === OAuthStatus.DENIED" class="denied">{{i18n.denied}}</span>
+      <span class="denied"
+            *ngIf="status === OAuthStatus.DENIED"
+            [innerHTML]="i18n.denied"></span>
     </ng-template>
   </ng-container>
 </ng-template>

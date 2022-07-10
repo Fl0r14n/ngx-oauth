@@ -14,11 +14,10 @@
 
 To start using the `ngx-oauth` you need to import and configure the `OAuthModule` module.
 
-Example for **resource owner** flow:
+Example:
 
 ```typescript
 const oauthConfig = {
-  type: OAuthType.RESOURCE,
   config: {
     tokenPath: '/authorizationserver/oauth/token',
     revokePath: '/authorizationserver/oauth/revoke', // optional
@@ -46,10 +45,9 @@ For public oauth clients `clientSecret` can be removed since is not used
 
 ```typescript
 const oauthConfig = {
-  type: OAuthType.AUTHORIZATION_CODE,
   config: {
     clientId: '<your_client_id>',
-    clientSecret: '<your_client_secret>',
+    clientSecret: '<your_client_secret>', //not used for public clients
     authorizePath: '/o/authorize/',
     tokenPath: '/o/token/',
     revokePath: '/o/revoke/',
@@ -59,23 +57,10 @@ const oauthConfig = {
 }
 ```
 
-***Keycloak*** example for **oidc** implicit flow
+***Keycloak*** example for **oidc** with autodiscovery
 
 ```typescript
 const keycloakOpenIDConfig = {
-  type: OAuthType.IMPLICIT,
-  config: {
-    issuerPath: 'http://localhost:8080/auth/realms/commerce',
-    clientId: '<your_client_id>',
-  }
-};
-```
-
-***Keycloak*** example for **oidc** with issuer url
-
-```typescript
-const keycloakOpenIDConfig = {
-  type: OAuthType.AUTHORIZATION_CODE,
   config: {
     issuerPath: 'http://localhost:8080/auth/realms/commerce',
     clientId: '<your_client_id>',
@@ -87,12 +72,11 @@ const keycloakOpenIDConfig = {
 
 ```typescript
 const azureOpenIDConfig = {
-  type: OAuthType.AUTHORIZATION_CODE,
   config: {
     issuerPath: 'https://login.microsoftonline.com/common/v2.0', // for common make sure you app has "signInAudience": "AzureADandPersonalMicrosoftAccount",
     clientId: '<your_client_id>',
     scope: 'openid profile email offline_access',
-    pkce: true // manually since is required but code_challenge_methods_supported is not in openid configuration
+    pkce: true // manually, since is required, but code_challenge_methods_supported is not in openid configuration
   }
 }
 ```
@@ -126,7 +110,8 @@ or with params
 @Component({
   selector: 'login-component',
   template: `
-    <oauth-login [i18n]="i18n"
+    <oauth-login [type]="type"
+                 [i18n]="i18n"
                  [profileName$]="profileName$"
                  [useLogoutUrl]="useLogoutUrl"
                  [(state)]="state"></oauth-login>
@@ -137,13 +122,11 @@ export class LoginComponent {
     username: 'Username'
   };
   state = 'some_salt_hash_or_whatever';
-  status$: Observable<OAuthStatus>;
   // not only revoke tokens but also access the logout page if defined.
   // logoutPath needs to be defined. logoutRedirectUri is optional. Current url will be used if undefined
   useLogoutUrl = true;
 
   constructor(private oauthService: OAuthService) {
-    this.status$ = this.oauthService.status$;
   }
 
   get profileName$(): Observable<string> {
@@ -226,4 +209,4 @@ Import ```OAuthModule``` in your angular app
 
 #### Licensing
 
-MIT License
+[MIT License](LICENSE)

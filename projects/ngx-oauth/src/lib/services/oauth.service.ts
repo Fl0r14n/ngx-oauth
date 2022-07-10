@@ -166,7 +166,11 @@ export class OAuthService {
   async login(parameters?: OAuthParameters) {
     if (!!parameters && (parameters as ResourceParameters).password) {
       await this.resourceLogin(parameters as ResourceParameters);
-    } else if (!!parameters && (parameters as AuthorizationParameters).responseType && (parameters as AuthorizationParameters).redirectUri) {
+    } else if (!!parameters
+      && (parameters as AuthorizationParameters).redirectUri
+      && ((parameters as AuthorizationParameters).responseType === OAuthType.IMPLICIT
+        || (parameters as AuthorizationParameters).responseType === OAuthType.AUTHORIZATION_CODE)
+    ) {
       await this.toAuthorizationUrl(parameters as AuthorizationParameters);
     } else {
       await this.clientCredentialLogin();

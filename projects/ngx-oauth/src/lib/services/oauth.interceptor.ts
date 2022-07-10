@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {HttpErrorResponse, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
-import {switchMap, throwError} from 'rxjs';
+import {switchMap, take, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {OAuthConfig} from '../models';
 import {TokenService} from './token.service';
@@ -14,6 +14,7 @@ export class OAuthInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
     return this.tokenService.token$.pipe(
+      take(1),
       map(token => {
         if (token?.access_token && !this.isPathExcepted(req)) {
           req = req.clone({

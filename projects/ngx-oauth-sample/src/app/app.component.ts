@@ -1,17 +1,34 @@
 import {Component, Inject} from '@angular/core';
-import {OAuthService} from 'ngx-oauth';
+import {OAuthService, OAuthType} from 'ngx-oauth';
 import {Observable} from 'rxjs';
 import {PROFILE_SERVICE, ProfileService} from './service';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html'
+  template: `
+    <header>
+      <nav class="navbar navbar-light bg-light container-fluid px-3">
+        <a class="navbar-brand">OAuth Demo</a>
+        <ul class="nav">
+          <li class="nav-item">
+            <oauth-login [type]="type"
+                         [profileName$]="profileName$"
+                         [i18n]="i18n"
+                         [useLogoutUrl]="useLogoutUrl"
+                         [(state)]="state"></oauth-login>
+          </li>
+        </ul>
+      </nav>
+      <div class="alert alert-info text-center font-weight-bold" *ngIf="status$ | async as status">{{status}}</div>
+    </header>
+  `
 })
 export class AppComponent {
 
   private _state = 'some_salt_dummy_state';
   useLogoutUrl = true;
   status$ = this.oauthService.status$;
+  type = OAuthType.AUTHORIZATION_CODE;
 
   constructor(private oauthService: OAuthService,
               @Inject(PROFILE_SERVICE) private profileService: ProfileService) {

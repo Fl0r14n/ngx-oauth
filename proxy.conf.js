@@ -15,10 +15,6 @@ const PROXY_CONFIG = [
     target: 'http://localhost:8080',
     changeOrigin: true,
     secure: false,
-
-    // target: 'https://some.domain',
-    // changeOrigin: true,
-    // secure: true
   }
 ];
 

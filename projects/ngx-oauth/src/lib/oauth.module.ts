@@ -62,7 +62,7 @@ const StorageService = {
 
 const OAuthInterceptorService = {
   provide: HTTP_INTERCEPTORS,
-  useExisting: OAuthInterceptor,
+  useClass: OAuthInterceptor,
   multi: true,
 };
 
@@ -92,13 +92,13 @@ export class OAuthModule {
       providers: [
         LocationService,
         StorageService,
-        TokenService,
-        OAuthService,
-        OAuthInterceptorService,
         provideOAuthConfigFactory((storage: Storage) => ({
           ...defaultConfig(storage),
           ...config
         }), [STORAGE]),
+        TokenService,
+        OAuthInterceptorService,
+        OAuthService,
       ]
     };
   }

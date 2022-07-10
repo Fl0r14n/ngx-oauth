@@ -1,10 +1,9 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {OAuthService} from 'ngx-oauth';
+import {OAuthService, OAuthStatus} from 'ngx-oauth';
 import {ProfileService} from './index';
 import {Observable, switchMap} from 'rxjs';
-import {filter, map, tap} from 'rxjs/operators';
-import {OAuthStatus} from '../../../../ngx-oauth/src';
+import {filter, map} from 'rxjs/operators';
 
 /**
  * OAuth token introspection service for keycloak

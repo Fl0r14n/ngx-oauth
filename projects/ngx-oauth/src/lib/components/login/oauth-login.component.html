@@ -5,7 +5,7 @@
 <ng-template #defaultLogin>
   <ng-container *ngIf="status$ | async as status">
     <ng-container *ngIf="type === OAuthType.RESOURCE; else noResource">
-      <div class="oauth dropdown text-end p-3 {{collapse ? 'show': ''}}">
+      <div class="oauth dropdown text-end {{collapse ? 'show': ''}}">
         <button class="btn btn-link p-0 dropdown-toggle"
                 (click)="status === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
           <ng-container *ngTemplateOutlet="message"></ng-container>

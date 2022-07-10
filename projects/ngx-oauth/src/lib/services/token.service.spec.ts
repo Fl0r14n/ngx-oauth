@@ -5,6 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import createSpyObj = jasmine.createSpyObj;
 import Spy = jasmine.Spy;
+import objectContaining = jasmine.objectContaining;
 
 describe('TokenService', () => {
 
@@ -57,8 +58,8 @@ describe('TokenService', () => {
     const tokenService = TestBed.inject(TokenService);
     tokenService.token = expected;
     tokenService.token$.subscribe(token => {
-      expect(token).toEqual(jasmine.objectContaining(expected));
-      expect(tokenService.saved).toEqual(jasmine.objectContaining(expected));
+      expect(token).toEqual(objectContaining(expected));
+      expect(tokenService.saved).toEqual(objectContaining(expected));
       done();
     });
   });
@@ -98,8 +99,8 @@ describe('TokenService', () => {
     tokenService.token = initial;
     tick(1100);
     tokenService.token$.subscribe(token => {
-      expect(token).toEqual(jasmine.objectContaining(expected));
-      expect(tokenService.saved).toEqual(jasmine.objectContaining(expected));
+      expect(token).toEqual(objectContaining(expected));
+      expect(tokenService.saved).toEqual(objectContaining(expected));
       flush();
     });
   }));

@@ -6,6 +6,7 @@ import {of, throwError} from 'rxjs';
 import {TokenService} from './token.service';
 import {catchError} from 'rxjs/operators';
 import createSpyObj = jasmine.createSpyObj;
+import objectContaining = jasmine.objectContaining;
 
 describe('OAuthInterceptor', () => {
 
@@ -84,7 +85,7 @@ describe('OAuthInterceptor', () => {
     });
   });
 
-  it('should throw if 401 response && ignored Paths set', done => {
+  it('should throw if 401 response and leave token if ignored Paths set', done => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpyObj<HttpHandler>(['handle']);
     next.handle.and.returnValue(throwError(() => ({
@@ -96,23 +97,24 @@ describe('OAuthInterceptor', () => {
     interceptor.intercept(req, next).pipe(
       catchError(err => of(err))
     ).subscribe(() => {
-      expect(tokenService.token).toEqual(jasmine.objectContaining(token));
+      expect(tokenService.token).toEqual(objectContaining(token));
       done();
     });
   });
 
-  it('should clear token on 401', done => {
+  it('should set error token on 401', done => {
+    const expected = {
+      status: 401,
+      message: 'not_authorized'
+    } as HttpErrorResponse;
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(throwError(() => ({
-      status: 401,
-      message: 'not authorized'
-    } as HttpErrorResponse)));
+    next.handle.and.returnValue(throwError(() => expected));
     tokenService.token = token;
     interceptor.intercept(req, next).pipe(
       catchError(err => of(err))
     ).subscribe(() => {
-      expect(tokenService.token).toEqual({});
+      expect(tokenService.token).toEqual(objectContaining({error: 'not_authorized'}));
       done();
     });
   });

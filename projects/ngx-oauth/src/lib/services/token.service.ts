@@ -1,6 +1,6 @@
-import {Injectable, NgZone} from '@angular/core';
+import {Inject, Injectable, NgZone} from '@angular/core';
 import {BehaviorSubject, distinctUntilChanged, Observable, of, switchMap} from 'rxjs';
-import {HEADER_APPLICATION, OAuthConfig, OAuthToken} from '../models';
+import {HEADER_APPLICATION, OAUTH_HTTP_CLIENT, OAuthConfig, OAuthToken} from '../models';
 import {catchError, map, shareReplay} from 'rxjs/operators';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
@@ -25,7 +25,7 @@ export class TokenService {
   );
 
   constructor(protected authConfig: OAuthConfig,
-              protected http: HttpClient,
+              @Inject(OAUTH_HTTP_CLIENT) protected http: HttpClient,
               protected zone: NgZone) {
   }
 

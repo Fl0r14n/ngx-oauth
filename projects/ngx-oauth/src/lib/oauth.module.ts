@@ -1,8 +1,8 @@
 import {ModuleWithProviders, NgModule, Optional, PLATFORM_ID} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
+import {HTTP_INTERCEPTORS, HttpBackend, HttpClient, HttpClientModule} from '@angular/common/http';
 import {RouterModule} from '@angular/router';
-import {LOCATION, OAuthConfig, provideOAuthConfigFactory, SERVER_HOST, SERVER_PATH, STORAGE} from './models';
+import {LOCATION, OAUTH_HTTP_CLIENT, OAuthConfig, provideOAuthConfigFactory, SERVER_HOST, SERVER_PATH, STORAGE} from './models';
 import {OAuthService} from './services/oauth.service';
 import {OAuthLoginComponent} from './components/login/oauth-login.component';
 import {CommonModule, isPlatformBrowser} from '@angular/common';
@@ -60,6 +60,15 @@ const StorageService = {
   deps: [PLATFORM_ID]
 };
 
+const OAuthHttpClient = {
+  provide: OAUTH_HTTP_CLIENT,
+  useFactory(httpBackend: HttpBackend) {
+    // avoid http interceptors
+    return new HttpClient(httpBackend);
+  },
+  deps: [HttpBackend]
+};
+
 const OAuthInterceptorService = {
   provide: HTTP_INTERCEPTORS,
   useClass: OAuthInterceptor,
@@ -92,6 +101,7 @@ export class OAuthModule {
       providers: [
         LocationService,
         StorageService,
+        OAuthHttpClient,
         provideOAuthConfigFactory((storage: Storage) => ({
           ...defaultConfig(storage),
           ...config

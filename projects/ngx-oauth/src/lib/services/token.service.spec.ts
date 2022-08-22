@@ -1,6 +1,6 @@
 import {fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
 import {TokenService} from './token.service';
-import {provideOAuthConfig} from '../models';
+import {OAUTH_HTTP_CLIENT, provideOAuthConfig} from '../models';
 import {HttpClient} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import createSpyObj = jasmine.createSpyObj;
@@ -27,7 +27,7 @@ describe('TokenService', () => {
           ignorePaths: []
         }),
         {
-          provide: HttpClient,
+          provide: OAUTH_HTTP_CLIENT,
           useValue: httpClient
         },
         TokenService,
@@ -77,6 +77,32 @@ describe('TokenService', () => {
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(expected);
       expect(tokenService.saved).toEqual(expected);
+      done();
+    });
+  });
+
+  it('should refresh token', done => {
+    const expected = {
+      access_token: 'access_token',
+      token_type: 'token_type',
+      refresh_token: 'refresh_token',
+      expires_in: 320
+    };
+    const initial = {
+      access_token: 'Mfol5uucFHBHbC9ThK0Xpi-CtTc',
+      token_type: 'bearer',
+      refresh_token: 'HPtx43K3nKP7y-ot1GzQAZB_7DI',
+      expires_in: 34773,
+      scope: 'basic openid',
+      type: 'password',
+      expires: 1658432377281
+    };
+    localStorage.setItem('token', JSON.stringify(initial));
+    (httpClient.post as Spy).and.returnValue(of(expected));
+    const tokenService = TestBed.inject(TokenService);
+    tokenService.token$.subscribe(token => {
+      expect(token).toEqual(objectContaining(expected));
+      expect(tokenService.saved).toEqual(objectContaining(expected));
       done();
     });
   });

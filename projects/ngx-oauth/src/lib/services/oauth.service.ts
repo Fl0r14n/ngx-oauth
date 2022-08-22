@@ -88,7 +88,6 @@ export class OAuthService {
         this.checkResponse(this.token, parameters);
       } else if (isAuthCodeRedirect) {
         const parameters = parseOauthUri(search && search.substring(1) || hash && hash.substring(1));
-        console.log(parameters);
         if (!this.checkResponse(this.token, parameters)) {
           this.token = parameters;
         } else {

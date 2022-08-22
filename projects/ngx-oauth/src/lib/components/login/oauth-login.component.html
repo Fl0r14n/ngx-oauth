@@ -11,7 +11,8 @@
           <ng-container *ngTemplateOutlet="message"></ng-container>
         </button>
         <div class="dropdown-menu mr-3 {{collapse ? 'show': ''}}">
-          <form class="p-3" #form="ngForm"
+          <form class="p-3"
+                #form="ngForm"
                 *ngIf="status === OAuthStatus.NOT_AUTHORIZED || status === OAuthStatus.DENIED"
                 (submit)="login({username: username, password: password})">
             <div class="mb-3">
@@ -41,7 +42,8 @@
     </ng-container>
 
     <ng-template #noResource>
-      <a role="button" class="oauth"
+      <a role="button"
+         class="oauth"
          (click)="status === OAuthStatus.AUTHORIZED ? logout() : login({responseType: responseType,  redirectUri: redirectUri, state:state})">
         <ng-container *ngTemplateOutlet="message"></ng-container>
       </a>

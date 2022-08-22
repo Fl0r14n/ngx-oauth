@@ -143,6 +143,8 @@ export class LoginComponent {
 }
 ```
 
+(`state`, `redirectUri`, `responseType` are optional in case of some advanced configuration)
+
 or create your custom login template using OAuthService
 
 ```html

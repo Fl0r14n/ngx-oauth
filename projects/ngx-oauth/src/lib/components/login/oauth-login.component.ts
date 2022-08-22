@@ -24,6 +24,7 @@ export class OAuthLoginComponent implements OnDestroy {
 
   #subscription = new Subscription();
   #redirectUri?: string;
+  #responseType?: string;
   #i18n: OAuthLoginI18n = {
     username: 'Username',
     password: 'Password',
@@ -36,6 +37,9 @@ export class OAuthLoginComponent implements OnDestroy {
   get i18n() {
     return this.#i18n;
   }
+
+  @Input()
+  type: OAuthType = OAuthType.RESOURCE;
 
   @Input()
   set i18n(i18n) {
@@ -57,6 +61,17 @@ export class OAuthLoginComponent implements OnDestroy {
   }
 
   @Input()
+  set responseType(responseType: string) {
+    if (this.responseType) {
+      this.#responseType = responseType;
+    }
+  }
+
+  get responseType() {
+    return this.#responseType || this.type;
+  }
+
+  @Input()
   useLogoutUrl = false;
   @Input()
   state = '';
@@ -72,8 +87,6 @@ export class OAuthLoginComponent implements OnDestroy {
   OAuthStatus = OAuthStatus;
   OAuthType = OAuthType;
   collapse = false;
-  @Input()
-  type = OAuthType.RESOURCE;
   status$ = this.oauthService.status$.pipe(
     tap(s => {
       if (s === OAuthStatus.AUTHORIZED && this.profileName$) {
@@ -115,9 +128,5 @@ export class OAuthLoginComponent implements OnDestroy {
   @HostListener('window:keydown.escape')
   keyboardEvent() {
     this.collapse = false;
-  }
-
-  get responseType() {
-    return this.type as OAuthType.AUTHORIZATION_CODE; //avoid complains
   }
 }

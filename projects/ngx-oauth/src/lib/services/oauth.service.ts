@@ -78,7 +78,7 @@ export class OAuthService {
     tap(config => {
       const {hash, search, origin, pathname} = this.location;
       const isImplicitRedirect = hash && /(access_token=)|(error=)/.test(hash);
-      const isAuthCodeRedirect = search && /(code=)|(error=)/.test(search);
+      const isAuthCodeRedirect = search && /(code=)|(error=)/.test(search) || hash && /(code=)|(error=)/.test(hash);
       if (isImplicitRedirect) {
         const parameters = parseOauthUri(hash.substring(1));
         this.token = {
@@ -87,13 +87,14 @@ export class OAuthService {
         };
         this.checkResponse(this.token, parameters);
       } else if (isAuthCodeRedirect) {
-        const parameters = parseOauthUri(search.substring(1));
+        const parameters = parseOauthUri(search && search.substring(1) || hash && hash.substring(1));
+        console.log(parameters);
         if (!this.checkResponse(this.token, parameters)) {
           this.token = parameters;
         } else {
           const newParametersString = this.getCleanedUnSearchParameters();
           const {clientId, clientSecret, tokenPath, scope} = config as AuthorizationCodeConfig;
-          const {codeVerifier} = this.token || {}; //should be set by autorizationUrl construction
+          const {codeVerifier} = this.token || {}; //should be set by authorizationUrl construction
           this.http.post(tokenPath, new HttpParams({
             fromObject: {
               code: parameters?.['code'],
@@ -166,10 +167,7 @@ export class OAuthService {
   async login(parameters?: OAuthParameters) {
     if (!!parameters && (parameters as ResourceParameters).password) {
       await this.resourceLogin(parameters as ResourceParameters);
-    } else if (!!parameters
-      && (parameters as AuthorizationParameters).redirectUri
-      && ((parameters as AuthorizationParameters).responseType === OAuthType.IMPLICIT
-        || (parameters as AuthorizationParameters).responseType === OAuthType.AUTHORIZATION_CODE)
+    } else if (!!parameters && (parameters as AuthorizationParameters).redirectUri && (parameters as AuthorizationParameters).responseType
     ) {
       await this.toAuthorizationUrl(parameters as AuthorizationParameters);
     } else {
@@ -323,7 +321,19 @@ export class OAuthService {
   private cleanLocationHash() {
     const {hash} = this.location;
     let curHash = hash && hash.substring(1) || '';
-    const hashKeys = ['access_token', 'token_type', 'expires_in', 'scope', 'state', 'error', 'error_description', 'session_state', 'nonce'];
+    const hashKeys = [
+      'access_token',
+      'token_type',
+      'expires_in',
+      'scope',
+      'state',
+      'error',
+      'error_description',
+      'session_state',
+      'nonce',
+      'id_token',
+      'code'
+    ];
     hashKeys.forEach(hashKey => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
       curHash = curHash.replace(re, '');

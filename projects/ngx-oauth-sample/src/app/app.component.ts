@@ -19,7 +19,8 @@ import {PROFILE_SERVICE, ProfileService} from './service';
           </li>
         </ul>
       </nav>
-      <div class="alert alert-info text-center font-weight-bold" *ngIf="status$ | async as status">{{status}}</div>
+      <div class="alert alert-info text-center font-weight-bold"
+           *ngIf="status$ | async as status">{{status}}</div>
     </header>
   `
 })

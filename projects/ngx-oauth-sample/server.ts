@@ -14,7 +14,7 @@ import {SERVER_HOST, SERVER_PATH} from 'ngx-oauth';
 const PROXY_CONFIG = require('../../proxy.conf');
 
 // allow insecure connections for https://localhost. Remove in prod
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -73,7 +73,7 @@ export function app(): express.Express {
 }
 
 function run(): void {
-  const port = process.env.PORT || 4000;
+  const port = process.env['PORT'] || 4000;
 
   // Start up the Node server
   const server = app();

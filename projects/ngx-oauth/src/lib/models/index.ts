@@ -83,7 +83,7 @@ export interface ResourceParameters {
 
 export interface AuthorizationParameters {
   redirectUri: string;
-  responseType: OAuthType.IMPLICIT | OAuthType.AUTHORIZATION_CODE;
+  responseType: OAuthType.IMPLICIT | OAuthType.AUTHORIZATION_CODE | string;
   state?: string;
 }
 

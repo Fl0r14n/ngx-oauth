@@ -51,7 +51,20 @@ const googleOpenIDConfig = {
     issuerPath: 'https://accounts.google.com',
     clientId: 'clientId',
     clientSecret: 'clientSecret',
-    scope: 'openid profile email'
+    scope: 'openid profile email',
+  }
+};
+
+const gigyaOpenIdConfig = {
+  config: {
+    // because issuerPath will give wrong paths
+    authorizePath: 'https://fidm.eu1.gigya.com/oidc/op/v1.0/<<tenantId>>/authorize',
+    tokenPath: 'https://fidm.eu1.gigya.com/oidc/op/v1.0/<<tenantId>>/token',
+    userPath: 'https://fidm.eu1.gigya.com/oidc/op/v1.0/<<tenantId>>/userinfo',
+    revokePath: 'https://fidm.eu1.gigya.com/oidc/op/v1.0/<<tenantId>>/revoke',
+    pkce: true,
+    clientId: 'clientId',
+    scope: 'openid profile email',
   }
 };
 

@@ -12,8 +12,8 @@ export class TokenService {
   #token$ = new BehaviorSubject<OAuthToken>(this.saved);
   token$ = this.#token$.pipe(
     distinctUntilChanged((p, c) => JSON.stringify(p || null) === JSON.stringify(c || null)),
+    shareReplay(1),
     switchMap(token => !isExpiredToken(token) && of(token) || this.refreshToken(token)),
-    shareReplay(1)
   );
   type$ = this.token$.pipe(
     map(token => token?.type),

@@ -22,6 +22,7 @@ import {PROFILE_SERVICE, ProfileService} from './service';
       <div class="alert alert-info text-center font-weight-bold"
            *ngIf="status$ | async as status">{{status}}</div>
     </header>
+    <button class="btn btn-primary" (click)="refresh()">Refresh profile</button>
   `
 })
 export class AppComponent {
@@ -49,5 +50,10 @@ export class AppComponent {
 
   get profileName$(): Observable<string | undefined> | undefined {
     return this.profileService.profileName$;
+  }
+
+  refresh() {
+    //test expired token
+    this.oauthService.getUserInfo().subscribe();
   }
 }

@@ -124,12 +124,9 @@ export class OAuthService {
   );
   userInfo$ = this.status$.pipe(
     filter(s => s === OAuthStatus.AUTHORIZED),
-    map(() => {
-      const {config} = this.authConfig as any;
-      return config.userPath;
-    }),
+    map(() => (this.config as any).userPath),
     filter(Boolean),
-    switchMap(path => this.http.get<UserInfo>(path)),
+    switchMap(path => this.getUserInfo(path)),
     shareReplay(1)
   );
   type$ = this.tokenService.type$;
@@ -183,6 +180,11 @@ export class OAuthService {
       const currentPath = `${origin}${pathname}`;
       this.location.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
     }
+  }
+
+  getUserInfo(path?: string) {
+    const {userPath} = this.config as any;
+    return this.http.get<UserInfo>(path || userPath);
   }
 
   protected revoke() {

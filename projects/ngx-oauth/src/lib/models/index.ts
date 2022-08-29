@@ -111,6 +111,8 @@ export interface OAuthToken {
   nonce?: string;
   type?: OAuthType;
   expires?: number;
+  
+  [x: string]: any;
 }
 
 export enum OAuthStatus {

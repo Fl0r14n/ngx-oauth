@@ -1,5 +1,5 @@
 import {fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
-import {TokenService} from './token.service';
+import {OAuthTokenService} from './token.service';
 import {OAUTH_HTTP_CLIENT, provideOAuthConfig} from '../models';
 import {HttpClient} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
@@ -7,7 +7,7 @@ import createSpyObj = jasmine.createSpyObj;
 import Spy = jasmine.Spy;
 import objectContaining = jasmine.objectContaining;
 
-describe('TokenService', () => {
+describe('OAuthTokenService', () => {
 
   let httpClient: HttpClient;
 
@@ -30,7 +30,7 @@ describe('TokenService', () => {
           provide: OAUTH_HTTP_CLIENT,
           useValue: httpClient
         },
-        TokenService,
+        OAuthTokenService,
       ]
     });
   });
@@ -42,7 +42,7 @@ describe('TokenService', () => {
       expires_in: 320
     };
     localStorage.setItem('token', JSON.stringify(expected));
-    const tokenService = TestBed.inject(TokenService);
+    const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(expected);
       done();
@@ -55,7 +55,7 @@ describe('TokenService', () => {
       token_type: 'token_type',
       expires_in: 320
     };
-    const tokenService = TestBed.inject(TokenService);
+    const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = expected;
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(objectContaining(expected));
@@ -72,7 +72,7 @@ describe('TokenService', () => {
       expires_in: 320
     };
     localStorage.setItem('token', JSON.stringify(initial));
-    const tokenService = TestBed.inject(TokenService);
+    const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = expected;
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(expected);
@@ -99,7 +99,7 @@ describe('TokenService', () => {
     };
     localStorage.setItem('token', JSON.stringify(initial));
     (httpClient.post as Spy).and.returnValue(of(expected));
-    const tokenService = TestBed.inject(TokenService);
+    const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token$.subscribe(token => {
       expect(token).toEqual(objectContaining(expected));
       expect(tokenService.saved).toEqual(objectContaining(expected));
@@ -121,7 +121,7 @@ describe('TokenService', () => {
       expires_in: 1
     };
     (httpClient.post as Spy).and.returnValue(of(expected));
-    const tokenService = TestBed.inject(TokenService);
+    const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
     tick(1100);
     tokenService.token$.subscribe(token => {
@@ -140,7 +140,7 @@ describe('TokenService', () => {
       expires_in: 1
     };
     (httpClient.post as Spy).and.returnValue(throwError(() => new Error('refresh failed')));
-    const tokenService = TestBed.inject(TokenService);
+    const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
     tick(1100);
     tokenService.token$.subscribe(token => {

@@ -7,7 +7,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 const isExpiredToken = (token?: OAuthToken) => token && token.expires && Date.now() > token.expires || false;
 
 @Injectable()
-export class TokenService {
+export class OAuthTokenService {
 
   #token$ = new BehaviorSubject<OAuthToken>(this.saved);
   token$ = this.#token$.pipe(

@@ -1,8 +1,9 @@
 /*
  * Public API Surface of ngx-oauth
  */
-export * from './lib/models';
-export * from './lib/services/oauth.service';
-export * from './lib/services/oauth.interceptor';
-export * from './lib/components/login/oauth-login.component';
-export * from './lib/oauth.module';
+export * from './models';
+export * from './services/token.service';
+export * from './services/oauth.service';
+export * from './services/oauth.interceptor';
+export * from './components/login/oauth-login.component';
+export * from './oauth.module';

@@ -7,7 +7,7 @@ import {OAuthService} from './services/oauth.service';
 import {OAuthLoginComponent} from './components/login/oauth-login.component';
 import {CommonModule, isPlatformBrowser} from '@angular/common';
 import {OAuthInterceptor} from './services/oauth.interceptor';
-import {TokenService} from './services/token.service';
+import {OAuthTokenService} from './services/token.service';
 
 const mockLocation = (serverHost: string, serverPath: string): Location => {
   const url = new URL(serverHost && serverPath ? `${serverHost}${serverPath}` : 'http://localhost');
@@ -106,7 +106,7 @@ export class OAuthModule {
           ...defaultConfig(storage),
           ...config
         }), [STORAGE]),
-        TokenService,
+        OAuthTokenService,
         OAuthInterceptorService,
         OAuthService,
       ]

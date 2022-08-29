@@ -3,7 +3,7 @@ import {OAUTH_HTTP_CLIENT, OAuthConfig, provideOAuthConfig} from '../models';
 import {TestBed} from '@angular/core/testing';
 import {HttpClient, HttpErrorResponse, HttpHandler, HttpParams, HttpRequest, HttpResponse} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
-import {TokenService} from './token.service';
+import {OAuthTokenService} from './token.service';
 import {catchError} from 'rxjs/operators';
 import createSpyObj = jasmine.createSpyObj;
 import objectContaining = jasmine.objectContaining;
@@ -17,7 +17,7 @@ describe('OAuthInterceptor', () => {
     expires_in: 320
   };
   let interceptor: OAuthInterceptor;
-  let tokenService: TokenService;
+  let tokenService: OAuthTokenService;
   let config: OAuthConfig;
   const httpClient = createSpyObj<HttpClient>(['post']);
   httpClient.post.and.returnValue(of(token));
@@ -40,12 +40,12 @@ describe('OAuthInterceptor', () => {
           provide: OAUTH_HTTP_CLIENT,
           useValue: httpClient
         },
-        TokenService,
+        OAuthTokenService,
         OAuthInterceptor,
       ]
     });
     config = TestBed.inject(OAuthConfig);
-    tokenService = TestBed.inject(TokenService);
+    tokenService = TestBed.inject(OAuthTokenService);
     interceptor = TestBed.inject(OAuthInterceptor);
   });
 

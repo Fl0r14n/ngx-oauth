@@ -3,12 +3,12 @@ import {HttpErrorResponse, HttpHandler, HttpInterceptor, HttpRequest} from '@ang
 import {switchMap, take, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {OAuthConfig} from '../models';
-import {TokenService} from './token.service';
+import {OAuthTokenService} from './token.service';
 
 @Injectable()
 export class OAuthInterceptor implements HttpInterceptor {
 
-  constructor(protected tokenService: TokenService,
+  constructor(protected tokenService: OAuthTokenService,
               protected authConfig: OAuthConfig) {
   }
 

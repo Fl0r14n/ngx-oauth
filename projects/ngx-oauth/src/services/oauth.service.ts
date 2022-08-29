@@ -19,7 +19,7 @@ import {
   UserInfo
 } from '../models';
 import {Location as Location2} from '@angular/common';
-import {TokenService} from './token.service';
+import {OAuthTokenService} from './token.service';
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '');
 
@@ -132,6 +132,17 @@ export class OAuthService {
   type$ = this.tokenService.type$;
   ignorePaths = this.authConfig.ignorePaths || [];
 
+  get storageKey() {
+    return this.authConfig.storageKey;
+  }
+
+  set storageKey(storageKey) {
+    if (storageKey) {
+      this.authConfig.storageKey = storageKey;
+      this.tokenService.token = this.tokenService.saved;
+    }
+  }
+
   get token() {
     return this.tokenService.token;
   }
@@ -154,7 +165,7 @@ export class OAuthService {
   }
 
   constructor(protected authConfig: OAuthConfig,
-              protected tokenService: TokenService,
+              protected tokenService: OAuthTokenService,
               protected http: HttpClient,
               @Inject(LOCATION) protected location: Location,
               protected locationService: Location2) {

@@ -1,5 +1,5 @@
-import {Component, ContentChild, HostListener, Inject, Input, OnDestroy, Output, TemplateRef, ViewEncapsulation} from '@angular/core';
-import {Observable, Subscription, take} from 'rxjs';
+import {Component, ContentChild, HostListener, Inject, Input, Output, TemplateRef, ViewEncapsulation} from '@angular/core';
+import {Observable, take} from 'rxjs';
 import {LOCATION, OAuthParameters, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
 import {OAuthService} from '../../services/oauth.service';
@@ -20,9 +20,8 @@ export interface OAuthLoginI18n {
   styleUrls: ['oauth-login.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class OAuthLoginComponent implements OnDestroy {
+export class OAuthLoginComponent {
 
-  #subscription = new Subscription();
   #redirectUri?: string;
   #responseType?: string;
   #i18n: OAuthLoginI18n = {
@@ -90,9 +89,9 @@ export class OAuthLoginComponent implements OnDestroy {
   status$ = this.oauthService.status$.pipe(
     tap(s => {
       if (s === OAuthStatus.AUTHORIZED && this.profileName$) {
-        this.#subscription.add(this.profileName$.pipe(
+        this.profileName$.pipe(
           take(1)
-        ).subscribe(n => this.profileName = n));
+        ).subscribe(n => this.profileName = n);
       } else {
         const {token} = this.oauthService;
         const userInfo = token && token.id_token && JSON.parse(atob(token.id_token.split('.')[1])) || {};
@@ -106,10 +105,6 @@ export class OAuthLoginComponent implements OnDestroy {
   constructor(private oauthService: OAuthService,
               private locationService: Location2,
               @Inject(LOCATION) private location: Location) {
-  }
-
-  ngOnDestroy() {
-    this.#subscription.unsubscribe();
   }
 
   logout() {

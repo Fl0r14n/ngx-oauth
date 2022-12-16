@@ -19,6 +19,8 @@ export abstract class OAuthConfig {
   storageKey?: string;
   storage?: Storage;
   ignorePaths?: RegExp[];
+
+  [x: string]: any;
 }
 
 export const provideOAuthConfig = (config: OAuthConfig = {}): ValueProvider => ({
@@ -111,7 +113,7 @@ export interface OAuthToken {
   nonce?: string;
   type?: OAuthType;
   expires?: number;
-  
+
   [x: string]: any;
 }
 

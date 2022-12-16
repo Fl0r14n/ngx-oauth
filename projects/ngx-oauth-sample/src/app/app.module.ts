@@ -6,7 +6,7 @@ import {HttpClientModule} from '@angular/common/http';
 import {PROFILE_SERVICE} from './service';
 import {OpenidProfileService} from './service/openid-profile.service';
 
-const hybrisConfig = {
+const sapCommerceConfig = {
   config: {
     authorizePath: '/authorizationserver/oauth/authorize',
     revokePath: '/authorizationserver/oauth/revoke',
@@ -71,7 +71,7 @@ const gigyaOpenIdConfig = {
 @NgModule({
   imports: [
     BrowserModule.withServerTransition({appId: 'serverApp'}),
-    OAuthModule.forRoot(keycloakOpenIDConfig),
+    OAuthModule.forRoot(googleOpenIDConfig),
     HttpClientModule
   ],
   providers: [

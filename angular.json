@@ -104,7 +104,7 @@
           "options": {
             "browserTarget": "ngx-oauth-sample:build",
             "proxyConfig": "proxy.conf.js",
-            "ssl": false
+            "ssl": true
           },
           "configurations": {
             "production": {
@@ -160,7 +160,8 @@
           "builder": "@nguniversal/builders:ssr-dev-server",
           "options": {
             "browserTarget": "ngx-oauth-sample:build",
-            "serverTarget": "ngx-oauth-sample:server"
+            "serverTarget": "ngx-oauth-sample:server",
+            "ssl": true
           },
           "configurations": {
             "production": {

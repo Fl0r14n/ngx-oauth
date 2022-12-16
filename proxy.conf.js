@@ -9,12 +9,12 @@ const PROXY_CONFIG = [
       '/auth/**',
       '/static/**',
     ],
-    // target: 'https://localhost:9002',
-    // secure: false,
-
-    target: 'http://localhost:8080',
     changeOrigin: true,
+    target: 'https://localhost:9002',
     secure: false,
+
+    // target: 'http://localhost:8080',
+    // secure: false,
   }
 ];
 

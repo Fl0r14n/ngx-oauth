@@ -152,7 +152,8 @@
                 }
               ],
               "sourceMap": false,
-              "optimization": true
+              "optimization": true,
+              "buildOptimizer": true
             }
           }
         },

@@ -102,20 +102,20 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ngx-oauth-sample:build",
             "proxyConfig": "proxy.conf.js",
-            "ssl": true
+            "ssl": true,
+            "buildTarget": "ngx-oauth-sample:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "ngx-oauth-sample:build:production"
+              "buildTarget": "ngx-oauth-sample:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ngx-oauth-sample:build"
+            "buildTarget": "ngx-oauth-sample:build"
           }
         },
         "test": {
@@ -158,7 +158,7 @@
           }
         },
         "serve-ssr": {
-          "builder": "@nguniversal/builders:ssr-dev-server",
+          "builder": "@angular-devkit/build-angular:ssr-dev-server",
           "options": {
             "browserTarget": "ngx-oauth-sample:build",
             "serverTarget": "ngx-oauth-sample:server",
@@ -172,7 +172,7 @@
           }
         },
         "prerender": {
-          "builder": "@nguniversal/builders:prerender",
+          "builder": "@angular-devkit/build-angular:prerender",
           "options": {
             "browserTarget": "ngx-oauth-sample:build:production",
             "serverTarget": "ngx-oauth-sample:server:production",

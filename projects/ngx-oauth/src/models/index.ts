@@ -8,7 +8,7 @@ export const OAUTH_HTTP_CLIENT = new InjectionToken<HttpClient>('OAuthHttpClient
 
 @Injectable({
   providedIn: 'root',
-  useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({...p, ...c}), {})
+  useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({...p, ...c}), defaultOAuthConfig)
 })
 export abstract class OAuthConfig {
   config?: OAuthTypeConfig;
@@ -32,13 +32,11 @@ export const provideOAuthConfigFactory = (factory: Function, deps?: any[]): Fact
   multi: true
 });
 
-export const defaultOAuthConfig = (storage?: Storage) => {
-  return {
-    storage: storage || localStorage,
-    storageKey: 'token',
-    ignorePaths: []
-  };
-};
+export const defaultOAuthConfig: OAuthConfig = {
+  storage: globalThis.localStorage,
+  storageKey: 'token',
+  ignorePaths: []
+}
 
 export enum OAuthType {
   RESOURCE = 'password',

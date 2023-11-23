@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpErrorResponse, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
+import {HTTP_INTERCEPTORS, HttpErrorResponse, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {switchMap, take, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {OAuthConfig} from '../models';
@@ -53,3 +53,9 @@ export class OAuthInterceptor implements HttpInterceptor {
     return false;
   }
 }
+
+export const provideOAuthInterceptor = () => ({
+  provide: HTTP_INTERCEPTORS,
+  useClass: OAuthInterceptor,
+  multi: true,
+})

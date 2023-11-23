@@ -9,16 +9,17 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
     "sourceMap": true,
     "declaration": false,
-    "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",
+    "useDefineForClassFields": false,
     "lib": [
-      "ES2021",
+      "ES2022",
       "dom"
     ],
     "paths": {
@@ -26,8 +27,7 @@
         "dist/ngx-oauth",
         "dist/ngx-oauth/ngx-oauth"
       ]
-    },
-    "useDefineForClassFields": false
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

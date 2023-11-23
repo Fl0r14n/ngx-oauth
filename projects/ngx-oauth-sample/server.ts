@@ -1,12 +1,13 @@
-
-import 'zone.js/node';
-
 import { APP_BASE_HREF } from '@angular/common';
 import { CommonEngine } from '@angular/ssr';
-import * as express from 'express';
+import express from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import bootstrap from './src/main.server';
+import {createProxyMiddleware} from 'http-proxy-middleware';
+
+// import proxy.conf.js
+const PROXY_CONFIG = require('../../proxy.conf');
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -27,6 +28,17 @@ export function app(): express.Express {
   server.get('*.*', express.static(distFolder, {
     maxAge: '1y'
   }));
+
+  for (const pConfig of PROXY_CONFIG) {
+    const {context, target, secure, changeOrigin} = pConfig;
+    if (context && context.length > 0) {
+      server.use(context, createProxyMiddleware({
+        target,
+        secure,
+        changeOrigin,
+      }));
+    }
+  }
 
   // All regular routes use the Angular engine
   server.get('*', (req, res, next) => {

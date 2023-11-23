@@ -1,10 +1,6 @@
 import {FactoryProvider, inject, Injectable, InjectionToken, ValueProvider} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 
-export const SERVER_HOST = new InjectionToken<string>('SERVER_HOST');
-export const SERVER_PATH = new InjectionToken<string>('SERVER_PATH');
-export const LOCATION = new InjectionToken<Location>('Location');
-export const STORAGE = new InjectionToken<Storage>('Storage');
 export const OAUTH_CONFIG = new InjectionToken<OAuthConfig[]>('OAuthConfig');
 export const OAUTH_TOKEN = new InjectionToken<OAuthToken>('OAuthToken');
 export const HEADER_APPLICATION = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
@@ -35,6 +31,14 @@ export const provideOAuthConfigFactory = (factory: Function, deps?: any[]): Fact
   deps: deps,
   multi: true
 });
+
+export const defaultOAuthConfig = (storage?: Storage) => {
+  return {
+    storage: storage || localStorage,
+    storageKey: 'token',
+    ignorePaths: []
+  };
+};
 
 export enum OAuthType {
   RESOURCE = 'password',

@@ -6,7 +6,6 @@ import {
   AuthorizationCodeConfig,
   AuthorizationParameters,
   HEADER_APPLICATION,
-  LOCATION,
   OAuthConfig,
   OAuthParameters,
   OAuthStatus,
@@ -51,7 +50,9 @@ const parseOauthUri = (hash: string) => {
 
 const jwt = (token: string) => JSON.parse(atob(token.split('.')[1]));
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class OAuthService {
 
   state$ = new ReplaySubject<string>(1);
@@ -76,7 +77,7 @@ export class OAuthService {
   );
   token$ = this.config$.pipe(
     tap(config => {
-      const {hash, search, origin, pathname} = this.location;
+      const {hash, search, origin, pathname} = globalThis.location || {};
       const isImplicitRedirect = hash && /(access_token=)|(error=)/.test(hash);
       const isAuthCodeRedirect = search && /(code=)|(error=)/.test(search) || hash && /(code=)|(error=)/.test(hash);
       if (isImplicitRedirect) {
@@ -167,7 +168,6 @@ export class OAuthService {
   constructor(protected authConfig: OAuthConfig,
               protected tokenService: OAuthTokenService,
               protected http: HttpClient,
-              @Inject(LOCATION) protected location: Location,
               protected locationService: Location2) {
   }
 
@@ -187,9 +187,9 @@ export class OAuthService {
     this.token = {};
     const {logoutPath, logoutRedirectUri} = this.authConfig.config as any;
     if (useLogoutUrl && logoutPath) {
-      const {origin, pathname} = this.location;
+      const {origin, pathname} = globalThis.location || {};
       const currentPath = `${origin}${pathname}`;
-      this.location.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
+      globalThis.location?.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
     }
   }
 
@@ -284,7 +284,7 @@ export class OAuthService {
     authorizationUrl += `&response_type=${parameters.responseType}`;
     authorizationUrl += `&scope=${encodeURIComponent(config.scope || '')}`;
     authorizationUrl += `&state=${encodeURIComponent(parameters.state || '')}`;
-    return this.location.replace(`${authorizationUrl}${this.generateNonce(config)}${await this.generateCodeChallenge(config)}`);
+    return globalThis.location?.replace(`${authorizationUrl}${this.generateNonce(config)}${await this.generateCodeChallenge(config)}`);
   }
 
   protected async generateCodeChallenge(config: any) {
@@ -320,7 +320,7 @@ export class OAuthService {
   }
 
   private getCleanedUnSearchParameters() {
-    const {search} = this.location;
+    const {search} = globalThis.location || {};
     let searchString = search && search.substring(1) || '';
     const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt'];
     hashKeys.forEach(hashKey => {
@@ -331,26 +331,28 @@ export class OAuthService {
   }
 
   private cleanLocationHash() {
-    const {hash} = this.location;
-    let curHash = hash && hash.substring(1) || '';
-    const hashKeys = [
-      'access_token',
-      'token_type',
-      'expires_in',
-      'scope',
-      'state',
-      'error',
-      'error_description',
-      'session_state',
-      'nonce',
-      'id_token',
-      'code'
-    ];
-    hashKeys.forEach(hashKey => {
-      const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
-      curHash = curHash.replace(re, '');
-    });
-    this.location.hash = curHash;
+    if (globalThis.location) {
+      const {hash} = globalThis.location;
+      let curHash = hash && hash.substring(1) || '';
+      const hashKeys = [
+        'access_token',
+        'token_type',
+        'expires_in',
+        'scope',
+        'state',
+        'error',
+        'error_description',
+        'session_state',
+        'nonce',
+        'id_token',
+        'code'
+      ];
+      hashKeys.forEach(hashKey => {
+        const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
+        curHash = curHash.replace(re, '');
+      });
+      globalThis.location.hash = curHash;
+    }
   }
 
   private emitState(parameters?: Record<string, string>) {

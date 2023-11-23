@@ -1,10 +1,12 @@
-import {BrowserModule} from '@angular/platform-browser';
-import {NgModule} from '@angular/core';
-import {AppComponent} from './app.component';
-import {OAuthModule} from 'ngx-oauth';
-import {HttpClientModule} from '@angular/common/http';
+import {ApplicationConfig} from '@angular/core';
+import {provideRouter} from '@angular/router';
+
+import {routes} from './app.routes';
+import {provideClientHydration} from '@angular/platform-browser';
 import {PROFILE_SERVICE} from './service';
 import {OpenidProfileService} from './service/openid-profile.service';
+import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {provideOAuthInterceptor, provideOAuthConfig} from 'ngx-oauth';
 
 const sapCommerceConfig = {
   config: {
@@ -12,6 +14,7 @@ const sapCommerceConfig = {
     revokePath: '/authorizationserver/oauth/revoke',
     clientId: 'mobile_android',
     tokenPath: '/authorizationserver/oauth/token',
+    userPath: '/occ/v2/electronics-spa/users/current',
     clientSecret: 'secret',
     scope: 'basic'
   }
@@ -68,22 +71,18 @@ const gigyaOpenIdConfig = {
   }
 };
 
-@NgModule({
-  imports: [
-    BrowserModule.withServerTransition({appId: 'serverApp'}),
-    OAuthModule.forRoot(googleOpenIDConfig),
-    HttpClientModule
-  ],
+export const appConfig: ApplicationConfig = {
   providers: [
+    provideRouter(routes),
+    provideClientHydration(),
+    provideHttpClient(
+      withInterceptorsFromDi()
+    ),
+    provideOAuthConfig(sapCommerceConfig),
+    provideOAuthInterceptor(),
     {
       provide: PROFILE_SERVICE,
       useExisting: OpenidProfileService
-    }
-  ],
-  declarations: [
-    AppComponent
-  ],
-  bootstrap: [AppComponent]
-})
-export class AppModule {
-}
+    },
+  ]
+};

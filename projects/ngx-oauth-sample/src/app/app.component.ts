@@ -1,10 +1,17 @@
 import {Component, Inject} from '@angular/core';
-import {OAuthService, OAuthType} from 'ngx-oauth';
+import {OAuthLoginComponent, OAuthService, OAuthType} from 'ngx-oauth';
 import {Observable} from 'rxjs';
 import {PROFILE_SERVICE, ProfileService} from './service';
+import {CommonModule} from '@angular/common';
+
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [
+    CommonModule,
+    OAuthLoginComponent
+  ],
   template: `
     <header>
       <nav class="navbar navbar-light bg-light container-fluid px-3">

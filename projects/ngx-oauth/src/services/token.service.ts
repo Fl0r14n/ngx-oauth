@@ -1,12 +1,17 @@
-import {Inject, Injectable, NgZone} from '@angular/core';
+import {Inject, Injectable} from '@angular/core';
 import {BehaviorSubject, distinctUntilChanged, Observable, of, switchMap} from 'rxjs';
 import {HEADER_APPLICATION, OAUTH_HTTP_CLIENT, OAuthConfig, OAuthToken} from '../models';
 import {catchError, map, shareReplay} from 'rxjs/operators';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpBackend, HttpClient, HttpParams, provideHttpClient} from '@angular/common/http';
 
 const isExpiredToken = (token?: OAuthToken) => token && token.expires && Date.now() > token.expires || false;
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+  deps: [
+    provideHttpClient(),
+  ]
+})
 export class OAuthTokenService {
 
   #token$ = new BehaviorSubject<OAuthToken>(this.saved);
@@ -25,8 +30,7 @@ export class OAuthTokenService {
   );
 
   constructor(protected authConfig: OAuthConfig,
-              @Inject(OAUTH_HTTP_CLIENT) protected http: HttpClient,
-              protected zone: NgZone) {
+              protected http: HttpClient) {
   }
 
   get token() {

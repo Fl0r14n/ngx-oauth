@@ -1,9 +1,10 @@
-import {Component, ContentChild, HostListener, Inject, Input, Output, TemplateRef, ViewEncapsulation} from '@angular/core';
+import {Component, ContentChild, HostListener, Input, Output, TemplateRef, ViewEncapsulation} from '@angular/core';
 import {Observable, take} from 'rxjs';
-import {LOCATION, OAuthParameters, OAuthStatus, OAuthType} from '../../models';
+import {OAuthParameters, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
 import {OAuthService} from '../../services/oauth.service';
-import {Location as Location2} from '@angular/common';
+import {CommonModule, Location as Location2} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 
 export interface OAuthLoginI18n {
   username?: string;
@@ -16,6 +17,11 @@ export interface OAuthLoginI18n {
 
 @Component({
   selector: 'oauth-login',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: 'oauth-login.component.html',
   styleUrls: ['oauth-login.component.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -49,7 +55,7 @@ export class OAuthLoginComponent {
   }
 
   get redirectUri() {
-    return this.#redirectUri || `${this.location.origin}${this.locationService.path(true) || '/'}`;
+    return this.#redirectUri || `${globalThis.location?.origin}${this.locationService.path(true) || '/'}`;
   }
 
   @Input()
@@ -79,7 +85,7 @@ export class OAuthLoginComponent {
   @Input()
   profileName$: Observable<string | undefined> | undefined;
   @ContentChild('login', {static: false})
-  loginTemplate: TemplateRef<any> | undefined;
+  loginTemplate: TemplateRef<any> | null = null;
   username = '';
   password = '';
   profileName?: string;
@@ -103,8 +109,7 @@ export class OAuthLoginComponent {
   logoutFunction = () => this.logout();
 
   constructor(private oauthService: OAuthService,
-              private locationService: Location2,
-              @Inject(LOCATION) private location: Location) {
+              private locationService: Location2) {
   }
 
   logout() {

@@ -5,7 +5,7 @@ import {routes} from './app.routes';
 import {provideClientHydration} from '@angular/platform-browser';
 import {PROFILE_SERVICE} from './service';
 import {OpenidProfileService} from './service/openid-profile.service';
-import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {provideHttpClient, withFetch, withInterceptorsFromDi} from '@angular/common/http';
 import {provideOAuthInterceptor, provideOAuthConfig} from 'ngx-oauth';
 
 const sapCommerceConfig = {
@@ -34,9 +34,9 @@ const djangoConfig = {
 
 const keycloakOpenIDConfig = {
   config: {
-    issuerPath: 'http://localhost:8080/auth/realms/commerce',
+    issuerPath: 'http://localhost:8080/realms/commerce',
     clientId: 'spartacus',
-    logoutRedirectUri: 'http://localhost:4200'
+    logoutRedirectUri: 'https://localhost:4200'
   }
 };
 
@@ -76,9 +76,10 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideClientHydration(),
     provideHttpClient(
+      withFetch(),
       withInterceptorsFromDi()
     ),
-    provideOAuthConfig(sapCommerceConfig),
+    provideOAuthConfig(keycloakOpenIDConfig),
     provideOAuthInterceptor(),
     {
       provide: PROFILE_SERVICE,

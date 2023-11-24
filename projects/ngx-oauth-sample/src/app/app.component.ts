@@ -11,26 +11,28 @@ import {CommonModule} from '@angular/common';
   imports: [
     CommonModule,
     OAuthLoginComponent
-  ],
+],
   template: `
-    <header>
-      <nav class="navbar navbar-light bg-light container-fluid px-3">
-        <a class="navbar-brand">OAuth Demo</a>
-        <ul class="nav">
-          <li class="nav-item">
-            <oauth-login [type]="type"
-                         [profileName$]="profileName$"
-                         [i18n]="i18n"
-                         [useLogoutUrl]="useLogoutUrl"
-                         [(state)]="state"></oauth-login>
-          </li>
-        </ul>
-      </nav>
-      <div class="alert alert-info text-center font-weight-bold"
-           *ngIf="status$ | async as status">{{status}}</div>
-    </header>
-    <button class="btn btn-primary" (click)="refresh()">Refresh profile</button>
-  `
+<header>
+  <nav class="navbar navbar-light bg-light container-fluid px-3">
+    <a class="navbar-brand">OAuth Demo</a>
+    <ul class="nav">
+      <li class="nav-item">
+        <oauth-login [type]="type"
+          [profileName$]="profileName$"
+          [i18n]="i18n"
+          [useLogoutUrl]="useLogoutUrl"
+        [(state)]="state"></oauth-login>
+      </li>
+    </ul>
+  </nav>
+  @if (status$ | async; as status) {
+    <div class="alert alert-info text-center font-weight-bold"
+    >{{status}}</div>
+  }
+</header>
+<button class="btn btn-primary" (click)="refresh()">Refresh profile</button>
+`
 })
 export class AppComponent {
 

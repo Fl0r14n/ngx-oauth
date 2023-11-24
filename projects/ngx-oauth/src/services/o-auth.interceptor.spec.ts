@@ -1,13 +1,22 @@
-import {OAuthInterceptor} from './oauth.interceptor';
-import {OAUTH_HTTP_CLIENT, OAuthConfig, provideOAuthConfig} from '../models';
 import {TestBed} from '@angular/core/testing';
-import {HttpClient, HttpErrorResponse, HttpHandler, HttpParams, HttpRequest, HttpResponse} from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHandlerFn,
+  HttpParams,
+  HttpRequest,
+  HttpResponse
+} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
-import {OAuthTokenService} from './token.service';
 import {catchError} from 'rxjs/operators';
+import {OAuthTokenService} from './o-auth-token.service';
+import {OAuthHttpClient} from './o-auth-http-client';
+import {OAuthInterceptor} from './o-auth.interceptor';
+import {OAuthConfig, provideOAuthConfig} from '../config';
 import createSpyObj = jasmine.createSpyObj;
 import objectContaining = jasmine.objectContaining;
 import any = jasmine.any;
+import createSpy = jasmine.createSpy;
 
 describe('OAuthInterceptor', () => {
 
@@ -16,12 +25,10 @@ describe('OAuthInterceptor', () => {
     token_type: 'Bearer',
     expires_in: 320
   };
-  let interceptor: OAuthInterceptor;
   let tokenService: OAuthTokenService;
   let config: OAuthConfig;
   const httpClient = createSpyObj<HttpClient>(['post']);
   httpClient.post.and.returnValue(of(token));
-
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
@@ -37,24 +44,20 @@ describe('OAuthInterceptor', () => {
           ignorePaths: []
         }),
         {
-          provide: OAUTH_HTTP_CLIENT,
+          provide: OAuthHttpClient,
           useValue: httpClient
-        },
-        OAuthTokenService,
-        OAuthInterceptor,
+        }
       ]
     });
     config = TestBed.inject(OAuthConfig);
     tokenService = TestBed.inject(OAuthTokenService);
-    interceptor = TestBed.inject(OAuthInterceptor);
   });
 
   it('should not add authorization', done => {
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(of(new HttpResponse()));
-    interceptor.intercept(req, next).subscribe(() => {
-      expect(next.handle).toHaveBeenCalledWith(req);
+    const next = createSpy<HttpHandlerFn>();
+    OAuthInterceptor(req, next).subscribe(() => {
+      expect(next).toHaveBeenCalledWith(req);
       done();
     });
   });
@@ -63,10 +66,9 @@ describe('OAuthInterceptor', () => {
     const req = createSpyObj<HttpRequest<any>>(['clone'], {
       url: 'localhost'
     });
-    const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(of(new HttpResponse()));
+    const next = createSpy<HttpHandlerFn>();
     tokenService.token = token;
-    interceptor.intercept(req, next).subscribe(() => {
+    OAuthInterceptor(req, next).subscribe(() => {
       expect(req.clone).toHaveBeenCalledWith({
         setHeaders: {
           Authorization: `Bearer ${token.access_token}`
@@ -78,26 +80,25 @@ describe('OAuthInterceptor', () => {
 
   it('should exclude path from authorization', done => {
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(of(new HttpResponse()));
+    const next = createSpy<HttpHandlerFn>();
     config.ignorePaths?.push(/localhost/);
     tokenService.token = token;
-    interceptor.intercept(req, next).subscribe(() => {
-      expect(next.handle).toHaveBeenCalledWith(req);
+    OAuthInterceptor(req, next).subscribe(() => {
+      expect(next).toHaveBeenCalledWith(req);
       done();
     });
   });
 
   it('should throw if 401 response and leave token if ignored Paths set', done => {
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(throwError(() => ({
+    const next = createSpy<HttpHandlerFn>();
+    next.and.returnValue(throwError(() => ({
       status: 401,
       message: 'not authorized'
     } as HttpErrorResponse)));
     config.ignorePaths?.push(/localhost/);
     tokenService.token = token;
-    interceptor.intercept(req, next).pipe(
+    OAuthInterceptor(req, next).pipe(
       catchError(err => of(err))
     ).subscribe(() => {
       expect(tokenService.token).toEqual(objectContaining(token));
@@ -111,10 +112,10 @@ describe('OAuthInterceptor', () => {
       message: 'not_authorized'
     } as HttpErrorResponse;
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(throwError(() => expected));
+    const next = createSpy<HttpHandlerFn>();
+    next.and.returnValue(throwError(() => expected));
     tokenService.token = token;
-    interceptor.intercept(req, next).pipe(
+    OAuthInterceptor(req, next).pipe(
       catchError(err => of(err))
     ).subscribe(() => {
       expect(tokenService.token).toEqual(objectContaining({
@@ -129,17 +130,16 @@ describe('OAuthInterceptor', () => {
     const req = createSpyObj<HttpRequest<any>>(['clone'], {
       url: 'localhost'
     });
-    const next = createSpyObj<HttpHandler>(['handle']);
-    next.handle.and.returnValue(of(new HttpResponse()));
-    const expired = {
+    const next = createSpy<HttpHandlerFn>();
+    next.and.returnValue(of(new HttpResponse()));
+    tokenService.token = {
       access_token: 'Mfol5uucFHBHbC9ThK0Xpi-CtTc',
       token_type: 'bearer',
       refresh_token: 'HPtx43K3nKP7y-ot1GzQAZB_7DI',
       scope: 'basic openid',
       expires: 1658432377281
-    };
-    tokenService.token = expired;
-    interceptor.intercept(req, next).subscribe(() => {
+    }
+    OAuthInterceptor(req, next).subscribe(() => {
       expect(httpClient.post).toHaveBeenCalledWith(any(String), new HttpParams({
         fromObject: {
           client_id: 'clientId',

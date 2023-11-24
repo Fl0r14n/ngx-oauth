@@ -5,8 +5,8 @@ import {routes} from './app.routes';
 import {provideClientHydration} from '@angular/platform-browser';
 import {PROFILE_SERVICE} from './service';
 import {OpenidProfileService} from './service/openid-profile.service';
-import {provideHttpClient, withFetch, withInterceptorsFromDi} from '@angular/common/http';
-import {provideOAuthInterceptor, provideOAuthConfig} from 'ngx-oauth';
+import {provideHttpClient, withFetch, withInterceptors} from '@angular/common/http';
+import {OAuthInterceptor, provideOAuthConfig} from 'ngx-oauth';
 
 const sapCommerceConfig = {
   config: {
@@ -77,10 +77,9 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(),
     provideHttpClient(
       withFetch(),
-      withInterceptorsFromDi()
+      withInterceptors([OAuthInterceptor])
     ),
     provideOAuthConfig(keycloakOpenIDConfig),
-    provideOAuthInterceptor(),
     {
       provide: PROFILE_SERVICE,
       useExisting: OpenidProfileService

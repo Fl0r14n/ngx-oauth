@@ -12,7 +12,7 @@
 
 ### How to
 
-To start using the `ngx-oauth` you need to import and configure the `OAuthModule` module.
+Provide a `OAuthConfig` using `provideOAuthConfig` or `provideOAuthConfigFactory`
 
 Example:
 
@@ -29,15 +29,17 @@ const oauthConfig = {
 };
 
 
-@NgModule({
-  imports: [
-    OAuthModule.forRoot(oauthConfig),
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule {
-}
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideClientHydration(),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([OAuthInterceptor])
+    ),
+    provideOAuthConfig(keycloakOpenIDConfig),
+  ]
+};
 ``` 
 
 Example for **authorization code** flow with `OIDC` and `PKCE`
@@ -62,7 +64,7 @@ const oauthConfig = {
 ```typescript
 const keycloakOpenIDConfig = {
   config: {
-    issuerPath: 'http://localhost:8080/auth/realms/commerce',
+    issuerPath: 'http://localhost:8080/realms/<some-realm>',
     clientId: '<your_client_id>',
   }
 };
@@ -196,17 +198,16 @@ and import OAuthService in your login component constructor
 npm install ngx-oauth --save
 ```
 
-Import ```OAuthModule``` in your angular app
-
 ## App Requirements
 
 * none
 
 ## Running the demo
 
-* change proxy context in ```proxy.conf.js``` so that webpack forwards your request to your oauth server
-* in app.component.ts add your **clientId, secret**, oauth server **token enpoint** and user **profile endpoint**
-* npm install
+* change proxy context in ```proxy.conf.js``` so that vite forwards your request to your oauth server (if relative paths in oauth configuration)
+* in app.component.ts add your **clientId, secret**, oauth server **token endpoint** and user **profile endpoint**
+* npm i
+* npm run build:lib
 * npm start
 
 #### Licensing

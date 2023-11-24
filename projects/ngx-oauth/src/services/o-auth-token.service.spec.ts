@@ -1,11 +1,12 @@
 import {fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
-import {OAuthTokenService} from './token.service';
-import {OAUTH_HTTP_CLIENT, provideOAuthConfig} from '../models';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, provideHttpClient, withFetch} from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import createSpyObj = jasmine.createSpyObj;
 import Spy = jasmine.Spy;
 import objectContaining = jasmine.objectContaining;
+import {OAuthTokenService} from './o-auth-token.service';
+import {provideOAuthConfig} from '../config';
+import {OAuthHttpClient} from './o-auth-http-client';
 
 describe('OAuthTokenService', () => {
 
@@ -16,6 +17,9 @@ describe('OAuthTokenService', () => {
     httpClient = createSpyObj<HttpClient>(['post']);
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(
+          withFetch()
+        ),
         provideOAuthConfig({
           config: {
             tokenPath: '/token',
@@ -27,10 +31,9 @@ describe('OAuthTokenService', () => {
           ignorePaths: []
         }),
         {
-          provide: OAUTH_HTTP_CLIENT,
+          provide: OAuthHttpClient,
           useValue: httpClient
-        },
-        OAuthTokenService,
+        }
       ]
     });
   });

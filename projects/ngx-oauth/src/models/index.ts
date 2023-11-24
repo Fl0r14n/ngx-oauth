@@ -1,42 +1,6 @@
-import {FactoryProvider, inject, Injectable, InjectionToken, ValueProvider} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpHeaders} from '@angular/common/http';
 
-export const OAUTH_CONFIG = new InjectionToken<OAuthConfig[]>('OAuthConfig');
-export const OAUTH_TOKEN = new InjectionToken<OAuthToken>('OAuthToken');
 export const HEADER_APPLICATION = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
-export const OAUTH_HTTP_CLIENT = new InjectionToken<HttpClient>('OAuthHttpClient');
-
-@Injectable({
-  providedIn: 'root',
-  useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({...p, ...c}), defaultOAuthConfig)
-})
-export abstract class OAuthConfig {
-  config?: OAuthTypeConfig;
-  storageKey?: string;
-  storage?: Storage;
-  ignorePaths?: RegExp[];
-
-  [x: string]: any;
-}
-
-export const provideOAuthConfig = (config: OAuthConfig = {}): ValueProvider => ({
-  provide: OAUTH_CONFIG,
-  useValue: config,
-  multi: true
-});
-
-export const provideOAuthConfigFactory = (factory: Function, deps?: any[]): FactoryProvider => ({
-  provide: OAUTH_CONFIG,
-  useFactory: factory,
-  deps: deps,
-  multi: true
-});
-
-export const defaultOAuthConfig: OAuthConfig = {
-  storage: globalThis.localStorage,
-  storageKey: 'token',
-  ignorePaths: []
-}
 
 export enum OAuthType {
   RESOURCE = 'password',

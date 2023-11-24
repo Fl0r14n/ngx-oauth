@@ -6,7 +6,6 @@ import {
   AuthorizationCodeConfig,
   AuthorizationParameters,
   HEADER_APPLICATION,
-  OAuthConfig,
   OAuthParameters,
   OAuthStatus,
   OAuthToken,
@@ -18,7 +17,8 @@ import {
   UserInfo
 } from '../models';
 import {Location as Location2} from '@angular/common';
-import {OAuthTokenService} from './token.service';
+import {OAuthTokenService} from './o-auth-token.service';
+import {OAuthConfig} from '../config';
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '');
 
@@ -187,9 +187,9 @@ export class OAuthService {
     this.token = {};
     const {logoutPath, logoutRedirectUri} = this.authConfig.config as any;
     if (useLogoutUrl && logoutPath) {
-      const {origin, pathname} = globalThis.location || {};
+      const {origin, pathname} = this.authConfig.location || {};
       const currentPath = `${origin}${pathname}`;
-      globalThis.location?.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
+      this.authConfig.location?.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
     }
   }
 
@@ -276,7 +276,7 @@ export class OAuthService {
   }
 
   protected async toAuthorizationUrl(parameters: AuthorizationParameters) {
-    const {config} = this.authConfig as any;
+    const {config, location} = this.authConfig as any;
     let authorizationUrl = `${config.authorizePath}`;
     authorizationUrl += config.authorizePath.includes('?') && '&' || '?';
     authorizationUrl += `client_id=${config.clientId}`;
@@ -284,7 +284,7 @@ export class OAuthService {
     authorizationUrl += `&response_type=${parameters.responseType}`;
     authorizationUrl += `&scope=${encodeURIComponent(config.scope || '')}`;
     authorizationUrl += `&state=${encodeURIComponent(parameters.state || '')}`;
-    return globalThis.location?.replace(`${authorizationUrl}${this.generateNonce(config)}${await this.generateCodeChallenge(config)}`);
+    return location?.replace(`${authorizationUrl}${this.generateNonce(config)}${await this.generateCodeChallenge(config)}`);
   }
 
   protected async generateCodeChallenge(config: any) {
@@ -320,7 +320,7 @@ export class OAuthService {
   }
 
   private getCleanedUnSearchParameters() {
-    const {search} = globalThis.location || {};
+    const {search} = this.authConfig.location || {};
     let searchString = search && search.substring(1) || '';
     const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt', 'iss'];
     hashKeys.forEach(hashKey => {
@@ -331,8 +331,8 @@ export class OAuthService {
   }
 
   private cleanLocationHash() {
-    if (globalThis.location) {
-      const {hash} = globalThis.location;
+    if (this.authConfig.location) {
+      const {hash} = this.authConfig.location;
       let curHash = hash && hash.substring(1) || '';
       const hashKeys = [
         'access_token',
@@ -352,7 +352,7 @@ export class OAuthService {
         const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
         curHash = curHash.replace(re, '');
       });
-      globalThis.location.hash = curHash;
+      this.authConfig.location.hash = curHash;
     }
   }
 

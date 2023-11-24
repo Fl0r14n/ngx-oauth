@@ -1,10 +1,10 @@
 import {Component, ContentChild, HostListener, Input, Output, TemplateRef, ViewEncapsulation} from '@angular/core';
 import {Observable, take} from 'rxjs';
-import {OAuthParameters, OAuthStatus, OAuthType} from '../../models';
 import {tap} from 'rxjs/operators';
-import {OAuthService} from '../../services/oauth.service';
 import { CommonModule, Location as Location2 } from '@angular/common';
 import {FormsModule} from '@angular/forms';
+import {OAuthParameters, OAuthType, OAuthStatus} from '../models';
+import {OAuthService} from '../services';
 
 export interface OAuthLoginI18n {
   username?: string;

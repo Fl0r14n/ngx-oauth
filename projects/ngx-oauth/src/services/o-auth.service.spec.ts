@@ -1,12 +1,13 @@
-import {OAuthService} from './oauth.service';
 import {of, throwError} from 'rxjs';
 import {TestBed} from '@angular/core/testing';
-import {LOCATION, OAuthConfig, OAuthStatus, OAuthType} from '../models';
-import {OAuthModule} from '../oauth.module';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, provideHttpClient, withFetch} from '@angular/common/http';
 import Spy = jasmine.Spy;
 import createSpyObj = jasmine.createSpyObj;
 import objectContaining = jasmine.objectContaining;
+import {OAuthConfig, provideOAuthConfig} from '../config';
+import {OAuthStatus, OAuthType} from '../models';
+import {OAuthService} from './o-auth.service';
+import {OAuthHttpClient} from './o-auth-http-client';
 
 describe('OAuthService', () => {
 
@@ -24,7 +25,12 @@ describe('OAuthService', () => {
 
     it('shoud be not authorized if no token', done => {
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config})
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -41,7 +47,12 @@ describe('OAuthService', () => {
       };
       localStorage.setItem('token', JSON.stringify(token));
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config})
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -56,7 +67,12 @@ describe('OAuthService', () => {
       };
       localStorage.setItem('token', JSON.stringify(token));
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config})
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -80,8 +96,13 @@ describe('OAuthService', () => {
       localStorage.clear();
       http = createSpyObj(['post']);
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})],
-        providers: [{provide: HttpClient, useValue: http}]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config}),
+          {provide: HttpClient, useValue: http}
+        ]
       });
       oauthService = TestBed.inject(OAuthService);
     });
@@ -134,8 +155,13 @@ describe('OAuthService', () => {
       localStorage.clear();
       http = createSpyObj(['post']);
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot(authConfig)],
-        providers: [{provide: HttpClient, useValue: http}]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig(authConfig),
+          {provide: HttpClient, useValue: http}
+        ]
       });
       oauthService = TestBed.inject(OAuthService);
     });
@@ -187,7 +213,12 @@ describe('OAuthService', () => {
     it('should be authorized if implicit login', done => {
       location.hash = '#access_token=token&token_type=bearer&expires_in=43199';
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config})
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -207,7 +238,12 @@ describe('OAuthService', () => {
     it('should be denied if implicit login error', done => {
       location.hash = '#error=access_denied&error_description=error_description';
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config})
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -245,16 +281,25 @@ describe('OAuthService', () => {
 
     it('should be authorized if authorization code login', done => {
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})],
-        providers: [{
-          provide: LOCATION,
-          useValue: {
-            search: '?code=code'
+        providers: [
+          // provideHttpClient(
+          //   withFetch()
+          // ),
+          provideOAuthConfig({
+            config,
+            location: {
+              search: '?code=code'
+            } as Location
+          }),
+          {
+            provide: HttpClient,
+            useValue: http
+          },
+          {
+            provide: OAuthHttpClient,
+            useValue: http
           }
-        }, {
-          provide: HttpClient,
-          useValue: http
-        }]
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -269,13 +314,17 @@ describe('OAuthService', () => {
 
     it('should be denied if authorization code login error', done => {
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})],
-        providers: [{
-          provide: LOCATION,
-          useValue: {
-            search: '?error=access_denied&error_description=error_description'
-          }
-        }]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({
+            config,
+            location: {
+              search: '?error=access_denied&error_description=error_description'
+            } as Location
+          })
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.status$.subscribe(status => {
@@ -298,7 +347,12 @@ describe('OAuthService', () => {
         clientId: 'clientId'
       };
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config})
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.config$.subscribe(cfg => {
@@ -325,11 +379,16 @@ describe('OAuthService', () => {
       const http = createSpyObj(['get']);
       (http.get as Spy).and.returnValue(of(discovery));
       TestBed.configureTestingModule({
-        imports: [OAuthModule.forRoot({config})],
-        providers: [{
-          provide: HttpClient,
-          useValue: http
-        }]
+        providers: [
+          provideHttpClient(
+            withFetch()
+          ),
+          provideOAuthConfig({config}),
+          {
+            provide: HttpClient,
+            useValue: http
+          }
+        ]
       });
       const oauthService = TestBed.inject(OAuthService);
       oauthService.config$.subscribe(cfg => {

@@ -1,18 +1,15 @@
-import {Inject, Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {BehaviorSubject, distinctUntilChanged, Observable, of, switchMap} from 'rxjs';
-import {HEADER_APPLICATION, OAUTH_HTTP_CLIENT, OAuthConfig, OAuthToken} from '../models';
+import {HEADER_APPLICATION, OAuthToken} from '../models';
 import {catchError, map, shareReplay} from 'rxjs/operators';
-import {HttpBackend, HttpClient, HttpParams, provideHttpClient, withFetch} from '@angular/common/http';
+import {HttpParams} from '@angular/common/http';
+import {OAuthHttpClient} from './o-auth-http-client';
+import {OAuthConfig} from '../config';
 
 const isExpiredToken = (token?: OAuthToken) => token && token.expires && Date.now() > token.expires || false;
 
 @Injectable({
-  providedIn: 'root',
-  deps: [
-    provideHttpClient(
-      withFetch()
-    ),
-  ]
+  providedIn: 'root'
 })
 export class OAuthTokenService {
 
@@ -32,7 +29,7 @@ export class OAuthTokenService {
   );
 
   constructor(protected authConfig: OAuthConfig,
-              protected http: HttpClient) {
+              protected http: OAuthHttpClient) {
   }
 
   get token() {

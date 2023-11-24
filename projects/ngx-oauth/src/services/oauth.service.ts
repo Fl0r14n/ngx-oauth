@@ -322,7 +322,7 @@ export class OAuthService {
   private getCleanedUnSearchParameters() {
     const {search} = globalThis.location || {};
     let searchString = search && search.substring(1) || '';
-    const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt'];
+    const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt', 'iss'];
     hashKeys.forEach(hashKey => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
       searchString = searchString.replace(re, '');
@@ -345,7 +345,8 @@ export class OAuthService {
         'session_state',
         'nonce',
         'id_token',
-        'code'
+        'code',
+        'iss'
       ];
       hashKeys.forEach(hashKey => {
         const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');

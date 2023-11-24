@@ -35,7 +35,7 @@ const djangoConfig = {
 const keycloakOpenIDConfig = {
   config: {
     issuerPath: 'http://localhost:8080/realms/commerce',
-    clientId: 'spartacus',
+    clientId: 'ngx-oauth',
     logoutRedirectUri: 'https://localhost:4200'
   }
 };

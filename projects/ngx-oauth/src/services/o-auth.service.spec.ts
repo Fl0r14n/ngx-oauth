@@ -139,7 +139,7 @@ describe('OAuthService', () => {
     });
   });
 
-  describe('When Resouce', () => {
+  describe('When Resource', () => {
 
     const authConfig: OAuthConfig = {
       config: {
@@ -166,7 +166,7 @@ describe('OAuthService', () => {
       oauthService = TestBed.inject(OAuthService);
     });
 
-    it('should be authorized if resouce login', done => {
+    it('should be authorized if resource login', done => {
       const expected = {
         access_token: 'token',
         token_type: 'bearer',
@@ -183,7 +183,7 @@ describe('OAuthService', () => {
       });
     });
 
-    it('should be denied if resouce login error', done => {
+    it('should be denied if resource login error', done => {
       const expected = {
         error: 'access_denied',
         error_description: 'error_description'
@@ -282,9 +282,6 @@ describe('OAuthService', () => {
     it('should be authorized if authorization code login', done => {
       TestBed.configureTestingModule({
         providers: [
-          // provideHttpClient(
-          //   withFetch()
-          // ),
           provideOAuthConfig({
             config,
             location: {

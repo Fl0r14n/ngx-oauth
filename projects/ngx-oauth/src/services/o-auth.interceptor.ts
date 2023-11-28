@@ -30,9 +30,9 @@ export const OAuthInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next:
           setHeaders: {
             Authorization: `${token.token_type} ${token.access_token}`
           }
-        });
+        })
       }
-      return req;
+      return req
     }),
     switchMap(req => next(req)),
     catchError((err: HttpErrorResponse) => {

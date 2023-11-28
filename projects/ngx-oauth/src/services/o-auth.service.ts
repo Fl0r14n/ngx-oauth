@@ -77,7 +77,7 @@ export class OAuthService {
   );
   token$ = this.config$.pipe(
     tap(config => {
-      const {hash, search, origin, pathname} = globalThis.location || {};
+      const {hash, search, origin, pathname} = this.authConfig.location || {};
       const isImplicitRedirect = hash && /(access_token=)|(error=)/.test(hash);
       const isAuthCodeRedirect = search && /(code=)|(error=)/.test(search) || hash && /(code=)|(error=)/.test(hash);
       if (isImplicitRedirect) {
@@ -88,7 +88,7 @@ export class OAuthService {
         };
         this.checkResponse(this.token, parameters);
       } else if (isAuthCodeRedirect) {
-        const parameters = parseOauthUri(search && search.substring(1) || hash && hash.substring(1));
+        const parameters = parseOauthUri(search && search.substring(1) || hash && hash.substring(1) || '');
         if (!this.checkResponse(this.token, parameters)) {
           this.token = parameters;
         } else {

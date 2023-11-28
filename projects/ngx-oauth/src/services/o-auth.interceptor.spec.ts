@@ -56,7 +56,9 @@ describe('OAuthInterceptor', () => {
   it('should not add authorization', done => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpy<HttpHandlerFn>();
-    OAuthInterceptor(req, next).subscribe(() => {
+    next.and.returnValue(of({} as any))
+    const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next))
+    oauthInterceptor.subscribe(() => {
       expect(next).toHaveBeenCalledWith(req);
       done();
     });
@@ -67,8 +69,10 @@ describe('OAuthInterceptor', () => {
       url: 'localhost'
     });
     const next = createSpy<HttpHandlerFn>();
+    next.and.returnValue(of({} as any))
     tokenService.token = token;
-    OAuthInterceptor(req, next).subscribe(() => {
+    const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next))
+    oauthInterceptor.subscribe(() => {
       expect(req.clone).toHaveBeenCalledWith({
         setHeaders: {
           Authorization: `Bearer ${token.access_token}`
@@ -81,9 +85,11 @@ describe('OAuthInterceptor', () => {
   it('should exclude path from authorization', done => {
     const req = new HttpRequest('GET', 'https://localhost');
     const next = createSpy<HttpHandlerFn>();
+    next.and.returnValue(of({} as any))
     config.ignorePaths?.push(/localhost/);
     tokenService.token = token;
-    OAuthInterceptor(req, next).subscribe(() => {
+    const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next))
+    oauthInterceptor.subscribe(() => {
       expect(next).toHaveBeenCalledWith(req);
       done();
     });
@@ -98,7 +104,8 @@ describe('OAuthInterceptor', () => {
     } as HttpErrorResponse)));
     config.ignorePaths?.push(/localhost/);
     tokenService.token = token;
-    OAuthInterceptor(req, next).pipe(
+    const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next))
+    oauthInterceptor.pipe(
       catchError(err => of(err))
     ).subscribe(() => {
       expect(tokenService.token).toEqual(objectContaining(token));
@@ -115,7 +122,8 @@ describe('OAuthInterceptor', () => {
     const next = createSpy<HttpHandlerFn>();
     next.and.returnValue(throwError(() => expected));
     tokenService.token = token;
-    OAuthInterceptor(req, next).pipe(
+    const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next))
+    oauthInterceptor.pipe(
       catchError(err => of(err))
     ).subscribe(() => {
       expect(tokenService.token).toEqual(objectContaining({
@@ -139,7 +147,8 @@ describe('OAuthInterceptor', () => {
       scope: 'basic openid',
       expires: 1658432377281
     }
-    OAuthInterceptor(req, next).subscribe(() => {
+    const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next))
+    oauthInterceptor.subscribe(() => {
       expect(httpClient.post).toHaveBeenCalledWith(any(String), new HttpParams({
         fromObject: {
           client_id: 'clientId',

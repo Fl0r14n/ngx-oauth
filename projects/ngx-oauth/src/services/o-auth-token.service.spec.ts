@@ -1,5 +1,5 @@
 import {fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
-import {HttpClient, provideHttpClient, withFetch} from '@angular/common/http';
+import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import createSpyObj = jasmine.createSpyObj;
 import Spy = jasmine.Spy;

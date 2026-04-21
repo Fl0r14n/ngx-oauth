@@ -6,13 +6,12 @@ import {CommonModule} from '@angular/common';
 
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [
-    CommonModule,
-    OAuthLoginComponent
-],
-  template: `
+    selector: 'app-root',
+    imports: [
+        CommonModule,
+        OAuthLoginComponent
+    ],
+    template: `
 <header>
   <nav class="navbar navbar-light bg-light container-fluid px-3">
     <a class="navbar-brand">OAuth Demo</a>

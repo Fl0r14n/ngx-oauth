@@ -1,12 +1,5 @@
 import {TestBed} from '@angular/core/testing';
-import {
-  HttpClient,
-  HttpErrorResponse,
-  HttpHandlerFn,
-  HttpParams,
-  HttpRequest,
-  HttpResponse
-} from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHandlerFn, HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
 import {of, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {OAuthTokenService} from './o-auth-token.service';

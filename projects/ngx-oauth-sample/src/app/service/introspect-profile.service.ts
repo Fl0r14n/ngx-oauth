@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { OAuthService, OAuthStatus } from 'ngx-oauth';
 import { ProfileService } from './index';
@@ -16,10 +16,10 @@ export class IntrospectProfileService implements ProfileService {
   clientId = 'hybris';
   clientSecret = '2519368d-8c92-44c9-ba4c-5f3763bc38c9';
 
-  constructor(
-    private http: HttpClient,
-    private oauthService: OAuthService
-  ) {
+  private http = inject(HttpClient);
+  private oauthService = inject(OAuthService);
+
+  constructor() {
     this.oauthService.ignorePaths.push(new RegExp(this.introspectPath));
   }
 
@@ -39,7 +39,7 @@ export class IntrospectProfileService implements ProfileService {
     return this.oauthService.status$.pipe(
       filter((s) => s === OAuthStatus.AUTHORIZED),
       switchMap(() => this.introspect()),
-      map((v: any) => v.name)
+      map((v: { name?: string }) => v.name)
     );
   }
 }

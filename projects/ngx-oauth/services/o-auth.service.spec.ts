@@ -107,7 +107,7 @@ describe('OAuthService', () => {
         error_description: 'error_description'
       };
       http.post.mockReturnValue(throwError(() => expected));
-      oauthService.login().catch(() => {});
+      oauthService.login().catch(() => void 0);
       oauthService.status$.subscribe((status) => {
         expect(status).toBe(OAuthStatus.DENIED);
         expect(oauthService.token).toEqual(expect.objectContaining(expected));
@@ -163,7 +163,7 @@ describe('OAuthService', () => {
         error_description: 'error_description'
       };
       http.post.mockReturnValue(throwError(() => expected));
-      oauthService.login({ username: 'username', password: 'password' }).catch(() => {});
+      oauthService.login({ username: 'username', password: 'password' }).catch(() => void 0);
       oauthService.status$.subscribe((status) => {
         expect(status).toBe(OAuthStatus.DENIED);
         expect(oauthService.token).toEqual(expect.objectContaining(expected));

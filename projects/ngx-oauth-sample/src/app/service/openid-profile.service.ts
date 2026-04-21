@@ -1,6 +1,6 @@
 import { ProfileService } from './index';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { OAuthService } from 'ngx-oauth';
 import { map } from 'rxjs/operators';
 
@@ -11,7 +11,7 @@ import { map } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class OpenidProfileService implements ProfileService {
-  constructor(private oauthService: OAuthService) {}
+  private oauthService = inject(OAuthService);
 
   get profileName$(): Observable<string | undefined> {
     return this.oauthService.userInfo$.pipe(map((v) => `${v.name}&nbsp;${this.getPicture(v.picture)}`));

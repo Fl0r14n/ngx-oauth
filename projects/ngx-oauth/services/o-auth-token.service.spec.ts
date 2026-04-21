@@ -1,4 +1,4 @@
-import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { OAuthTokenService } from './o-auth-token.service';
@@ -9,6 +9,7 @@ describe('OAuthTokenService', () => {
   let httpClient: jest.Mocked<Pick<HttpClient, 'post'>>;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     localStorage.clear();
     httpClient = { post: jest.fn() } as jest.Mocked<Pick<HttpClient, 'post'>>;
     TestBed.configureTestingModule({
@@ -30,6 +31,10 @@ describe('OAuthTokenService', () => {
         }
       ]
     });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should set existing token from storage', (done) => {
@@ -104,7 +109,7 @@ describe('OAuthTokenService', () => {
     });
   });
 
-  it('should set token on refresh token', fakeAsync(() => {
+  it('should set token on refresh token', (done) => {
     const expected = {
       access_token: 'access_token',
       token_type: 'token_type',
@@ -120,15 +125,15 @@ describe('OAuthTokenService', () => {
     httpClient.post.mockReturnValue(of(expected));
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
-    tick(1100);
+    jest.advanceTimersByTime(1100);
     tokenService.token$.subscribe((token) => {
       expect(token).toEqual(expect.objectContaining(expected));
       expect(tokenService.saved).toEqual(expect.objectContaining(expected));
-      flush();
+      done();
     });
-  }));
+  });
 
-  it('should clear token on refresh token', fakeAsync(() => {
+  it('should clear token on refresh token', (done) => {
     const expected = {};
     const initial = {
       access_token: 'access_token',
@@ -139,11 +144,11 @@ describe('OAuthTokenService', () => {
     httpClient.post.mockReturnValue(throwError(() => new Error('refresh failed')));
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
-    tick(1100);
+    jest.advanceTimersByTime(1100);
     tokenService.token$.subscribe((token) => {
       expect(token).toEqual(expected);
       expect(tokenService.saved).toEqual(expected);
-      flush();
+      done();
     });
-  }));
+  });
 });

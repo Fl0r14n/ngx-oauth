@@ -50,7 +50,6 @@ export function app(): express.Express {
 
 function run(): void {
   const port = process.env['PORT'] || 443;
-  const distFolder = dirname(fileURLToPath(import.meta.url));
   const server = createServer(app());
   server.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);

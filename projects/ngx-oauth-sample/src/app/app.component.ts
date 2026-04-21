@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { OAuthService, OAuthType } from 'ngx-oauth';
 import { OAuthLoginComponent } from 'ngx-oauth/component';
 import { Observable } from 'rxjs';
@@ -37,10 +37,8 @@ export class AppComponent {
   status$ = this.oauthService.status$;
   type = OAuthType.AUTHORIZATION_CODE;
 
-  constructor(
-    private oauthService: OAuthService,
-    @Inject(PROFILE_SERVICE) private profileService: ProfileService
-  ) {}
+  private oauthService = inject(OAuthService);
+  private profileService = inject(ProfileService, { optional: true }) ?? inject(PROFILE_SERVICE);
 
   i18n = {
     username: 'Username'

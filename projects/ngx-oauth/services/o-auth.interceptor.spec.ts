@@ -14,10 +14,6 @@ import { OAuthTokenService } from './o-auth-token.service';
 import { OAuthHttpClient } from './o-auth-http-client';
 import { OAuthInterceptor } from './o-auth.interceptor';
 import { OAuthConfig, provideOAuthConfig } from '../config';
-import createSpyObj = jasmine.createSpyObj;
-import objectContaining = jasmine.objectContaining;
-import any = jasmine.any;
-import createSpy = jasmine.createSpy;
 
 describe('OAuthInterceptor', () => {
   const token = {
@@ -27,8 +23,8 @@ describe('OAuthInterceptor', () => {
   };
   let tokenService: OAuthTokenService;
   let config: OAuthConfig;
-  const httpClient = createSpyObj<HttpClient>(['post']);
-  httpClient.post.and.returnValue(of(token));
+  const httpClient = { post: jest.fn().mockReturnValue(of(token)) } as unknown as HttpClient;
+
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
@@ -55,8 +51,8 @@ describe('OAuthInterceptor', () => {
 
   it('should not add authorization', (done) => {
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpy<HttpHandlerFn>();
-    next.and.returnValue(of({} as HttpEvent<unknown>));
+    const next = jest.fn() as unknown as jest.MockedFunction<HttpHandlerFn>;
+    next.mockReturnValue(of({} as HttpEvent<unknown>));
     const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next));
     oauthInterceptor.subscribe(() => {
       expect(next).toHaveBeenCalledWith(req);
@@ -65,15 +61,13 @@ describe('OAuthInterceptor', () => {
   });
 
   it('should add authorization to request', (done) => {
-    const req = createSpyObj<HttpRequest<unknown>>(['clone'], {
-      url: 'localhost'
-    });
-    const next = createSpy<HttpHandlerFn>();
-    next.and.returnValue(of({} as HttpEvent<unknown>));
+    const req = { clone: jest.fn(), url: 'localhost' } as unknown as HttpRequest<unknown>;
+    const next = jest.fn() as unknown as jest.MockedFunction<HttpHandlerFn>;
+    next.mockReturnValue(of({} as HttpEvent<unknown>));
     tokenService.token = token;
     const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next));
     oauthInterceptor.subscribe(() => {
-      expect(req.clone).toHaveBeenCalledWith({
+      expect((req as unknown as { clone: jest.Mock }).clone).toHaveBeenCalledWith({
         setHeaders: {
           Authorization: `Bearer ${token.access_token}`
         }
@@ -84,8 +78,8 @@ describe('OAuthInterceptor', () => {
 
   it('should exclude path from authorization', (done) => {
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpy<HttpHandlerFn>();
-    next.and.returnValue(of({} as HttpEvent<unknown>));
+    const next = jest.fn() as unknown as jest.MockedFunction<HttpHandlerFn>;
+    next.mockReturnValue(of({} as HttpEvent<unknown>));
     config.ignorePaths?.push(/localhost/);
     tokenService.token = token;
     const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next));
@@ -97,8 +91,8 @@ describe('OAuthInterceptor', () => {
 
   it('should throw if 401 response and leave token if ignored Paths set', (done) => {
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpy<HttpHandlerFn>();
-    next.and.returnValue(
+    const next = jest.fn() as unknown as jest.MockedFunction<HttpHandlerFn>;
+    next.mockReturnValue(
       throwError(
         () =>
           ({
@@ -111,7 +105,7 @@ describe('OAuthInterceptor', () => {
     tokenService.token = token;
     const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next));
     oauthInterceptor.pipe(catchError((err) => of(err))).subscribe(() => {
-      expect(tokenService.token).toEqual(objectContaining(token));
+      expect(tokenService.token).toEqual(expect.objectContaining(token));
       done();
     });
   });
@@ -122,13 +116,13 @@ describe('OAuthInterceptor', () => {
       message: 'not_authorized'
     } as HttpErrorResponse;
     const req = new HttpRequest('GET', 'https://localhost');
-    const next = createSpy<HttpHandlerFn>();
-    next.and.returnValue(throwError(() => expected));
+    const next = jest.fn() as unknown as jest.MockedFunction<HttpHandlerFn>;
+    next.mockReturnValue(throwError(() => expected));
     tokenService.token = token;
     const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next));
     oauthInterceptor.pipe(catchError((err) => of(err))).subscribe(() => {
       expect(tokenService.token).toEqual(
-        objectContaining({
+        expect.objectContaining({
           error: '401',
           error_description: 'not_authorized'
         })
@@ -138,11 +132,9 @@ describe('OAuthInterceptor', () => {
   });
 
   it('should refresh token before making the call', (done) => {
-    const req = createSpyObj<HttpRequest<unknown>>(['clone'], {
-      url: 'localhost'
-    });
-    const next = createSpy<HttpHandlerFn>();
-    next.and.returnValue(of(new HttpResponse()));
+    const req = { clone: jest.fn(), url: 'localhost' } as unknown as HttpRequest<unknown>;
+    const next = jest.fn() as unknown as jest.MockedFunction<HttpHandlerFn>;
+    next.mockReturnValue(of(new HttpResponse()));
     tokenService.token = {
       access_token: 'Mfol5uucFHBHbC9ThK0Xpi-CtTc',
       token_type: 'bearer',
@@ -152,8 +144,8 @@ describe('OAuthInterceptor', () => {
     };
     const oauthInterceptor = TestBed.runInInjectionContext(() => OAuthInterceptor(req, next));
     oauthInterceptor.subscribe(() => {
-      expect(httpClient.post).toHaveBeenCalledWith(
-        any(String),
+      expect((httpClient as unknown as { post: jest.Mock }).post).toHaveBeenCalledWith(
+        expect.any(String),
         new HttpParams({
           fromObject: {
             client_id: 'clientId',
@@ -162,9 +154,9 @@ describe('OAuthInterceptor', () => {
             refresh_token: 'HPtx43K3nKP7y-ot1GzQAZB_7DI'
           }
         }),
-        any(Object)
+        expect.any(Object)
       );
-      expect(req.clone).toHaveBeenCalledWith({
+      expect((req as unknown as { clone: jest.Mock }).clone).toHaveBeenCalledWith({
         setHeaders: {
           Authorization: `Bearer ${token.access_token}`
         }

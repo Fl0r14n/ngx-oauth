@@ -1,19 +1,16 @@
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import createSpyObj = jasmine.createSpyObj;
-import Spy = jasmine.Spy;
-import objectContaining = jasmine.objectContaining;
 import { OAuthTokenService } from './o-auth-token.service';
 import { provideOAuthConfig } from '../config';
 import { OAuthHttpClient } from './o-auth-http-client';
 
 describe('OAuthTokenService', () => {
-  let httpClient: HttpClient;
+  let httpClient: jest.Mocked<Pick<HttpClient, 'post'>>;
 
   beforeEach(() => {
     localStorage.clear();
-    httpClient = createSpyObj<HttpClient>(['post']);
+    httpClient = { post: jest.fn() } as jest.Mocked<Pick<HttpClient, 'post'>>;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withFetch()),
@@ -58,8 +55,8 @@ describe('OAuthTokenService', () => {
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = expected;
     tokenService.token$.subscribe((token) => {
-      expect(token).toEqual(objectContaining(expected));
-      expect(tokenService.saved).toEqual(objectContaining(expected));
+      expect(token).toEqual(expect.objectContaining(expected));
+      expect(tokenService.saved).toEqual(expect.objectContaining(expected));
       done();
     });
   });
@@ -98,11 +95,11 @@ describe('OAuthTokenService', () => {
       expires: 1658432377281
     };
     localStorage.setItem('token', JSON.stringify(initial));
-    (httpClient.post as Spy).and.returnValue(of(expected));
+    httpClient.post.mockReturnValue(of(expected));
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token$.subscribe((token) => {
-      expect(token).toEqual(objectContaining(expected));
-      expect(tokenService.saved).toEqual(objectContaining(expected));
+      expect(token).toEqual(expect.objectContaining(expected));
+      expect(tokenService.saved).toEqual(expect.objectContaining(expected));
       done();
     });
   });
@@ -120,13 +117,13 @@ describe('OAuthTokenService', () => {
       refresh_token: 'refresh_token',
       expires_in: 1
     };
-    (httpClient.post as Spy).and.returnValue(of(expected));
+    httpClient.post.mockReturnValue(of(expected));
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
     tick(1100);
     tokenService.token$.subscribe((token) => {
-      expect(token).toEqual(objectContaining(expected));
-      expect(tokenService.saved).toEqual(objectContaining(expected));
+      expect(token).toEqual(expect.objectContaining(expected));
+      expect(tokenService.saved).toEqual(expect.objectContaining(expected));
       flush();
     });
   }));
@@ -139,7 +136,7 @@ describe('OAuthTokenService', () => {
       refresh_token: 'refresh_token',
       expires_in: 1
     };
-    (httpClient.post as Spy).and.returnValue(throwError(() => new Error('refresh failed')));
+    httpClient.post.mockReturnValue(throwError(() => new Error('refresh failed')));
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
     tick(1100);

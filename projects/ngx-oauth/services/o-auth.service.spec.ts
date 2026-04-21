@@ -1,9 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
-import Spy = jasmine.Spy;
-import createSpyObj = jasmine.createSpyObj;
-import objectContaining = jasmine.objectContaining;
 import { OAuthConfig, provideOAuthConfig } from '../config';
 import { OAuthStatus, OAuthType } from '../models';
 import { OAuthService } from './o-auth.service';
@@ -72,11 +69,11 @@ describe('OAuthService', () => {
       clientId: 'clientId'
     };
     let oauthService: OAuthService;
-    let http: HttpClient;
+    let http: jest.Mocked<Pick<HttpClient, 'post'>>;
 
     beforeEach(() => {
       localStorage.clear();
-      http = createSpyObj(['post']);
+      http = { post: jest.fn() } as jest.Mocked<Pick<HttpClient, 'post'>>;
       TestBed.configureTestingModule({
         providers: [
           provideHttpClient(withFetch()),
@@ -93,12 +90,12 @@ describe('OAuthService', () => {
         token_type: 'bearer',
         expires_in: 43199
       };
-      (http.post as Spy).and.returnValue(of(expected));
+      http.post.mockReturnValue(of(expected));
       oauthService.login();
       oauthService.status$.subscribe((status) => {
         expect(status).toBe(OAuthStatus.AUTHORIZED);
         const { token } = oauthService;
-        expect(token).toEqual(objectContaining(expected));
+        expect(token).toEqual(expect.objectContaining(expected));
         expect(token.type).toBe(OAuthType.CLIENT_CREDENTIAL);
         done();
       });
@@ -109,11 +106,11 @@ describe('OAuthService', () => {
         error: 'access_denied',
         error_description: 'error_description'
       };
-      (http.post as Spy).and.returnValue(throwError(() => expected));
-      oauthService.login();
+      http.post.mockReturnValue(throwError(() => expected));
+      oauthService.login().catch(() => {});
       oauthService.status$.subscribe((status) => {
         expect(status).toBe(OAuthStatus.DENIED);
-        expect(oauthService.token).toEqual(objectContaining(expected));
+        expect(oauthService.token).toEqual(expect.objectContaining(expected));
         done();
       });
     });
@@ -128,11 +125,11 @@ describe('OAuthService', () => {
       }
     };
     let oauthService: OAuthService;
-    let http: HttpClient;
+    let http: jest.Mocked<Pick<HttpClient, 'post'>>;
 
     beforeEach(() => {
       localStorage.clear();
-      http = createSpyObj(['post']);
+      http = { post: jest.fn() } as jest.Mocked<Pick<HttpClient, 'post'>>;
       TestBed.configureTestingModule({
         providers: [
           provideHttpClient(withFetch()),
@@ -149,12 +146,12 @@ describe('OAuthService', () => {
         token_type: 'bearer',
         expires_in: 43199
       };
-      (http.post as Spy).and.returnValue(of(expected));
+      http.post.mockReturnValue(of(expected));
       oauthService.login({ username: 'username', password: 'password' });
       oauthService.status$.subscribe((status) => {
         expect(status).toBe(OAuthStatus.AUTHORIZED);
         const { token } = oauthService;
-        expect(token).toEqual(objectContaining(expected));
+        expect(token).toEqual(expect.objectContaining(expected));
         expect(token.type).toBe(OAuthType.RESOURCE);
         done();
       });
@@ -165,11 +162,11 @@ describe('OAuthService', () => {
         error: 'access_denied',
         error_description: 'error_description'
       };
-      (http.post as Spy).and.returnValue(throwError(() => expected));
-      oauthService.login({ username: 'username', password: 'password' });
+      http.post.mockReturnValue(throwError(() => expected));
+      oauthService.login({ username: 'username', password: 'password' }).catch(() => {});
       oauthService.status$.subscribe((status) => {
         expect(status).toBe(OAuthStatus.DENIED);
-        expect(oauthService.token).toEqual(objectContaining(expected));
+        expect(oauthService.token).toEqual(expect.objectContaining(expected));
         done();
       });
     });
@@ -197,7 +194,7 @@ describe('OAuthService', () => {
         expect(location.hash).toEqual('');
         const { token } = oauthService;
         expect(token).toEqual(
-          objectContaining({
+          expect.objectContaining({
             access_token: 'token',
             token_type: 'bearer',
             expires_in: '43199'
@@ -218,7 +215,7 @@ describe('OAuthService', () => {
         expect(status).toBe(OAuthStatus.DENIED);
         expect(location.hash).toEqual('');
         expect(oauthService.token).toEqual(
-          objectContaining({
+          expect.objectContaining({
             error: 'access_denied',
             error_description: 'error_description'
           })
@@ -238,13 +235,12 @@ describe('OAuthService', () => {
       token_type: 'bearer',
       expires_in: 43199
     };
-    let http: HttpClient;
+    let http: jest.Mocked<Pick<HttpClient, 'post'>>;
 
     beforeEach(() => {
       localStorage.clear();
-      http = createSpyObj(['post']);
-      //token after redirect and token request
-      (http.post as Spy).and.returnValue(of(token));
+      http = { post: jest.fn() } as jest.Mocked<Pick<HttpClient, 'post'>>;
+      http.post.mockReturnValue(of(token));
     });
 
     it('should be authorized if authorization code login', (done) => {
@@ -256,14 +252,8 @@ describe('OAuthService', () => {
               search: '?code=code'
             } as Location
           }),
-          {
-            provide: HttpClient,
-            useValue: http
-          },
-          {
-            provide: OAuthHttpClient,
-            useValue: http
-          }
+          { provide: HttpClient, useValue: http },
+          { provide: OAuthHttpClient, useValue: http }
         ]
       });
       const oauthService = TestBed.inject(OAuthService);
@@ -271,7 +261,7 @@ describe('OAuthService', () => {
         expect(status).toBe(OAuthStatus.AUTHORIZED);
         expect(location.search).toEqual('');
         const { token } = oauthService;
-        expect(token).toEqual(objectContaining(token));
+        expect(token).toEqual(expect.objectContaining(token));
         expect(token.type).toBe(OAuthType.AUTHORIZATION_CODE);
         done();
       });
@@ -294,7 +284,7 @@ describe('OAuthService', () => {
         expect(status).toBe(OAuthStatus.DENIED);
         expect(location.search).toEqual('');
         expect(oauthService.token).toEqual(
-          objectContaining({
+          expect.objectContaining({
             error: 'access_denied',
             error_description: 'error_description'
           })
@@ -335,16 +325,12 @@ describe('OAuthService', () => {
         tokenPath: '/token',
         scope: 'openid'
       };
-      const http = createSpyObj(['get']);
-      (http.get as Spy).and.returnValue(of(discovery));
+      const http = { get: jest.fn().mockReturnValue(of(discovery)) } as jest.Mocked<Pick<HttpClient, 'get'>>;
       TestBed.configureTestingModule({
         providers: [
           provideHttpClient(withFetch()),
           provideOAuthConfig({ config }),
-          {
-            provide: HttpClient,
-            useValue: http
-          }
+          { provide: HttpClient, useValue: http }
         ]
       });
       const oauthService = TestBed.inject(OAuthService);

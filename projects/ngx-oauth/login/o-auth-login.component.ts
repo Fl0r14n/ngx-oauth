@@ -12,8 +12,7 @@ import { Observable, take } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CommonModule, Location as Location2 } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OAuthParameters, OAuthType, OAuthStatus } from '../models';
-import { OAuthService } from '../services';
+import { OAuthParameters, OAuthType, OAuthStatus, OAuthService } from 'ngx-oauth';
 
 export interface OAuthLoginI18n {
   username?: string;

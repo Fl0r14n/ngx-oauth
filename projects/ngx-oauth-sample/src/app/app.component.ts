@@ -1,5 +1,6 @@
 import { Component, Inject } from '@angular/core';
-import { OAuthLoginComponent, OAuthService, OAuthType } from 'ngx-oauth';
+import { OAuthService, OAuthType } from 'ngx-oauth';
+import { OAuthLoginComponent } from 'ngx-oauth/login';
 import { Observable } from 'rxjs';
 import { PROFILE_SERVICE, ProfileService } from './service';
 import { CommonModule } from '@angular/common';

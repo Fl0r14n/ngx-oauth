@@ -22,6 +22,10 @@
       "ngx-oauth": [
         "dist/ngx-oauth",
         "dist/ngx-oauth/ngx-oauth"
+      ],
+      "ngx-oauth/login": [
+        "dist/ngx-oauth/login",
+        "dist/ngx-oauth/login/ngx-oauth-login"
       ]
     }
   },

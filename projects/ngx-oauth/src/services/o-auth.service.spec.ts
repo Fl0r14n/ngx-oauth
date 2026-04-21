@@ -1,6 +1,6 @@
 import {of, throwError} from 'rxjs';
 import {TestBed} from '@angular/core/testing';
-import {HttpClient, provideHttpClient, withFetch} from '@angular/common/http';
+import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
 import Spy = jasmine.Spy;
 import createSpyObj = jasmine.createSpyObj;
 import objectContaining = jasmine.objectContaining;

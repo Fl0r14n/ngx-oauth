@@ -1,5 +1,5 @@
 import {inject} from '@angular/core';
-import {HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest} from '@angular/common/http';
+import { HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import {switchMap, take, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {OAuthTokenService} from './o-auth-token.service';

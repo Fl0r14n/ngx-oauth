@@ -16,13 +16,12 @@ export interface OAuthLoginI18n {
 }
 
 @Component({
-  selector: 'oauth-login',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule
-],
-  template: `
+    selector: 'oauth-login',
+    imports: [
+        CommonModule,
+        FormsModule
+    ],
+    template: `
 @if (loginTemplate) {
   <ng-container
     [ngTemplateOutlet]="loginTemplate"
@@ -94,7 +93,7 @@ export interface OAuthLoginI18n {
       }
     }
     `,
-  styles: [`
+    styles: [`
     .oauth {
 
       .dropdown-menu {
@@ -130,7 +129,7 @@ export interface OAuthLoginI18n {
       }
     }
   `],
-  encapsulation: ViewEncapsulation.None,
+    encapsulation: ViewEncapsulation.None
 })
 export class OAuthLoginComponent {
 

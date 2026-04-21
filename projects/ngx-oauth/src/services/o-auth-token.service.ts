@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {BehaviorSubject, distinctUntilChanged, Observable, of, switchMap} from 'rxjs';
 import {HEADER_APPLICATION, OAuthToken} from '../models';
 import {catchError, map, shareReplay} from 'rxjs/operators';
-import {HttpParams} from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import {OAuthHttpClient} from './o-auth-http-client';
 import {OAuthConfig} from '../config';
 

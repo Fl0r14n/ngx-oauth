@@ -5,7 +5,7 @@ import {routes} from './app.routes';
 import {provideClientHydration} from '@angular/platform-browser';
 import {PROFILE_SERVICE} from './service';
 import {OpenidProfileService} from './service/openid-profile.service';
-import {provideHttpClient, withFetch, withInterceptors} from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import {OAuthInterceptor, provideOAuthConfig} from 'ngx-oauth';
 
 const sapCommerceConfig = {

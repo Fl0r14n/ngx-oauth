@@ -1,12 +1,12 @@
-import {ApplicationConfig} from '@angular/core';
-import {provideRouter} from '@angular/router';
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
 
-import {routes} from './app.routes';
-import {provideClientHydration} from '@angular/platform-browser';
-import {PROFILE_SERVICE} from './service';
-import {OpenidProfileService} from './service/openid-profile.service';
+import { routes } from './app.routes';
+import { provideClientHydration } from '@angular/platform-browser';
+import { PROFILE_SERVICE } from './service';
+import { OpenidProfileService } from './service/openid-profile.service';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import {OAuthInterceptor, provideOAuthConfig} from 'ngx-oauth';
+import { OAuthInterceptor, provideOAuthConfig } from 'ngx-oauth';
 
 const sapCommerceConfig = {
   config: {
@@ -55,7 +55,7 @@ const googleOpenIDConfig = {
     issuerPath: 'https://accounts.google.com',
     clientId: 'clientId',
     clientSecret: 'clientSecret',
-    scope: 'openid profile email',
+    scope: 'openid profile email'
   }
 };
 
@@ -68,7 +68,7 @@ const gigyaOpenIdConfig = {
     revokePath: 'https://fidm.eu1.gigya.com/oidc/op/v1.0/<<tenantId>>/revoke',
     pkce: true,
     clientId: 'clientId',
-    scope: 'openid profile email',
+    scope: 'openid profile email'
   }
 };
 
@@ -76,14 +76,11 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideClientHydration(),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([OAuthInterceptor])
-    ),
+    provideHttpClient(withFetch(), withInterceptors([OAuthInterceptor])),
     provideOAuthConfig(keycloakOpenIDConfig),
     {
       provide: PROFILE_SERVICE,
       useExisting: OpenidProfileService
-    },
+    }
   ]
 };

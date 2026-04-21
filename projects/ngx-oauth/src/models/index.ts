@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-export const HEADER_APPLICATION = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
+export const HEADER_APPLICATION = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
 
 export enum OAuthType {
   RESOURCE = 'password',
@@ -17,9 +17,7 @@ export interface ClientCredentialConfig {
   scope?: string;
 }
 
-// tslint:disable-next-line:no-empty-interface
-export interface ResourceConfig extends ClientCredentialConfig {
-}
+export type ResourceConfig = ClientCredentialConfig;
 
 export interface ImplicitConfig {
   authorizePath: string;
@@ -57,7 +55,8 @@ export interface AuthorizationParameters {
 }
 
 export type OAuthParameters = ResourceParameters | AuthorizationParameters;
-export type OAuthTypeConfig = OpenIdConfig
+export type OAuthTypeConfig =
+  | OpenIdConfig
   | AuthorizationCodePKCEConfig
   | AuthorizationCodeConfig
   | ImplicitConfig
@@ -80,8 +79,19 @@ export interface OAuthToken {
   type?: OAuthType;
   expires?: number;
 
-  [x: string]: any;
+  [x: string]: unknown;
 }
+
+export type OAuthRuntimeConfig = Partial<
+  OpenIdConfig &
+    AuthorizationCodePKCEConfig &
+    AuthorizationCodeConfig &
+    ImplicitConfig &
+    ClientCredentialConfig & {
+      userPath: string;
+      introspectionPath: string;
+    }
+>;
 
 export enum OAuthStatus {
   NOT_AUTHORIZED = 'NOT_AUTHORIZED',

@@ -1,12 +1,13 @@
-import {Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import {catchError, concatMap, delay, filter, map, shareReplay, switchMap, tap} from 'rxjs/operators';
-import {firstValueFrom, from, noop, of, ReplaySubject, throwError} from 'rxjs';
+import { catchError, concatMap, delay, filter, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { firstValueFrom, from, noop, of, ReplaySubject, throwError } from 'rxjs';
 import {
   AuthorizationCodeConfig,
   AuthorizationParameters,
   HEADER_APPLICATION,
   OAuthParameters,
+  OAuthRuntimeConfig,
   OAuthStatus,
   OAuthToken,
   OAuthType,
@@ -16,18 +17,15 @@ import {
   ResourceParameters,
   UserInfo
 } from '../models';
-import {Location as Location2} from '@angular/common';
-import {OAuthTokenService} from './o-auth-token.service';
-import {OAuthConfig} from '../config';
+import { Location as Location2 } from '@angular/common';
+import { OAuthTokenService } from './o-auth-token.service';
+import { OAuthConfig } from '../config';
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '');
 
-const base64url = (str: string) => btoa(str)
-  .replace(/\+/g, '-')
-  .replace(/\//g, '_')
-  .replace(/=/g, '');
+const base64url = (str: string) => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-const randomString = (length: number = 48) => {
+const randomString = (length = 48) => {
   const buff = arrToString(crypto.getRandomValues(new Uint8Array(length * 2)));
   return base64url(buff).substring(0, length);
 };
@@ -41,78 +39,101 @@ const parseOauthUri = (hash: string) => {
   const regex = /([^&=]+)=([^&]*)/g;
   const params: Record<string, string> = {};
   let m;
-  // tslint:disable-next-line:no-conditional-assignment
   while ((m = regex.exec(hash)) !== null) {
     params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
   }
-  return Object.keys(params).length && params || {};
+  return (Object.keys(params).length && params) || {};
 };
 
 const jwt = (token: string) => JSON.parse(atob(token.split('.')[1]));
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class OAuthService {
+  protected authConfig = inject(OAuthConfig);
+  protected tokenService = inject(OAuthTokenService);
+  protected http = inject(HttpClient);
+  protected locationService = inject(Location2);
 
   state$ = new ReplaySubject<string>(1);
   config$ = of(this.config).pipe(
     filter(Boolean),
-    filter(config => !!config?.clientId),
-    map(config => config as OpenIdConfig),
-    switchMap(config => !config.issuerPath && of(config) || this.http.get<OpenIdConfiguration>(`${config.issuerPath}/.well-known/openid-configuration?client_id=${config.clientId}`).pipe(
-      tap(v => this.config = {
-        ...v.authorization_endpoint && {authorizePath: v.authorization_endpoint} || {},
-        ...v.token_endpoint && {tokenPath: v.token_endpoint} || {},
-        ...v.revocation_endpoint && {revokePath: v.revocation_endpoint} || {},
-        ...v.code_challenge_methods_supported && {pkce: v.code_challenge_methods_supported.indexOf('S256') > -1} || {},
-        ...v.userinfo_endpoint && {userPath: v.userinfo_endpoint} || {},
-        ...v.introspection_endpoint && {introspectionPath: v.introspection_endpoint} || {},
-        ...v.end_session_endpoint && {logoutPath: v.end_session_endpoint} || {},
-        ...{scope: config.scope || 'openid'}
-      } as any),
-      map(() => this.config)
-    )),
+    filter((config) => !!config?.clientId),
+    map((config) => config as OpenIdConfig),
+    switchMap(
+      (config) =>
+        (!config.issuerPath && of(config)) ||
+        this.http
+          .get<OpenIdConfiguration>(
+            `${config.issuerPath}/.well-known/openid-configuration?client_id=${config.clientId}`
+          )
+          .pipe(
+            tap(
+              (v) =>
+                (this.config = {
+                  ...((v.authorization_endpoint && { authorizePath: v.authorization_endpoint }) || {}),
+                  ...((v.token_endpoint && { tokenPath: v.token_endpoint }) || {}),
+                  ...((v.revocation_endpoint && { revokePath: v.revocation_endpoint }) || {}),
+                  ...((v.code_challenge_methods_supported && {
+                    pkce: v.code_challenge_methods_supported.indexOf('S256') > -1
+                  }) ||
+                    {}),
+                  ...((v.userinfo_endpoint && { userPath: v.userinfo_endpoint }) || {}),
+                  ...((v.introspection_endpoint && { introspectionPath: v.introspection_endpoint }) || {}),
+                  ...((v.end_session_endpoint && { logoutPath: v.end_session_endpoint }) || {}),
+                  ...{ scope: config.scope || 'openid' }
+                } as OAuthTypeConfig)
+            ),
+            map(() => this.config)
+          )
+    ),
     shareReplay(1)
   );
   token$ = this.config$.pipe(
-    tap(config => {
-      const {hash, search, origin, pathname} = this.authConfig.location || {};
+    tap((config) => {
+      const { hash, search, origin, pathname } = this.authConfig.location || {};
       const isImplicitRedirect = hash && /(access_token=)|(error=)/.test(hash);
-      const isAuthCodeRedirect = search && /(code=)|(error=)/.test(search) || hash && /(code=)|(error=)/.test(hash);
+      const isAuthCodeRedirect = (search && /(code=)|(error=)/.test(search)) || (hash && /(code=)|(error=)/.test(hash));
       if (isImplicitRedirect) {
         const parameters = parseOauthUri(hash.substring(1));
         this.token = {
           ...parameters,
-          type: OAuthType.IMPLICIT,
+          type: OAuthType.IMPLICIT
         };
         this.checkResponse(this.token, parameters);
       } else if (isAuthCodeRedirect) {
-        const parameters = parseOauthUri(search && search.substring(1) || hash && hash.substring(1) || '');
+        const parameters = parseOauthUri((search && search.substring(1)) || (hash && hash.substring(1)) || '');
         if (!this.checkResponse(this.token, parameters)) {
           this.token = parameters;
         } else {
           const newParametersString = this.getCleanedUnSearchParameters();
-          const {clientId, clientSecret, tokenPath, scope} = config as AuthorizationCodeConfig;
-          const {codeVerifier} = this.token || {}; //should be set by authorizationUrl construction
-          this.http.post(tokenPath, new HttpParams({
-            fromObject: {
-              code: parameters?.['code'],
-              client_id: clientId,
-              ...clientSecret && {client_secret: clientSecret} || {},
-              redirect_uri: `${origin}${pathname}`,
-              grant_type: 'authorization_code',
-              ...scope && {scope} || {},
-              ...codeVerifier && {code_verifier: codeVerifier} || {}
-            }
-          }), {headers: HEADER_APPLICATION}).pipe(
-          ).subscribe(token => {
-            this.token = {
-              ...token,
-              type: OAuthType.AUTHORIZATION_CODE
-            };
-            this.locationService.replaceState(`${pathname}${newParametersString}`);
-          });
+          const { clientId, clientSecret, tokenPath, scope } = config as AuthorizationCodeConfig;
+          const { codeVerifier } = this.token || {}; //should be set by authorizationUrl construction
+          this.http
+            .post(
+              tokenPath,
+              new HttpParams({
+                fromObject: {
+                  code: parameters?.['code'],
+                  client_id: clientId,
+                  ...((clientSecret && { client_secret: clientSecret }) || {}),
+                  redirect_uri: `${origin}${pathname}`,
+                  grant_type: 'authorization_code',
+                  ...((scope && { scope }) || {}),
+                  ...((codeVerifier && { code_verifier: codeVerifier }) || {})
+                }
+              }),
+              { headers: HEADER_APPLICATION }
+            )
+            .pipe()
+            .subscribe((token) => {
+              this.token = {
+                ...token,
+                type: OAuthType.AUTHORIZATION_CODE
+              };
+              this.locationService.replaceState(`${pathname}${newParametersString}`);
+            });
         }
       }
     }),
@@ -120,14 +141,19 @@ export class OAuthService {
     shareReplay(1)
   );
   status$ = this.token$.pipe(
-    map(token => token.access_token && OAuthStatus.AUTHORIZED || token.error && OAuthStatus.DENIED || OAuthStatus.NOT_AUTHORIZED),
+    map(
+      (token) =>
+        (token.access_token && OAuthStatus.AUTHORIZED) ||
+        (token.error && OAuthStatus.DENIED) ||
+        OAuthStatus.NOT_AUTHORIZED
+    ),
     shareReplay(1)
   );
   userInfo$ = this.status$.pipe(
-    filter(s => s === OAuthStatus.AUTHORIZED),
-    map(() => (this.config as any).userPath),
+    filter((s) => s === OAuthStatus.AUTHORIZED),
+    map(() => (this.config as OAuthRuntimeConfig).userPath),
     filter(Boolean),
-    switchMap(path => this.getUserInfo(path)),
+    switchMap((path) => this.getUserInfo(path)),
     shareReplay(1)
   );
   type$ = this.tokenService.type$;
@@ -165,16 +191,13 @@ export class OAuthService {
     }
   }
 
-  constructor(protected authConfig: OAuthConfig,
-              protected tokenService: OAuthTokenService,
-              protected http: HttpClient,
-              protected locationService: Location2) {
-  }
-
   async login(parameters?: OAuthParameters) {
     if (!!parameters && (parameters as ResourceParameters).password) {
       await this.resourceLogin(parameters as ResourceParameters);
-    } else if (!!parameters && (parameters as AuthorizationParameters).redirectUri && (parameters as AuthorizationParameters).responseType
+    } else if (
+      !!parameters &&
+      (parameters as AuthorizationParameters).redirectUri &&
+      (parameters as AuthorizationParameters).responseType
     ) {
       await this.toAuthorizationUrl(parameters as AuthorizationParameters);
     } else {
@@ -185,128 +208,148 @@ export class OAuthService {
   logout(useLogoutUrl?: boolean) {
     this.revoke();
     this.token = {};
-    const {logoutPath, logoutRedirectUri} = this.authConfig.config as any;
+    const { logoutPath, logoutRedirectUri } = this.authConfig.config as OAuthRuntimeConfig;
     if (useLogoutUrl && logoutPath) {
-      const {origin, pathname} = this.authConfig.location || {};
+      const { origin, pathname } = this.authConfig.location || {};
       const currentPath = `${origin}${pathname}`;
       this.authConfig.location?.replace(`${logoutPath}?post_logout_redirect_uri=${logoutRedirectUri || currentPath}`);
     }
   }
 
   getUserInfo(path?: string) {
-    const {userPath} = this.config as any;
-    return this.http.get<UserInfo>(path || userPath);
+    const { userPath } = this.config as OAuthRuntimeConfig;
+    return this.http.get<UserInfo>((path || userPath)!);
   }
 
   protected revoke() {
-    const {revokePath, clientId, clientSecret} = this.authConfig.config as any;
+    const { revokePath, clientId, clientSecret } = this.authConfig.config as OAuthRuntimeConfig;
     if (revokePath) {
-      const {access_token, refresh_token} = this.token || {};
+      const { access_token, refresh_token } = this.token || {};
       const toRevoke = [];
       if (access_token) {
         toRevoke.push({
-          ...clientId && {client_id: clientId} || {},
-          ...clientSecret && {client_secret: clientSecret} || {},
+          ...((clientId && { client_id: clientId }) || {}),
+          ...((clientSecret && { client_secret: clientSecret }) || {}),
           token: access_token,
           token_type_hint: 'access_token'
         });
       }
       if (refresh_token) {
         toRevoke.push({
-          ...clientId && {client_id: clientId} || {},
-          ...clientSecret && {client_secret: clientSecret} || {},
+          ...((clientId && { client_id: clientId }) || {}),
+          ...((clientSecret && { client_secret: clientSecret }) || {}),
           token: refresh_token,
           token_type_hint: 'refresh_token'
         });
       }
-      from(toRevoke).pipe(
-        concatMap(o => of(o).pipe(delay(300))), // space request to avoid cancellation
-        switchMap(o => this.http.post(revokePath, new HttpParams({fromObject: o}))),
-      ).subscribe(noop);
+      from(toRevoke)
+        .pipe(
+          concatMap((o) => of(o).pipe(delay(300))), // space request to avoid cancellation
+          switchMap((o) => this.http.post(revokePath, new HttpParams({ fromObject: o })))
+        )
+        .subscribe(noop);
     }
   }
 
   protected clientCredentialLogin() {
-    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
-    return firstValueFrom(this.http.post(tokenPath, new HttpParams({
-      fromObject: {
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: OAuthType.CLIENT_CREDENTIAL,
-        ...scope ? {scope} : {},
-      }
-    }), {headers: HEADER_APPLICATION}).pipe(
-      catchError((err) => {
-        this.token = err;
-        return throwError(() => err);
-      }),
-      tap(params => {
-        this.token = {
-          ...params,
-          type: OAuthType.CLIENT_CREDENTIAL,
-        };
-      }),
-    ));
+    const { clientId, clientSecret, tokenPath, scope } = this.authConfig.config as OAuthRuntimeConfig;
+    return firstValueFrom(
+      this.http
+        .post(
+          tokenPath!,
+          new HttpParams({
+            fromObject: {
+              client_id: clientId!,
+              client_secret: clientSecret!,
+              grant_type: OAuthType.CLIENT_CREDENTIAL,
+              ...(scope ? { scope } : {})
+            }
+          }),
+          { headers: HEADER_APPLICATION }
+        )
+        .pipe(
+          catchError((err) => {
+            this.token = err;
+            return throwError(() => err);
+          }),
+          tap((params) => {
+            this.token = {
+              ...params,
+              type: OAuthType.CLIENT_CREDENTIAL
+            };
+          })
+        )
+    );
   }
 
   protected resourceLogin(parameters: ResourceParameters) {
-    const {clientId, clientSecret, tokenPath, scope} = this.authConfig.config as any;
-    const {username, password} = parameters;
-    return firstValueFrom(this.http.post(tokenPath, new HttpParams({
-      fromObject: {
-        client_id: clientId,
-        ...clientSecret && {client_secret: clientSecret} || {},
-        grant_type: OAuthType.RESOURCE,
-        ...scope && {scope} || {},
-        username,
-        password
-      }
-    }), {headers: HEADER_APPLICATION}).pipe(
-      catchError(err => {
-        this.token = err;
-        return throwError(() => err);
-      }),
-      tap(params => {
-        this.token = {
-          ...params,
-          type: OAuthType.RESOURCE,
-        };
-      })
-    ));
+    const { clientId, clientSecret, tokenPath, scope } = this.authConfig.config as OAuthRuntimeConfig;
+    const { username, password } = parameters;
+    return firstValueFrom(
+      this.http
+        .post(
+          tokenPath!,
+          new HttpParams({
+            fromObject: {
+              client_id: clientId!,
+              ...((clientSecret && { client_secret: clientSecret }) || {}),
+              grant_type: OAuthType.RESOURCE,
+              ...((scope && { scope }) || {}),
+              username,
+              password
+            }
+          }),
+          { headers: HEADER_APPLICATION }
+        )
+        .pipe(
+          catchError((err) => {
+            this.token = err;
+            return throwError(() => err);
+          }),
+          tap((params) => {
+            this.token = {
+              ...params,
+              type: OAuthType.RESOURCE
+            };
+          })
+        )
+    );
   }
 
   protected async toAuthorizationUrl(parameters: AuthorizationParameters) {
-    const {config, location} = this.authConfig as any;
-    let authorizationUrl = `${config.authorizePath}`;
-    authorizationUrl += config.authorizePath.includes('?') && '&' || '?';
-    authorizationUrl += `client_id=${config.clientId}`;
+    const { config, location } = this.authConfig;
+    const runtimeConfig = config as OAuthRuntimeConfig;
+    let authorizationUrl = `${runtimeConfig.authorizePath}`;
+    authorizationUrl += (runtimeConfig.authorizePath?.includes('?') && '&') || '?';
+    authorizationUrl += `client_id=${runtimeConfig.clientId}`;
     authorizationUrl += `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`;
     authorizationUrl += `&response_type=${parameters.responseType}`;
-    authorizationUrl += `&scope=${encodeURIComponent(config.scope || '')}`;
+    authorizationUrl += `&scope=${encodeURIComponent(runtimeConfig.scope || '')}`;
     authorizationUrl += `&state=${encodeURIComponent(parameters.state || '')}`;
-    return location?.replace(`${authorizationUrl}${this.generateNonce(config)}${await this.generateCodeChallenge(config)}`);
+    return location?.replace(
+      `${authorizationUrl}${this.generateNonce(runtimeConfig)}${await this.generateCodeChallenge(runtimeConfig)}`
+    );
   }
 
-  protected async generateCodeChallenge(config: any) {
+  protected async generateCodeChallenge(config: OAuthRuntimeConfig) {
     if (config.pkce) {
       const codeVerifier = randomString();
-      this.token = {...this.token, codeVerifier};
+      this.token = { ...this.token, codeVerifier };
       return `&code_challenge=${await pkce(codeVerifier)}&code_challenge_method=S256`;
     }
     return '';
   }
 
-  protected generateNonce(config: any) {
+  protected generateNonce(config: OAuthRuntimeConfig) {
     if (config && config.scope && config.scope.indexOf('openid') > -1) {
       const nonce = randomString(10);
-      this.token = {...this.token, nonce};
+      this.token = { ...this.token, nonce };
       return `&nonce=${nonce}`;
     }
     return '';
   }
 
-  private checkResponse(token?: OAuthToken,
-                        parameters?: Record<string, string>) {
+  private checkResponse(token?: OAuthToken, parameters?: Record<string, string>) {
     this.emitState(parameters);
     this.cleanLocationHash();
     if (!parameters || parameters['error']) {
@@ -320,20 +363,30 @@ export class OAuthService {
   }
 
   private getCleanedUnSearchParameters() {
-    const {search} = this.authConfig.location || {};
-    let searchString = search && search.substring(1) || '';
-    const hashKeys = ['code', 'state', 'error', 'error_description', 'session_state', 'scope', 'authuser', 'prompt', 'iss'];
-    hashKeys.forEach(hashKey => {
+    const { search } = this.authConfig.location || {};
+    let searchString = (search && search.substring(1)) || '';
+    const hashKeys = [
+      'code',
+      'state',
+      'error',
+      'error_description',
+      'session_state',
+      'scope',
+      'authuser',
+      'prompt',
+      'iss'
+    ];
+    hashKeys.forEach((hashKey) => {
       const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
       searchString = searchString.replace(re, '');
     });
-    return searchString.length && `?${searchString}` || '';
+    return (searchString.length && `?${searchString}`) || '';
   }
 
   private cleanLocationHash() {
     if (this.authConfig.location) {
-      const {hash} = this.authConfig.location;
-      let curHash = hash && hash.substring(1) || '';
+      const { hash } = this.authConfig.location;
+      let curHash = (hash && hash.substring(1)) || '';
       const hashKeys = [
         'access_token',
         'token_type',
@@ -348,7 +401,7 @@ export class OAuthService {
         'code',
         'iss'
       ];
-      hashKeys.forEach(hashKey => {
+      hashKeys.forEach((hashKey) => {
         const re = new RegExp('&' + hashKey + '(=[^&]*)?|^' + hashKey + '(=[^&]*)?&?');
         curHash = curHash.replace(re, '');
       });
@@ -357,7 +410,7 @@ export class OAuthService {
   }
 
   private emitState(parameters?: Record<string, string>) {
-    const {state} = parameters || {};
-    state && this.state$.next(state);
+    const { state } = parameters || {};
+    if (state) this.state$.next(state);
   }
 }

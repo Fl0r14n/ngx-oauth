@@ -1,9 +1,9 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {OAuthService, OAuthStatus} from 'ngx-oauth';
-import {ProfileService} from './index';
-import {Observable, switchMap} from 'rxjs';
-import {filter, map} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { OAuthService, OAuthStatus } from 'ngx-oauth';
+import { ProfileService } from './index';
+import { Observable, switchMap } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 /**
  * OAuth token introspection service for keycloak
@@ -12,13 +12,14 @@ import {filter, map} from 'rxjs/operators';
   providedIn: 'root'
 })
 export class IntrospectProfileService implements ProfileService {
-
   introspectPath = '/auth/realms/commerce/protocol/openid-connect/token/introspect';
   clientId = 'hybris';
   clientSecret = '2519368d-8c92-44c9-ba4c-5f3763bc38c9';
 
-  constructor(private http: HttpClient,
-              private oauthService: OAuthService) {
+  constructor(
+    private http: HttpClient,
+    private oauthService: OAuthService
+  ) {
     this.oauthService.ignorePaths.push(new RegExp(this.introspectPath));
   }
 
@@ -36,9 +37,9 @@ export class IntrospectProfileService implements ProfileService {
 
   get profileName$(): Observable<string> {
     return this.oauthService.status$.pipe(
-      filter(s => s === OAuthStatus.AUTHORIZED),
+      filter((s) => s === OAuthStatus.AUTHORIZED),
       switchMap(() => this.introspect()),
-      map((v: any) => v.name),
+      map((v: any) => v.name)
     );
   }
 }

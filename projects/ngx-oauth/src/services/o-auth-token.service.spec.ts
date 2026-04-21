@@ -1,15 +1,14 @@
-import {fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
+import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
-import {of, throwError} from 'rxjs';
+import { of, throwError } from 'rxjs';
 import createSpyObj = jasmine.createSpyObj;
 import Spy = jasmine.Spy;
 import objectContaining = jasmine.objectContaining;
-import {OAuthTokenService} from './o-auth-token.service';
-import {provideOAuthConfig} from '../config';
-import {OAuthHttpClient} from './o-auth-http-client';
+import { OAuthTokenService } from './o-auth-token.service';
+import { provideOAuthConfig } from '../config';
+import { OAuthHttpClient } from './o-auth-http-client';
 
 describe('OAuthTokenService', () => {
-
   let httpClient: HttpClient;
 
   beforeEach(() => {
@@ -17,9 +16,7 @@ describe('OAuthTokenService', () => {
     httpClient = createSpyObj<HttpClient>(['post']);
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(
-          withFetch()
-        ),
+        provideHttpClient(withFetch()),
         provideOAuthConfig({
           config: {
             tokenPath: '/token',
@@ -38,7 +35,7 @@ describe('OAuthTokenService', () => {
     });
   });
 
-  it('should set existing token from storage', done => {
+  it('should set existing token from storage', (done) => {
     const expected = {
       access_token: 'access_token',
       token_type: 'token_type',
@@ -46,13 +43,13 @@ describe('OAuthTokenService', () => {
     };
     localStorage.setItem('token', JSON.stringify(expected));
     const tokenService = TestBed.inject(OAuthTokenService);
-    tokenService.token$.subscribe(token => {
+    tokenService.token$.subscribe((token) => {
       expect(token).toEqual(expected);
       done();
     });
   });
 
-  it('should set token', done => {
+  it('should set token', (done) => {
     const expected = {
       access_token: 'access_token',
       token_type: 'token_type',
@@ -60,14 +57,14 @@ describe('OAuthTokenService', () => {
     };
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = expected;
-    tokenService.token$.subscribe(token => {
+    tokenService.token$.subscribe((token) => {
       expect(token).toEqual(objectContaining(expected));
       expect(tokenService.saved).toEqual(objectContaining(expected));
       done();
     });
   });
 
-  it('should clear token', done => {
+  it('should clear token', (done) => {
     const expected = {};
     const initial = {
       access_token: 'access_token',
@@ -77,14 +74,14 @@ describe('OAuthTokenService', () => {
     localStorage.setItem('token', JSON.stringify(initial));
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = expected;
-    tokenService.token$.subscribe(token => {
+    tokenService.token$.subscribe((token) => {
       expect(token).toEqual(expected);
       expect(tokenService.saved).toEqual(expected);
       done();
     });
   });
 
-  it('should refresh token', done => {
+  it('should refresh token', (done) => {
     const expected = {
       access_token: 'access_token',
       token_type: 'token_type',
@@ -103,7 +100,7 @@ describe('OAuthTokenService', () => {
     localStorage.setItem('token', JSON.stringify(initial));
     (httpClient.post as Spy).and.returnValue(of(expected));
     const tokenService = TestBed.inject(OAuthTokenService);
-    tokenService.token$.subscribe(token => {
+    tokenService.token$.subscribe((token) => {
       expect(token).toEqual(objectContaining(expected));
       expect(tokenService.saved).toEqual(objectContaining(expected));
       done();
@@ -127,7 +124,7 @@ describe('OAuthTokenService', () => {
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
     tick(1100);
-    tokenService.token$.subscribe(token => {
+    tokenService.token$.subscribe((token) => {
       expect(token).toEqual(objectContaining(expected));
       expect(tokenService.saved).toEqual(objectContaining(expected));
       flush();
@@ -146,7 +143,7 @@ describe('OAuthTokenService', () => {
     const tokenService = TestBed.inject(OAuthTokenService);
     tokenService.token = initial;
     tick(1100);
-    tokenService.token$.subscribe(token => {
+    tokenService.token$.subscribe((token) => {
       expect(token).toEqual(expected);
       expect(tokenService.saved).toEqual(expected);
       flush();

@@ -1,20 +1,20 @@
-import {FactoryProvider, inject, Injectable, InjectionToken, ValueProvider} from '@angular/core';
-import {OAuthTypeConfig} from '../models';
+import { FactoryProvider, inject, Injectable, InjectionToken, ValueProvider } from '@angular/core';
+import { OAuthTypeConfig } from '../models';
 
 export const OAUTH_CONFIG = new InjectionToken<OAuthConfig[]>('OAuthConfig');
 
 @Injectable({
   providedIn: 'root',
-  useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({...p, ...c}), defaultOAuthConfig)
+  useFactory: () => inject(OAUTH_CONFIG).reduce((p, c) => ({ ...p, ...c }), defaultOAuthConfig)
 })
 export abstract class OAuthConfig {
   config?: OAuthTypeConfig;
   storageKey?: string;
   storage?: Storage;
-  location?: Location
+  location?: Location;
   ignorePaths?: RegExp[];
 
-  [x: string]: any;
+  [x: string]: unknown;
 }
 
 export const provideOAuthConfig = (config: OAuthConfig = {}): ValueProvider => ({
@@ -23,7 +23,10 @@ export const provideOAuthConfig = (config: OAuthConfig = {}): ValueProvider => (
   multi: true
 });
 
-export const provideOAuthConfigFactory = (factory: Function, deps?: any[]): FactoryProvider => ({
+export const provideOAuthConfigFactory = (
+  factory: (...args: unknown[]) => unknown,
+  deps?: unknown[]
+): FactoryProvider => ({
   provide: OAUTH_CONFIG,
   useFactory: factory,
   deps: deps,
@@ -35,4 +38,4 @@ export const defaultOAuthConfig: OAuthConfig = {
   location: globalThis.location,
   storageKey: 'token',
   ignorePaths: []
-}
+};

@@ -1,5 +1,5 @@
-import {Observable} from 'rxjs';
-import {InjectionToken} from '@angular/core';
+import { Observable } from 'rxjs';
+import { InjectionToken } from '@angular/core';
 
 export interface ProfileService {
   get profileName$(): Observable<string | undefined>;

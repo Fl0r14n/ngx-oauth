@@ -1,10 +1,10 @@
-import {APP_BASE_HREF} from '@angular/common';
-import {CommonEngine} from '@angular/ssr/node';
+import { APP_BASE_HREF } from '@angular/common';
+import { CommonEngine } from '@angular/ssr/node';
 import express from 'express';
-import {dirname, join, resolve} from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
-import {fileURLToPath} from 'node:url';
-import {createServer} from 'node:https';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:https';
 
 // import proxy.conf.js
 
@@ -16,20 +16,22 @@ export function app(): express.Express {
   const indexHtml = join(serverDistFolder, 'index.server.html');
   const commonEngine = new CommonEngine();
 
-
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
   // Example Express Rest API endpoints
   // server.get('/api/**', (req, res) => { });
   // Serve static files from /browser
-  server.get('*.*', express.static(browserDistFolder, {
-    maxAge: '1y'
-  }));
+  server.get(
+    '*.*',
+    express.static(browserDistFolder, {
+      maxAge: '1y'
+    })
+  );
 
   // All regular routes use the Angular engine
   server.get('*', (req, res, next) => {
-    const {protocol, originalUrl, baseUrl, headers} = req;
+    const { protocol, originalUrl, baseUrl, headers } = req;
 
     commonEngine
       .render({
@@ -37,9 +39,7 @@ export function app(): express.Express {
         documentFilePath: indexHtml,
         url: `${protocol}://${headers.host}${originalUrl}`,
         publicPath: browserDistFolder,
-        providers: [
-          {provide: APP_BASE_HREF, useValue: baseUrl},
-        ],
+        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }]
       })
       .then((html) => res.send(html))
       .catch((err) => next(err));
@@ -50,11 +50,11 @@ export function app(): express.Express {
 
 function run(): void {
   const port = process.env['PORT'] || 443;
-  const distFolder = dirname(fileURLToPath(import.meta.url))
+  const distFolder = dirname(fileURLToPath(import.meta.url));
   const server = createServer(app());
   server.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }
 
-run()
+run();

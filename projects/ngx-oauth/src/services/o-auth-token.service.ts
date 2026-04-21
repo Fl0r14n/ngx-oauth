@@ -1,36 +1,34 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, distinctUntilChanged, Observable, of, switchMap} from 'rxjs';
-import {HEADER_APPLICATION, OAuthToken} from '../models';
-import {catchError, map, shareReplay} from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
+import { HEADER_APPLICATION, OAuthRuntimeConfig, OAuthToken } from '../models';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 import { HttpParams } from '@angular/common/http';
-import {OAuthHttpClient} from './o-auth-http-client';
-import {OAuthConfig} from '../config';
+import { OAuthHttpClient } from './o-auth-http-client';
+import { OAuthConfig } from '../config';
 
-const isExpiredToken = (token?: OAuthToken) => token && token.expires && Date.now() > token.expires || false;
+const isExpiredToken = (token?: OAuthToken) => (token && token.expires && Date.now() > token.expires) || false;
 
 @Injectable({
   providedIn: 'root'
 })
 export class OAuthTokenService {
+  protected authConfig = inject(OAuthConfig);
+  protected http = inject(OAuthHttpClient);
 
   #token$ = new BehaviorSubject<OAuthToken>(this.saved);
   token$ = this.#token$.pipe(
     distinctUntilChanged((p, c) => JSON.stringify(p || null) === JSON.stringify(c || null)),
     shareReplay(1),
-    switchMap(token => !isExpiredToken(token) && of(token) || this.refreshToken(token)),
+    switchMap((token) => (!isExpiredToken(token) && of(token)) || this.refreshToken(token))
   );
   type$ = this.token$.pipe(
-    map(token => token?.type),
+    map((token) => token?.type),
     shareReplay(1)
   );
   accessToken$ = this.token$.pipe(
-    map(token => token?.access_token),
-    shareReplay(1),
+    map((token) => token?.access_token),
+    shareReplay(1)
   );
-
-  constructor(protected authConfig: OAuthConfig,
-              protected http: OAuthHttpClient) {
-  }
 
   get token() {
     return this.#token$.value;
@@ -40,19 +38,19 @@ export class OAuthTokenService {
     const expiresIn = Number(token.expires_in) || 0;
     const result = {
       ...token,
-      ...expiresIn && {expires: Date.now() + expiresIn * 1000} || {}
+      ...((expiresIn && { expires: Date.now() + expiresIn * 1000 }) || {})
     };
     this.saved = result;
     this.#token$.next(result);
   }
 
   get saved() {
-    const {storageKey, storage} = this.authConfig;
-    return storageKey && storage && storage[storageKey] && JSON.parse(storage[storageKey]) || {};
+    const { storageKey, storage } = this.authConfig;
+    return (storageKey && storage && storage[storageKey] && JSON.parse(storage[storageKey])) || {};
   }
 
   set saved(token: OAuthToken) {
-    const {storageKey, storage} = this.authConfig;
+    const { storageKey, storage } = this.authConfig;
     if (storage && storageKey) {
       if (token) {
         storage[storageKey] = JSON.stringify(token);
@@ -63,30 +61,41 @@ export class OAuthTokenService {
   }
 
   protected refreshToken(token?: OAuthToken): Observable<OAuthToken> {
-    const {tokenPath, clientId, clientSecret, scope} = this.authConfig.config as any;
-    const {refresh_token} = token || {};
-    return tokenPath && refresh_token && this.http.post<OAuthToken>(tokenPath, new HttpParams({
-      fromObject: {
-        client_id: clientId,
-        ...clientSecret && {client_secret: clientSecret} || {},
-        grant_type: 'refresh_token',
-        refresh_token,
-        ...scope && {scope} || {},
-      }
-    }), {
-      headers: HEADER_APPLICATION
-    }).pipe(
-      catchError(() => {
-        this.token = {};
-        return of(this.token);
-      }),
-      map(token => {
-        this.token = {
-          ...this.token,
-          ...token
-        };
-        return this.token;
-      })
-    ) || of(token);
+    const { tokenPath, clientId, clientSecret, scope } = this.authConfig.config as OAuthRuntimeConfig;
+    const { refresh_token } = token || {};
+    return (
+      (tokenPath &&
+        refresh_token &&
+        this.http
+          .post<OAuthToken>(
+            tokenPath,
+            new HttpParams({
+              fromObject: {
+                client_id: clientId!,
+                ...((clientSecret && { client_secret: clientSecret }) || {}),
+                grant_type: 'refresh_token',
+                refresh_token,
+                ...((scope && { scope }) || {})
+              }
+            }),
+            {
+              headers: HEADER_APPLICATION
+            }
+          )
+          .pipe(
+            catchError(() => {
+              this.token = {};
+              return of(this.token);
+            }),
+            map((token) => {
+              this.token = {
+                ...this.token,
+                ...token
+              };
+              return this.token;
+            })
+          )) ||
+      of(token ?? {})
+    );
   }
 }

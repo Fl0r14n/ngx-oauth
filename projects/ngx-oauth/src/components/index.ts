@@ -1,1 +1,1 @@
-export * from './o-auth-login.component'
+export * from './o-auth-login.component';

@@ -17,6 +17,7 @@ export interface OAuthLoginI18n {
 
 @Component({
     selector: 'oauth-login',
+    standalone: true,
     imports: [
         CommonModule,
         FormsModule

@@ -6,7 +6,7 @@
     "ngx-oauth": {
       "projectType": "library",
       "root": "projects/ngx-oauth",
-      "sourceRoot": "projects/ngx-oauth/src",
+      "sourceRoot": "projects/ngx-oauth",
       "prefix": "lib",
       "architect": {
         "build": {

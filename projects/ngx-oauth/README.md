@@ -155,11 +155,10 @@ or create your custom login template using OAuthService
   <oauth-login>
     <ng-template #login let-li="login" let-s="status" let-lo="logout">
       <form (submit)="li({username: username, password: password})">
-        <ng-container *ngIf="s === OAuthStatus.AUTHORIZED; else loginTemplate">
+        @if (s === OAuthStatus.AUTHORIZED) {
           <h2>profileName</h2>
           <button (click)="lo()">Logout</button>
-        </ng-container>
-        <ng-template #loginTemplate>
+        } @else {
           <div class="card">
             <div class="card-header text-center">
               <h2 class="m-0 p-3">
@@ -182,7 +181,7 @@ or create your custom login template using OAuthService
               </div>
             </div>
           </div>
-        </ng-template>
+        }
       </form>
     </ng-template>
   </oauth-login>

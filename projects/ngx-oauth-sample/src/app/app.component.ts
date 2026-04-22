@@ -1,9 +1,9 @@
-import { Component, inject } from '@angular/core';
-import { OAuthService, OAuthType } from 'ngx-oauth';
-import { OAuthLoginComponent } from 'ngx-oauth/component';
-import { Observable } from 'rxjs';
-import { PROFILE_SERVICE, ProfileService } from './service';
-import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core'
+import { OAuthService, OAuthType } from 'ngx-oauth'
+import { OAuthLoginComponent } from 'ngx-oauth/component'
+import { Observable } from 'rxjs'
+import { PROFILE_SERVICE, ProfileService } from './service'
+import { CommonModule } from '@angular/common'
 
 @Component({
   selector: 'app-root',
@@ -19,8 +19,7 @@ import { CommonModule } from '@angular/common';
               [profileName$]="profileName$"
               [i18n]="i18n"
               [useLogoutUrl]="useLogoutUrl"
-              [(state)]="state"
-            ></oauth-login>
+              [(state)]="state"></oauth-login>
           </li>
         </ul>
       </nav>
@@ -32,32 +31,32 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class AppComponent {
-  private _state = 'some_salt_dummy_state';
-  useLogoutUrl = true;
-  status$ = this.oauthService.status$;
-  type = OAuthType.AUTHORIZATION_CODE;
+  private _state = 'some_salt_dummy_state'
+  useLogoutUrl = true
+  status$ = this.oauthService.status$
+  type = OAuthType.AUTHORIZATION_CODE
 
-  private oauthService = inject(OAuthService);
-  private profileService = inject(ProfileService, { optional: true }) ?? inject(PROFILE_SERVICE);
+  private oauthService = inject(OAuthService)
+  private profileService = inject(ProfileService, { optional: true }) ?? inject(PROFILE_SERVICE)
 
   i18n = {
     username: 'Username'
-  };
+  }
 
   get state(): string {
-    return this._state;
+    return this._state
   }
 
   set state(value: string) {
-    this._state = value;
+    this._state = value
   }
 
   get profileName$(): Observable<string | undefined> | undefined {
-    return this.profileService.profileName$;
+    return this.profileService.profileName$
   }
 
   refresh() {
     //test expired token
-    this.oauthService.getUserInfo().subscribe();
+    this.oauthService.getUserInfo().subscribe()
   }
 }

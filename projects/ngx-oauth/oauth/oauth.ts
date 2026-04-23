@@ -30,13 +30,7 @@ const pkce = async (value: string) => {
   return base64url(arrToString(new Uint8Array(buff)))
 }
 const parseOauthUri = (hash: string) => {
-  const regex = /([^&=]+)=([^&]*)/g
-  const params: Record<string, string> = {}
-  for (const m of hash.matchAll(regex)) {
-    if (m[1] && m[2]) {
-      params[decodeURIComponent(m[1])] = decodeURIComponent(m[2])
-    }
-  }
+  const params = Object.fromEntries(new URLSearchParams(hash))
   return (Object.keys(params).length && params) || {}
 }
 
@@ -129,9 +123,6 @@ export const OAUTH = new InjectionToken('OAUTH', {
           ...((v?.authorization_endpoint && { authorizePath: v.authorization_endpoint }) || {}),
           ...((v?.token_endpoint && { tokenPath: v.token_endpoint }) || {}),
           ...((v?.revocation_endpoint && { revokePath: v.revocation_endpoint }) || {}),
-          ...((pkce === undefined &&
-            v?.code_challenge_methods_supported && { pkce: v.code_challenge_methods_supported.indexOf('S256') > -1 }) ||
-            {}),
           ...((v?.userinfo_endpoint && { userPath: v.userinfo_endpoint }) || {}),
           ...((v?.introspection_endpoint && { introspectionPath: v.introspection_endpoint }) || {}),
           ...((v?.end_session_endpoint && { logoutPath: v.end_session_endpoint }) || {}),

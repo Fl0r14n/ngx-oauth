@@ -18,11 +18,9 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
       return (token_type && access_token && `${token_type} ${access_token}`) || undefined
     })
     const status = computed(() => {
-      const { value } = token()
+      const { error, access_token } = token()
       return (
-        (value?.error && OAuthStatus.DENIED) ||
-        (value?.access_token && !isExpiredToken(value) && OAuthStatus.AUTHORIZED) ||
-        OAuthStatus.NOT_AUTHORIZED
+        (error && OAuthStatus.DENIED) || (access_token && !isExpiredToken(token()) && OAuthStatus.AUTHORIZED) || OAuthStatus.NOT_AUTHORIZED
       )
     })
     const isAuthorized = computed(() => status() === OAuthStatus.AUTHORIZED)

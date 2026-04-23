@@ -10,7 +10,13 @@ import {
 import { OAUTH_TOKEN } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_OPENID_CONFIG, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
+import {
+  OAUTH_AUTHORIZE,
+  OAUTH_CLIENT_CREDENTIAL,
+  OAUTH_OPENID_CONFIG,
+  OAUTH_RESOURCE_OWNER,
+  OAUTH_REVOKE
+} from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
@@ -139,22 +145,6 @@ export const OAUTH = new InjectionToken('OAUTH', {
     }
 
     const toAuthorizationUrl = async (parameters: AuthorizationCodeParameters) => {
-      const generateNonce = (scope: string) => {
-        if (scope.indexOf('openid') > -1) {
-          const nonce = randomString()
-          token.set({ ...token(), nonce })
-          return `&nonce=${nonce}`
-        }
-        return ''
-      }
-      const generateCodeChallenge = async (doPkce: any) => {
-        if (doPkce) {
-          const code_verifier = randomString()
-          token.set({ ...token(), code_verifier })
-          return `&code_challenge=${await pkce(code_verifier)}&code_challenge_method=S256`
-        }
-        return ''
-      }
       const { authorizePath, clientId, scope, pkce } = config() as any
       let authorizationUrl = `${authorizePath}`
       authorizationUrl += (authorizePath.includes('?') && '&') || '?'
@@ -165,6 +155,24 @@ export const OAUTH = new InjectionToken('OAUTH', {
       authorizationUrl += `&scope=${encodeURIComponent(scope || '')}`
       authorizationUrl += `&state=${encodeURIComponent(parameters.state || '')}`
       return globalThis.location?.replace(`${authorizationUrl}${generateNonce(scope)}${await generateCodeChallenge(pkce)}`)
+    }
+
+    const generateNonce = (scope: string) => {
+      if (scope.indexOf('openid') > -1) {
+        const nonce = randomString()
+        token.set({ ...token(), nonce })
+        return `&nonce=${nonce}`
+      }
+      return ''
+    }
+
+    const generateCodeChallenge = async (doPkce: any) => {
+      if (doPkce) {
+        const code_verifier = randomString()
+        token.set({ ...token(), code_verifier })
+        return `&code_challenge=${await pkce(code_verifier)}&code_challenge_method=S256`
+      }
+      return ''
     }
 
     return {

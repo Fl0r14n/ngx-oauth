@@ -14,11 +14,18 @@ export const OAUTH_FETCH = new InjectionToken<typeof fetch>('OAUTH_FETCH', {
   factory: () => {
     const { token, accessToken, isExpiredToken } = inject(OAUTH_TOKEN)
     const refreshFn = inject(OAUTH_REFRESH)
+    let inFlight: Promise<void> | undefined
+    const refreshIfExpired = () => {
+      if (inFlight) return inFlight
+      if (!isExpiredToken(token())) return
+      inFlight = refreshFn(token(), config() as any)
+        .then(r => void token.set(r ?? {}))
+        .finally(() => (inFlight = undefined))
+      return inFlight
+    }
     return async (input, init) => {
       if (!isPathIgnored(input)) {
-        if (isExpiredToken(token())) {
-          token.set((await refreshFn(token(), config() as any)) ?? {})
-        }
+        await refreshIfExpired()
         const at = accessToken()
         if (at) {
           const headers = new Headers(init?.headers)

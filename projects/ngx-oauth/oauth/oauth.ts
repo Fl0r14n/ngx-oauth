@@ -10,7 +10,13 @@ import {
 import { token } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_OPEN_ID_CONFIG, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
+import {
+  OAUTH_AUTHORIZE,
+  OAUTH_CLIENT_CREDENTIAL,
+  OAUTH_OPEN_ID_CONFIG,
+  OAUTH_RESOURCE_OWNER,
+  OAUTH_REVOKE
+} from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
@@ -49,7 +55,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
     const login = async (parameters?: OAuthParameters) => {
       await autoconfigOauth()
       if (!!parameters && (parameters as ResourceOwnerParameters).password) {
-        token.set = (await resourceOwnerLogin(parameters as ResourceOwnerParameters, config() as ResourceOwnerConfig)) || {}
+        token.set((await resourceOwnerLogin(parameters as ResourceOwnerParameters, config() as ResourceOwnerConfig)) || {})
       } else if (
         !!parameters &&
         (parameters as AuthorizationCodeParameters).redirectUri &&
@@ -57,7 +63,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
       ) {
         await toAuthorizationUrl(parameters as AuthorizationCodeParameters)
       } else {
-        token.set = (await clientCredentialLogin(config() as ClientCredentialConfig)) || {}
+        token.set((await clientCredentialLogin(config() as ClientCredentialConfig)) || {})
       }
     }
 
@@ -158,7 +164,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
       let authorizationUrl = `${authorizePath}`
       authorizationUrl += (authorizePath.includes('?') && '&') || '?'
       authorizationUrl += `client_id=${clientId}`
-      token.set = { ...token(), redirect_uri: parameters.redirectUri }
+      token.set({ ...token(), redirect_uri: parameters.redirectUri })
       authorizationUrl += `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`
       authorizationUrl += `&response_type=${parameters.responseType}`
       authorizationUrl += `&scope=${encodeURIComponent(scope || '')}`

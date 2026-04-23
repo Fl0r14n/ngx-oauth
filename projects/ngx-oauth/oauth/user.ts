@@ -1,18 +1,18 @@
 import { inject, InjectionToken, resource } from '@angular/core'
 import { config } from './config'
 import { OAUTH_FETCH } from './fetch'
-import { OAUTH_USER_INFO } from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 import { OAUTH_TOKEN } from './token'
 import { OpenIdConfig, UserInfo } from './types'
+import { OAUTH_USER_INFO } from './functions'
 
 export const OAUTH_USER = new InjectionToken('OAUTH_USER', {
   providedIn: 'root',
   factory: () => {
     const { token, isAuthorized } = inject(OAUTH_TOKEN)
-    const verifyJwtFn = inject(OAUTH_VERIFY_JWT)
-    const userInfoFn = inject(OAUTH_USER_INFO)
-    const fetchFn = inject(OAUTH_FETCH)
+    const verifyJwt = inject(OAUTH_VERIFY_JWT)
+    const userInfo = inject(OAUTH_USER_INFO)
+    const fetch = inject(OAUTH_FETCH)
     return resource<UserInfo | undefined, { idToken?: string; authorized: boolean; userPath?: string }>({
       params: () => ({
         idToken: token().id_token,
@@ -20,8 +20,8 @@ export const OAUTH_USER = new InjectionToken('OAUTH_USER', {
         userPath: (config() as OpenIdConfig)?.userPath
       }),
       loader: async ({ params: { idToken, authorized, userPath } }) => {
-        if (idToken) return verifyJwtFn(idToken)
-        if (authorized && userPath) return userInfoFn({ userPath } as OpenIdConfig, fetchFn)
+        if (idToken) return verifyJwt(idToken)
+        if (authorized && userPath) return userInfo({ userPath } as OpenIdConfig, fetch)
         return undefined
       }
     })

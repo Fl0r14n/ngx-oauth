@@ -1,12 +1,5 @@
 import { InjectionToken } from '@angular/core'
-import {
-  ClientCredentialConfig,
-  OAuthToken,
-  OAuthType,
-  OpenIdConfig,
-  ResourceOwnerConfig,
-  ResourceOwnerParameters
-} from './types'
+import { ClientCredentialConfig, OAuthToken, OAuthType, OpenIdConfig, ResourceOwnerConfig, ResourceOwnerParameters } from './types'
 
 const HEADERS = { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' }
 
@@ -155,7 +148,7 @@ export const OAUTH_RESOURCE_OWNER = new InjectionToken('OAUTH_RESOURCE_OWNER', {
   factory: () => resourceOwnerLogin
 })
 
-export const OAUTH_OPEN_ID_CONFIG = new InjectionToken('OAUTH_OPEN_ID_CONFIG', {
+export const OAUTH_OPENID_CONFIG = new InjectionToken('OAUTH_OPENID_CONFIG', {
   providedIn: 'root',
   factory: () => openIdConfiguration
 })

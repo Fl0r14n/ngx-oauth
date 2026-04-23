@@ -1,11 +1,20 @@
-import { Component, ContentChild, HostListener, Input, Output, TemplateRef, ViewEncapsulation, inject } from '@angular/core'
-import { Observable, take } from 'rxjs'
-import { tap } from 'rxjs/operators'
+import {
+  Component,
+  computed,
+  contentChild,
+  effect,
+  HostListener,
+  inject,
+  input,
+  output,
+  TemplateRef,
+  ViewEncapsulation
+} from '@angular/core'
 import { CommonModule, Location as Location2 } from '@angular/common'
 import { FormsModule } from '@angular/forms'
-import { OAuthParameters, OAuthType, OAuthStatus, OAuthService } from 'ngx-oauth'
+import { OAUTH, OAuthParameters, OAuthStatus, OAuthType } from 'ngx-oauth'
 
-export interface OAuthLoginI18n {
+export type OAuthLoginI18n = {
   username?: string
   password?: string
   submit?: string
@@ -14,70 +23,76 @@ export interface OAuthLoginI18n {
   denied?: string
 }
 
+const defaultI18n: OAuthLoginI18n = {
+  username: 'Username',
+  password: 'Password',
+  submit: 'Sign in',
+  notAuthorized: 'Sign in',
+  authorized: 'Welcome',
+  denied: 'Access Denied. Try again!'
+}
+
 @Component({
   selector: 'oauth-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    @if (loginTemplate) {
+    @if (loginTemplate(); as tpl) {
       <ng-container
-        [ngTemplateOutlet]="loginTemplate"
-        [ngTemplateOutletContext]="{ login: loginFunction, logout: logoutFunction, status: status$ | async }">
-      </ng-container>
-    } @else {
-      @if (status$ | async; as status) {
-        @if (type === OAuthType.RESOURCE) {
-          <div class="oauth dropdown text-end {{ collapse ? 'show' : '' }}">
-            <button class="btn btn-link p-0 dropdown-toggle" (click)="status === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
-              <ng-container *ngTemplateOutlet="message"></ng-container>
-            </button>
-            <div class="dropdown-menu mr-3 {{ collapse ? 'show' : '' }}">
-              @if (status === OAuthStatus.NOT_AUTHORIZED || status === OAuthStatus.DENIED) {
-                <form class="p-3" #form="ngForm" (submit)="login({ username: username, password: password })">
-                  <div class="mb-3">
-                    <input type="text" class="form-control" name="username" required [(ngModel)]="username" [placeholder]="i18n.username" />
-                  </div>
-                  <div class="mb-3">
-                    <input
-                      type="password"
-                      class="form-control"
-                      name="password"
-                      required
-                      [(ngModel)]="password"
-                      [placeholder]="i18n.password" />
-                  </div>
-                  <div class="text-end">
-                    <button type="submit" class="btn btn-primary" [disabled]="form.invalid">{{ i18n.submit }}</button>
-                  </div>
-                </form>
-              }
-            </div>
-          </div>
-        } @else {
-          <button
-            type="button"
-            class="oauth"
-            (click)="
-              status === OAuthStatus.AUTHORIZED ? logout() : login({ responseType: responseType, redirectUri: redirectUri, state: state })
-            ">
-            <ng-container *ngTemplateOutlet="message"></ng-container>
+        [ngTemplateOutlet]="tpl"
+        [ngTemplateOutletContext]="{ login: loginFunction, logout: logoutFunction, status: status() }" />
+    } @else if (status(); as s) {
+      @if (type() === OAuthType.RESOURCE) {
+        <div class="oauth dropdown text-end {{ collapse ? 'show' : '' }}">
+          <button class="btn btn-link p-0 dropdown-toggle" (click)="s === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
+            <ng-container *ngTemplateOutlet="message" />
           </button>
-        }
-        <ng-template #message>
-          @if (status === OAuthStatus.NOT_AUTHORIZED) {
-            <span class="not-authorized" [innerHTML]="i18n.notAuthorized"></span>
-          }
-          @if (status === OAuthStatus.AUTHORIZED) {
-            <span class="authorized">
-              <span class="welcome" [innerHTML]="i18n.authorized + '&nbsp;'"></span>
-              <strong class="profile-name" [innerHTML]="profileName"></strong>
-            </span>
-          }
-          @if (status === OAuthStatus.DENIED) {
-            <span class="denied" [innerHTML]="i18n.denied"></span>
-          }
-        </ng-template>
+          <div class="dropdown-menu mr-3 {{ collapse ? 'show' : '' }}">
+            @if (s === OAuthStatus.NOT_AUTHORIZED || s === OAuthStatus.DENIED) {
+              <form class="p-3" #form="ngForm" (submit)="login({ username: username, password: password })">
+                <div class="mb-3">
+                  <input type="text" class="form-control" name="username" required [(ngModel)]="username" [placeholder]="i18n().username" />
+                </div>
+                <div class="mb-3">
+                  <input
+                    type="password"
+                    class="form-control"
+                    name="password"
+                    required
+                    [(ngModel)]="password"
+                    [placeholder]="i18n().password" />
+                </div>
+                <div class="text-end">
+                  <button type="submit" class="btn btn-primary" [disabled]="form.invalid">{{ i18n().submit }}</button>
+                </div>
+              </form>
+            }
+          </div>
+        </div>
+      } @else {
+        <button
+          type="button"
+          class="oauth"
+          (click)="
+            s === OAuthStatus.AUTHORIZED ? logout() : login({ responseType: responseType(), redirectUri: redirectUri(), state: state() })
+          ">
+          <ng-container *ngTemplateOutlet="message" />
+        </button>
       }
+      <ng-template #message>
+        @if (s === OAuthStatus.NOT_AUTHORIZED) {
+          <span class="not-authorized" [innerHTML]="i18n().notAuthorized"></span>
+        }
+        @if (s === OAuthStatus.AUTHORIZED) {
+          <span class="authorized">
+            <span class="welcome" [innerHTML]="i18n().authorized + '&nbsp;'"></span>
+            <strong class="profile-name" [innerHTML]="displayName()"></strong>
+          </span>
+        }
+        @if (s === OAuthStatus.DENIED) {
+          <span class="denied" [innerHTML]="i18n().denied"></span>
+        }
+      </ng-template>
     }
   `,
   styles: [
@@ -120,94 +135,60 @@ export interface OAuthLoginI18n {
   encapsulation: ViewEncapsulation.None
 })
 export class OAuthLoginComponent {
-  private oauthService = inject(OAuthService)
+  private oauth = inject(OAUTH)
   private locationService = inject(Location2)
 
-  #redirectUri?: string
-  #responseType?: string
-  #i18n: OAuthLoginI18n = {
-    username: 'Username',
-    password: 'Password',
-    submit: 'Sign in',
-    notAuthorized: 'Sign in',
-    authorized: 'Welcome',
-    denied: 'Access Denied. Try again!'
-  }
+  readonly OAuthStatus = OAuthStatus
+  readonly OAuthType = OAuthType
 
-  get i18n() {
-    return this.#i18n
-  }
+  type = input<OAuthType>(OAuthType.RESOURCE)
+  logoutRedirectUri = input<string | undefined>(undefined)
+  state = input('')
+  profileName = input<string | undefined>(undefined)
 
-  @Input()
-  set i18n(i18n) {
-    this.#i18n = {
-      ...this.#i18n,
-      ...i18n
-    }
-  }
+  protected i18nInput = input<OAuthLoginI18n>({}, { alias: 'i18n' })
+  i18n = computed<OAuthLoginI18n>(() => ({ ...defaultI18n, ...this.i18nInput() }))
 
-  @Input()
-  type: OAuthType = OAuthType.RESOURCE
+  protected redirectUriInput = input<string | undefined>(undefined, { alias: 'redirectUri' })
+  redirectUri = computed(() => this.redirectUriInput() || `${globalThis.location?.origin}${this.locationService.path(true) || '/'}`)
 
-  get redirectUri() {
-    return this.#redirectUri || `${globalThis.location?.origin}${this.locationService.path(true) || '/'}`
-  }
+  protected responseTypeInput = input<string | undefined>(undefined, { alias: 'responseType' })
+  responseType = computed(() => this.responseTypeInput() || this.type())
 
-  @Input()
-  set redirectUri(redirectUri: string) {
-    if (redirectUri) {
-      this.#redirectUri = redirectUri
-    }
-  }
+  loginTemplate = contentChild<TemplateRef<unknown>>('login')
 
-  @Input()
-  set responseType(responseType: string) {
-    if (this.responseType) {
-      this.#responseType = responseType
-    }
-  }
+  status = this.oauth.status
+  private token = this.oauth.token
 
-  get responseType() {
-    return this.#responseType || this.type
-  }
+  displayName = computed(() => {
+    const override = this.profileName()
+    if (override) return override
+    const t = this.token()
+    const payload = t?.id_token?.split('.')[1]
+    const info = (payload && JSON.parse(atob(payload))) || {}
+    return info.name || info.username || info.email || info.sub || ''
+  })
 
-  @Input()
-  useLogoutUrl = false
-  @Input()
-  state = ''
-  @Output()
-  stateChange = this.oauthService.state$.asObservable()
-  @Input()
-  profileName$: Observable<string | undefined> | undefined
-  @ContentChild('login', { static: false })
-  loginTemplate: TemplateRef<unknown> | null = null
+  stateChange = output<string | undefined>()
+
   username = ''
   password = ''
-  profileName?: string
-  OAuthStatus = OAuthStatus
-  OAuthType = OAuthType
   collapse = false
-  status$ = this.oauthService.status$.pipe(
-    tap(s => {
-      if (s === OAuthStatus.AUTHORIZED && this.profileName$) {
-        this.profileName$.pipe(take(1)).subscribe(n => (this.profileName = n))
-      } else {
-        const { token } = this.oauthService
-        const userInfo = (token && token.id_token && JSON.parse(atob(token.id_token.split('.')[1]))) || {}
-        this.profileName = userInfo.name || userInfo.username || userInfo.email || userInfo.sub || ''
-      }
-    })
-  )
+
   loginFunction = (p: OAuthParameters) => this.login(p)
   logoutFunction = () => this.logout()
 
+  constructor() {
+    effect(() => this.stateChange.emit(this.oauth.state()))
+  }
+
   logout() {
-    this.oauthService.logout(this.useLogoutUrl)
+    return this.oauth.logout(this.logoutRedirectUri(), this.state())
   }
 
   login(parameters: OAuthParameters) {
     this.collapse = false
-    return this.oauthService.login(parameters)
+    return this.oauth.login(parameters)
   }
 
   toggleCollapse() {

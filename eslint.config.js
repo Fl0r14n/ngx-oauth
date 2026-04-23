@@ -33,6 +33,9 @@ module.exports = defineConfig([
           style: "kebab-case",
         },
       ],
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "@typescript-eslint/no-explicit-any": "off",
+      semi: ["error", "never"],
     },
   },
   {

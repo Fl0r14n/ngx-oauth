@@ -10,7 +10,13 @@ import {
 import { OAUTH_TOKEN } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_OPEN_ID_CONFIG, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
+import {
+  OAUTH_AUTHORIZE,
+  OAUTH_CLIENT_CREDENTIAL,
+  OAUTH_OPEN_ID_CONFIG,
+  OAUTH_RESOURCE_OWNER,
+  OAUTH_REVOKE
+} from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
@@ -37,7 +43,7 @@ const parseOauthUri = (hash: string) => {
 export const OAUTH = new InjectionToken('OAUTH', {
   providedIn: 'root',
   factory: () => {
-    const { token } = inject(OAUTH_TOKEN)
+    const { token, status, type, isAuthorized } = inject(OAUTH_TOKEN)
     const resourceOwnerLogin = inject(OAUTH_RESOURCE_OWNER)
     const clientCredentialLogin = inject(OAUTH_CLIENT_CREDENTIAL)
     const revoke = inject(OAUTH_REVOKE)
@@ -171,7 +177,11 @@ export const OAUTH = new InjectionToken('OAUTH', {
       login,
       logout,
       oauthCallback,
-      state
+      state,
+      token,
+      status,
+      type,
+      isAuthorized
     }
   }
 })

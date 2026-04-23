@@ -1,7 +1,9 @@
-import { effect, InjectionToken } from '@angular/core'
-import { config, strictJwt } from './config'
+import { computed, effect, InjectionToken } from '@angular/core'
+import { config, oauthConfig } from './config'
 import { OpenIdConfig } from './types'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
+
+const strictJwt = computed(() => oauthConfig().strictJwt)
 
 const jwt = (idToken?: string) => {
   const payload = idToken?.split('.')[1]

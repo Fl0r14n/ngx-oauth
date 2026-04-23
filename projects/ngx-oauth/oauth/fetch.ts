@@ -1,12 +1,13 @@
-import { inject, InjectionToken } from '@angular/core'
+import { computed, inject, InjectionToken } from '@angular/core'
 import { accessToken, isExpiredToken, token } from './token'
-import { config, ignorePaths } from './config'
+import { config, oauthConfig } from './config'
 import { OAUTH_REFRESH } from './functions'
 
 const getPath = (input: RequestInfo | URL): string =>
   input instanceof URL ? input.pathname : input instanceof Request ? new URL(input.url).pathname : input
 
 const isPathIgnored = (input: RequestInfo | URL) => ignorePaths().some(pattern => pattern.test(getPath(input)))
+const ignorePaths = computed(() => oauthConfig().ignorePaths as RegExp[])
 
 export const OAUTH_FETCH = new InjectionToken<typeof fetch>('OAUTH_FETCH', {
   providedIn: 'root',

@@ -1,8 +1,9 @@
 import { storageSignal } from './storage'
-import { storageKey } from './config'
+import { oauthConfig } from './config'
 import { OAuthStatus, OAuthToken } from './types'
-import { computed } from '@angular/core'
+import { computed, linkedSignal } from '@angular/core'
 
+export const storageKey = linkedSignal(() => oauthConfig().storageKey as string)
 export const token = storageSignal<OAuthToken>(storageKey, {})
 
 export const isExpiredToken = (token?: OAuthToken) => (token?.expires && Date.now() > token.expires) || false

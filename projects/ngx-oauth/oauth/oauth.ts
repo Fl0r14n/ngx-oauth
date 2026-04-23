@@ -10,13 +10,7 @@ import {
 import { token } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import {
-  OAUTH_AUTHORIZE,
-  OAUTH_CLIENT_CREDENTIAL,
-  OAUTH_OPEN_ID_CONFIG,
-  OAUTH_RESOURCE_OWNER,
-  OAUTH_REVOKE
-} from './functions'
+import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_OPEN_ID_CONFIG, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')

@@ -10,13 +10,7 @@ import {
 import { OAUTH_TOKEN } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import {
-  OAUTH_AUTHORIZE,
-  OAUTH_CLIENT_CREDENTIAL,
-  OAUTH_OPENID_CONFIG,
-  OAUTH_RESOURCE_OWNER,
-  OAUTH_REVOKE
-} from './functions'
+import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_OPENID_CONFIG, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
@@ -80,6 +74,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
 
     const oauthCallback = async (url?: string) => {
       const checkNonce = async (parameters: Record<string, string>) => {
+        if (parameters['error']) return parameters
         const payload = await verifyJwt(parameters['id_token'])
         if (payload?.error || payload?.nonce !== token()?.nonce) {
           return { error: (payload?.error as string) || 'Invalid nonce' }
@@ -136,14 +131,14 @@ export const OAUTH = new InjectionToken('OAUTH', {
     }
 
     const toAuthorizationUrl = async (parameters: AuthorizationCodeParameters) => {
-      const { authorizePath, clientId, scope, pkce } = config() as any
+      const { authorizePath, clientId, scope = '', pkce } = config() as any
       let authorizationUrl = `${authorizePath}`
       authorizationUrl += (authorizePath.includes('?') && '&') || '?'
       authorizationUrl += `client_id=${clientId}`
       token.set({ ...token(), redirect_uri: parameters.redirectUri })
       authorizationUrl += `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`
       authorizationUrl += `&response_type=${parameters.responseType}`
-      authorizationUrl += `&scope=${encodeURIComponent(scope || '')}`
+      authorizationUrl += `&scope=${encodeURIComponent(scope)}`
       authorizationUrl += `&state=${encodeURIComponent(parameters.state || '')}`
       return globalThis.location?.replace(`${authorizationUrl}${generateNonce(scope)}${await generateCodeChallenge(pkce)}`)
     }

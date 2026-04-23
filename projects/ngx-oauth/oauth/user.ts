@@ -3,12 +3,13 @@ import { config } from './config'
 import { OAUTH_FETCH } from './fetch'
 import { OAUTH_USER_INFO } from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
-import { isAuthorized, token } from './token'
+import { OAUTH_TOKEN } from './token'
 import { OpenIdConfig, UserInfo } from './types'
 
 export const OAUTH_USER = new InjectionToken('OAUTH_USER', {
   providedIn: 'root',
   factory: () => {
+    const { token, isAuthorized } = inject(OAUTH_TOKEN)
     const verifyJwtFn = inject(OAUTH_VERIFY_JWT)
     const userInfoFn = inject(OAUTH_USER_INFO)
     const fetchFn = inject(OAUTH_FETCH)

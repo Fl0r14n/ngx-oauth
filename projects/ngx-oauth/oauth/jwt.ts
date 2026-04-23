@@ -4,6 +4,7 @@ import { OpenIdConfig } from './types'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 const strictJwt = computed(() => oauthConfig().strictJwt)
+const jwksUri = computed(() => (config() as OpenIdConfig)?.jwksUri)
 
 const jwt = (idToken?: string) => {
   const payload = idToken?.split('.')[1]
@@ -39,8 +40,8 @@ export const OAUTH_VERIFY_JWT = new InjectionToken('OAUTH_VERIFY_JWT', {
   providedIn: 'root',
   factory: () => {
     effect(() => {
-      const jwksUri = (config() as OpenIdConfig)?.jwksUri
-      jwksSet = jwksUri && strictJwt() ? createRemoteJWKSet(new URL(jwksUri)) : undefined
+      const uri = jwksUri()
+      jwksSet = uri && strictJwt() ? createRemoteJWKSet(new URL(uri)) : undefined
     })
     return verifyJwt
   }

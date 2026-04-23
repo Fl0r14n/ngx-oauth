@@ -1,5 +1,5 @@
 import { computed, inject, InjectionToken } from '@angular/core'
-import { accessToken, isExpiredToken, token } from './token'
+import { OAUTH_TOKEN } from './token'
 import { config, oauthConfig } from './config'
 import { OAUTH_REFRESH } from './functions'
 
@@ -12,6 +12,7 @@ const ignorePaths = computed(() => oauthConfig().ignorePaths as RegExp[])
 export const OAUTH_FETCH = new InjectionToken<typeof fetch>('OAUTH_FETCH', {
   providedIn: 'root',
   factory: () => {
+    const { token, accessToken, isExpiredToken } = inject(OAUTH_TOKEN)
     const refreshFn = inject(OAUTH_REFRESH)
     return async (input, init) => {
       if (!isPathIgnored(input)) {

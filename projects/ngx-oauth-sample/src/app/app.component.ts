@@ -1,13 +1,11 @@
 import { Component, inject } from '@angular/core'
-import { OAuthService, OAuthType } from 'ngx-oauth'
+import { OAUTH, OAuthType } from 'ngx-oauth'
 import { OAuthLoginComponent } from 'ngx-oauth/component'
-import { Observable } from 'rxjs'
-import { PROFILE_SERVICE, ProfileService } from './service'
-import { CommonModule } from '@angular/common'
+import { PROFILE_SERVICE } from './service'
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, OAuthLoginComponent],
+  imports: [OAuthLoginComponent],
   template: `
     <header>
       <nav class="navbar navbar-light bg-light container-fluid px-3">
@@ -16,47 +14,23 @@ import { CommonModule } from '@angular/common'
           <li class="nav-item">
             <oauth-login
               [type]="type"
-              [profileName$]="profileName$"
+              [profileName]="profile.profileName()"
               [i18n]="i18n"
-              [useLogoutUrl]="useLogoutUrl"
-              [(state)]="state"></oauth-login>
+              [logoutRedirectUri]="logoutRedirectUri"
+              [state]="state" />
           </li>
         </ul>
       </nav>
-      @if (status$ | async; as status) {
-        <div class="alert alert-info text-center font-weight-bold">{{ status }}</div>
-      }
+      <div class="alert alert-info text-center font-weight-bold">{{ oauth.status() }}</div>
     </header>
-    <button class="btn btn-primary" (click)="refresh()">Refresh profile</button>
   `
 })
 export class AppComponent {
-  private _state = 'some_salt_dummy_state'
-  useLogoutUrl = true
-  status$ = this.oauthService.status$
-  type = OAuthType.AUTHORIZATION_CODE
+  protected readonly oauth = inject(OAUTH)
+  protected readonly profile = inject(PROFILE_SERVICE)
 
-  private oauthService = inject(OAuthService)
-  private profileService = inject(ProfileService, { optional: true }) ?? inject(PROFILE_SERVICE)
-
-  i18n = {
-    username: 'Username'
-  }
-
-  get state(): string {
-    return this._state
-  }
-
-  set state(value: string) {
-    this._state = value
-  }
-
-  get profileName$(): Observable<string | undefined> | undefined {
-    return this.profileService.profileName$
-  }
-
-  refresh() {
-    //test expired token
-    this.oauthService.getUserInfo().subscribe()
-  }
+  protected readonly type = OAuthType.AUTHORIZATION_CODE
+  protected readonly logoutRedirectUri = 'https://localhost:4200'
+  protected readonly state = 'some_salt_dummy_state'
+  protected readonly i18n = { username: 'Username' }
 }

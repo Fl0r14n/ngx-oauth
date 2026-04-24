@@ -1,12 +1,21 @@
 import { signal, Signal, WritableSignal } from '@angular/core'
 
+const storage = () => {
+  const s = globalThis.localStorage
+  return typeof s?.getItem === 'function' ? s : undefined
+}
+
 const get = (key: string) => {
-  const value = globalThis.localStorage?.getItem(key)
-  return (value && JSON.parse(value)) || undefined
+  const value = storage()?.getItem(key)
+  try {
+    return (value && JSON.parse(value)) || undefined
+  } catch {
+    return undefined
+  }
 }
 
 const set = (key: string, value: any) => {
-  globalThis.localStorage?.setItem(key, JSON.stringify(value))
+  storage()?.setItem(key, JSON.stringify(value))
 }
 
 export const storageSignal = <T>(keyInput: string | Signal<string>, defaultValue: T): WritableSignal<T> => {

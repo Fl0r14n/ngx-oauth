@@ -1,8 +1,7 @@
-import { Observable } from 'rxjs'
-import { InjectionToken } from '@angular/core'
+import { InjectionToken, Signal } from '@angular/core'
 
 export type ProfileService = {
-  readonly profileName$: Observable<string | undefined>
+  readonly profileName: Signal<string | undefined>
 }
 
 export const PROFILE_SERVICE = new InjectionToken<ProfileService>('ProfileService')

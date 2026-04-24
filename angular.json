@@ -112,7 +112,11 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "ssl": true
+            "host": "0.0.0.0",
+            "port": 3000,
+            "ssl": true,
+            "sslCert": ".cert/cert.pem",
+            "sslKey": ".cert/key.pem"
           },
           "configurations": {
             "production": {

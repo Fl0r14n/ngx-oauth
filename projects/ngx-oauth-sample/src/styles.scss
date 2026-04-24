@@ -1,1 +1,28 @@
-@import 'bootstrap/scss/bootstrap';
+// Targeted Bootstrap 5 import — only what the sample uses.
+// Bootstrap's own SCSS still uses @import; silenceDeprecations in angular.json suppresses the noise.
+
+// Configuration
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+
+// Layout & components actually used (alert, btn, form-control, nav/navbar, dropdown, img-thumbnail, container)
+@import 'bootstrap/scss/root';
+@import 'bootstrap/scss/reboot';
+@import 'bootstrap/scss/images';
+@import 'bootstrap/scss/containers';
+@import 'bootstrap/scss/grid';
+@import 'bootstrap/scss/forms';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/transitions';
+@import 'bootstrap/scss/dropdown';
+@import 'bootstrap/scss/nav';
+@import 'bootstrap/scss/navbar';
+@import 'bootstrap/scss/alert';
+
+// Helpers + utilities API (mb-3, p-3, text-end, text-center, rounded-circle, etc.)
+@import 'bootstrap/scss/helpers';
+@import 'bootstrap/scss/utilities/api';

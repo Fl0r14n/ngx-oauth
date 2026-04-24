@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { OAUTH_TOKEN } from './token'
 import { OAUTH_REFRESH } from './functions'
@@ -5,14 +6,14 @@ import { oauthConfig, config } from './config'
 import { OAuthStatus, OAuthToken } from './types'
 
 describe('OAUTH_TOKEN', () => {
-  let refreshMock: jest.Mock
+  let refreshMock: Mock
 
   const setup = (initial?: OAuthToken) => {
     localStorage.clear()
     oauthConfig.set({ storageKey: 'token', ignorePaths: [], strictJwt: true })
     config.set(undefined as any)
     if (initial) localStorage.setItem('token', JSON.stringify(initial))
-    refreshMock = jest.fn()
+    refreshMock = vi.fn()
     TestBed.configureTestingModule({
       providers: [{ provide: OAUTH_REFRESH, useValue: refreshMock }]
     })
@@ -74,12 +75,12 @@ describe('OAUTH_TOKEN', () => {
   })
 
   it('effect stamps expires when expires_in present and expires missing', async () => {
-    jest.spyOn(Date, 'now').mockReturnValue(1000)
+    vi.spyOn(Date, 'now').mockReturnValue(1000)
     const api = setup()
     api.token.set({ access_token: 'a', expires_in: 60 })
     TestBed.tick()
     expect(api.token().expires).toBe(1000 + 60 * 1000)
-    ;(Date.now as jest.Mock).mockRestore()
+    ;(Date.now as Mock).mockRestore()
   })
 
   it('effect calls refresh when token is expired', async () => {

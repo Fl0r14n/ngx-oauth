@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { OAUTH_FETCH } from './fetch'
 import { OAUTH_TOKEN } from './token'
@@ -18,15 +19,15 @@ if (typeof (globalThis as any).Request === 'undefined') {
 }
 
 describe('OAUTH_FETCH', () => {
-  let globalFetch: jest.Mock
-  let refreshMock: jest.Mock
+  let globalFetch: Mock
+  let refreshMock: Mock
 
   const setup = () => {
     localStorage.clear()
     oauthConfig.set({ storageKey: 'token', ignorePaths: [], strictJwt: true })
     config.set({ tokenPath: '/t', clientId: 'c' } as any)
-    refreshMock = jest.fn()
-    globalFetch = jest.fn(() => Promise.resolve(mockJsonResponse(200, {})))
+    refreshMock = vi.fn()
+    globalFetch = vi.fn(() => Promise.resolve(mockJsonResponse(200, {})))
     globalThis.fetch = globalFetch
     TestBed.configureTestingModule({
       providers: [{ provide: OAUTH_REFRESH, useValue: refreshMock }]
@@ -88,8 +89,8 @@ describe('OAUTH_FETCH', () => {
     localStorage.clear()
     oauthConfig.set({ storageKey: 'token', ignorePaths: [/^\/public/], strictJwt: true })
     config.set({ tokenPath: '/t', clientId: 'c' } as any)
-    refreshMock = jest.fn()
-    globalFetch = jest.fn(() => Promise.resolve(mockJsonResponse(200, {})))
+    refreshMock = vi.fn()
+    globalFetch = vi.fn(() => Promise.resolve(mockJsonResponse(200, {})))
     globalThis.fetch = globalFetch
     TestBed.configureTestingModule({ providers: [{ provide: OAUTH_REFRESH, useValue: refreshMock }] })
     const fetchFn = TestBed.inject(OAUTH_FETCH)

@@ -1,4 +1,5 @@
-jest.mock('jose', () => ({ createRemoteJWKSet: jest.fn(), jwtVerify: jest.fn() }))
+import type { Mock } from 'vitest'
+vi.mock('jose', () => ({ createRemoteJWKSet: vi.fn(), jwtVerify: vi.fn() }))
 // jsdom lacks crypto.subtle; use Node's webcrypto for the PKCE path.
 if (!(globalThis.crypto as any)?.subtle) {
   const nodeCrypto = eval('require')('node:crypto')
@@ -27,25 +28,25 @@ const flush = async () => {
 }
 
 describe('OAUTH', () => {
-  let resourceOwnerLogin: jest.Mock
-  let clientCredentialLogin: jest.Mock
-  let revoke: jest.Mock
-  let authorize: jest.Mock
-  let openIdConfiguration: jest.Mock
-  let verifyJwt: jest.Mock
-  let refresh: jest.Mock
+  let resourceOwnerLogin: Mock
+  let clientCredentialLogin: Mock
+  let revoke: Mock
+  let authorize: Mock
+  let openIdConfiguration: Mock
+  let verifyJwt: Mock
+  let refresh: Mock
 
   const setup = (initialConfig: any = { clientId: 'c', authorizePath: '/auth', tokenPath: '/t' }) => {
     localStorage.clear()
     oauthConfig.set({ storageKey: 'token', ignorePaths: [], strictJwt: true })
     config.set(initialConfig)
-    resourceOwnerLogin = jest.fn().mockResolvedValue(undefined)
-    clientCredentialLogin = jest.fn().mockResolvedValue(undefined)
-    revoke = jest.fn().mockResolvedValue(undefined)
-    authorize = jest.fn().mockResolvedValue(undefined)
-    openIdConfiguration = jest.fn().mockResolvedValue(undefined)
-    verifyJwt = jest.fn().mockResolvedValue({})
-    refresh = jest.fn().mockResolvedValue(undefined)
+    resourceOwnerLogin = vi.fn().mockResolvedValue(undefined)
+    clientCredentialLogin = vi.fn().mockResolvedValue(undefined)
+    revoke = vi.fn().mockResolvedValue(undefined)
+    authorize = vi.fn().mockResolvedValue(undefined)
+    openIdConfiguration = vi.fn().mockResolvedValue(undefined)
+    verifyJwt = vi.fn().mockResolvedValue({})
+    refresh = vi.fn().mockResolvedValue(undefined)
     TestBed.configureTestingModule({
       providers: [
         { provide: OAUTH_RESOURCE_OWNER, useValue: resourceOwnerLogin },
@@ -63,10 +64,10 @@ describe('OAUTH', () => {
   // jsdom's location.replace is read-only; we silence the "Not implemented: navigation"
   // warnings from jsdom and assert on observable token state instead.
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(jest.fn())
+    vi.spyOn(console, 'error').mockImplementation(vi.fn())
   })
   afterEach(() => {
-    jest.restoreAllMocks()
+    vi.restoreAllMocks()
   })
 
   describe('login', () => {

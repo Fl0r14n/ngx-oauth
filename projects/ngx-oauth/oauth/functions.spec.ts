@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import {
   OAUTH_AUTHORIZE,
@@ -14,14 +15,14 @@ import { OAuthType } from './types'
 const mockJsonResponse = (body: any) => ({ json: () => Promise.resolve(body) }) as any
 
 describe('OAuth function tokens', () => {
-  let fetchMock: jest.Mock
+  let fetchMock: Mock
 
   beforeEach(() => {
-    fetchMock = jest.fn(() => Promise.resolve(mockJsonResponse({})))
+    fetchMock = vi.fn(() => Promise.resolve(mockJsonResponse({})))
     globalThis.fetch = fetchMock
   })
 
-  const bodyOf = (call: jest.Mock, i = 0) => {
+  const bodyOf = (call: Mock, i = 0) => {
     const init = call.mock.calls[i][1] as RequestInit
     return new URLSearchParams(init.body as string)
   }
@@ -167,7 +168,7 @@ describe('OAuth function tokens', () => {
 
   describe('userInfo', () => {
     it('GETs userPath via provided fetchFn', async () => {
-      const customFetch = jest.fn().mockResolvedValue(mockJsonResponse({ sub: 'u1' }))
+      const customFetch = vi.fn().mockResolvedValue(mockJsonResponse({ sub: 'u1' }))
       const fn = TestBed.inject(OAUTH_USER_INFO)
       const result = await fn({ userPath: '/me' } as any, customFetch)
       expect(customFetch).toHaveBeenCalledWith('/me')

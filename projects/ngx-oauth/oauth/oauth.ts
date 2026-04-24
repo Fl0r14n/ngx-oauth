@@ -10,7 +10,13 @@ import {
 import { OAUTH_TOKEN } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_OPENID_CONFIG, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
+import {
+  OAUTH_AUTHORIZE,
+  OAUTH_CLIENT_CREDENTIAL,
+  OAUTH_OPENID_CONFIG,
+  OAUTH_RESOURCE_OWNER,
+  OAUTH_REVOKE
+} from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
@@ -31,7 +37,7 @@ const parseOauthUri = (hash: string) => {
 export const OAUTH = new InjectionToken('OAUTH', {
   providedIn: 'root',
   factory: () => {
-    const { token, status, type, isAuthorized } = inject(OAUTH_TOKEN)
+    const { token, status, type, isAuthorized, storageKey } = inject(OAUTH_TOKEN)
     const resourceOwnerLogin = inject(OAUTH_RESOURCE_OWNER)
     const clientCredentialLogin = inject(OAUTH_CLIENT_CREDENTIAL)
     const revoke = inject(OAUTH_REVOKE)
@@ -72,7 +78,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
       }
     }
 
-    const oauthCallback = async (url?: string) => {
+    const oauthCallback = async (url?: string | URL) => {
       const checkNonce = async (parameters: Record<string, string>) => {
         if (parameters['error']) return parameters
         const payload = await verifyJwt(parameters['id_token'])
@@ -115,6 +121,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
       const v = await openIdConfiguration(config() as OpenIdConfig)
       if (v) {
         config.set({
+          ...config(),
           ...((v?.authorization_endpoint && { authorizePath: v.authorization_endpoint }) || {}),
           ...((v?.token_endpoint && { tokenPath: v.token_endpoint }) || {}),
           ...((v?.revocation_endpoint && { revokePath: v.revocation_endpoint }) || {}),
@@ -140,7 +147,8 @@ export const OAUTH = new InjectionToken('OAUTH', {
       authorizationUrl += `&response_type=${parameters.responseType}`
       authorizationUrl += `&scope=${encodeURIComponent(scope)}`
       authorizationUrl += `&state=${encodeURIComponent(parameters.state || '')}`
-      return globalThis.location?.replace(`${authorizationUrl}${generateNonce(scope)}${await generateCodeChallenge(pkce)}`)
+      authorizationUrl = `${authorizationUrl}${generateNonce(scope)}${await generateCodeChallenge(pkce)}`
+      return globalThis.location?.replace(authorizationUrl)
     }
 
     const generateNonce = (scope: string) => {
@@ -169,7 +177,9 @@ export const OAUTH = new InjectionToken('OAUTH', {
       token,
       status,
       type,
-      isAuthorized
+      isAuthorized,
+      config,
+      storageKey
     }
   }
 })

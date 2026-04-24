@@ -1,7 +1,7 @@
 import { storageSignal } from './storage'
-import { config, oauthConfig } from './config'
-import { OAuthStatus, OAuthToken, OpenIdConfig } from './types'
-import { computed, effect, inject, InjectionToken, linkedSignal, untracked } from '@angular/core'
+import { oauthConfig } from './config'
+import { OAuthStatus, OAuthToken } from './types'
+import { computed, effect, inject, InjectionToken, linkedSignal } from '@angular/core'
 import { OAUTH_REFRESH } from './functions'
 
 const isExpiredToken = (token?: OAuthToken) => (token?.expires && Date.now() > token.expires) || false
@@ -38,8 +38,11 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
             expires: Date.now() + expiresIn * 1000
           })
         } else if (isExpiredToken(t)) {
-          const refreshed = await untracked(() => refresh(token(), config() as OpenIdConfig))
-          token.set({ ...refreshed })
+          console.log('token expired', token())
+          // const refreshed = await untracked(() => refresh(token(), config() as OpenIdConfig))
+          // if (refreshed && !isExpiredToken(refreshed)) {
+          //   token.set({ ...refreshed })
+          // }
         }
       }
     })
@@ -53,7 +56,8 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
       isAuthorized,
       error,
       hasError,
-      errorDescription
+      errorDescription,
+      storageKey
     }
   }
 })

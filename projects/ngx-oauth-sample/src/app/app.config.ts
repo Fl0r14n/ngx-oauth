@@ -1,9 +1,9 @@
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core'
 import { provideRouter } from '@angular/router'
 
-import { routes } from './app.routes'
 import { provideClientHydration } from '@angular/platform-browser'
 import { provideOAuthConfig } from 'ngx-oauth'
+import { routes } from './app.routes'
 
 const googleIDConfig = {
   config: {

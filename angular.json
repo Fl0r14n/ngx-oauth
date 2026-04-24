@@ -50,7 +50,7 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
+          "style": "css"
         }
       },
       "root": "projects/ngx-oauth-sample",
@@ -65,19 +65,14 @@
             "browser": "projects/ngx-oauth-sample/src/main.ts",
             "polyfills": [],
             "tsConfig": "projects/ngx-oauth-sample/tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               "projects/ngx-oauth-sample/src/favicon.ico",
               "projects/ngx-oauth-sample/src/assets"
             ],
             "styles": [
-              "projects/ngx-oauth-sample/src/styles.scss"
+              "projects/ngx-oauth-sample/src/styles.css"
             ],
-            "stylePreprocessorOptions": {
-              "sass": {
-                "silenceDeprecations": ["import", "global-builtin", "color-functions"]
-              }
-            },
             "scripts": [],
             "server": "projects/ngx-oauth-sample/src/main.server.ts",
             "prerender": true,
@@ -139,13 +134,13 @@
           "options": {
             "polyfills": [],
             "tsConfig": "projects/ngx-oauth-sample/tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               "projects/ngx-oauth-sample/src/favicon.ico",
               "projects/ngx-oauth-sample/src/assets"
             ],
             "styles": [
-              "projects/ngx-oauth-sample/src/styles.scss"
+              "projects/ngx-oauth-sample/src/styles.css"
             ],
             "scripts": []
           }

@@ -44,36 +44,61 @@ const defaultI18n: Required<OAuthLoginI18n> = {
         [ngTemplateOutletContext]="{ login: loginFunction, logout: logoutFunction, status: status() }" />
     } @else if (status(); as s) {
       @if (type() === OAuthType.RESOURCE) {
-        <div class="oauth dropdown text-end {{ collapse() ? 'show' : '' }}">
-          <button class="btn btn-link p-0 dropdown-toggle" (click)="s === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
+        <div class="oauth-login relative inline-block text-right">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition"
+            (click)="s === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
             <ng-container *ngTemplateOutlet="message" />
+            @if (s !== OAuthStatus.AUTHORIZED) {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 opacity-60">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            }
           </button>
-          <div class="dropdown-menu mr-3 {{ collapse() ? 'show' : '' }}">
-            @if (s === OAuthStatus.NOT_AUTHORIZED || s === OAuthStatus.DENIED) {
-              <form class="p-3" #form="ngForm" (submit)="login({ username: username, password: password })">
-                <div class="mb-3">
-                  <input type="text" class="form-control" name="username" required [(ngModel)]="username" [placeholder]="i18n().username" />
+          @if (collapse() && (s === OAuthStatus.NOT_AUTHORIZED || s === OAuthStatus.DENIED)) {
+            <div class="absolute right-0 z-20 mt-2 w-72 origin-top-right rounded-xl border border-slate-200 bg-white p-4 shadow-lg ring-1 ring-black/5 focus:outline-none">
+              <div class="absolute -top-2 right-6 h-4 w-4 rotate-45 border-l border-t border-slate-200 bg-white"></div>
+              <form #form="ngForm" (submit)="login({ username: username, password: password })" class="relative space-y-3">
+                @if (s === OAuthStatus.DENIED) {
+                  <div class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700" [innerHTML]="i18n().denied"></div>
+                }
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">{{ i18n().username }}</label>
+                  <input
+                    type="text"
+                    name="username"
+                    required
+                    [(ngModel)]="username"
+                    [placeholder]="i18n().username"
+                    class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
                 </div>
-                <div class="mb-3">
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">{{ i18n().password }}</label>
                   <input
                     type="password"
-                    class="form-control"
                     name="password"
                     required
                     [(ngModel)]="password"
-                    [placeholder]="i18n().password" />
+                    [placeholder]="i18n().password"
+                    class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
                 </div>
-                <div class="text-end">
-                  <button type="submit" class="btn btn-primary" [disabled]="form.invalid">{{ i18n().submit }}</button>
+                <div class="flex justify-end pt-1">
+                  <button
+                    type="submit"
+                    [disabled]="form.invalid"
+                    class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 transition">
+                    {{ i18n().submit }}
+                  </button>
                 </div>
               </form>
-            }
-          </div>
+            </div>
+          }
         </div>
       } @else {
         <button
           type="button"
-          class="oauth"
+          class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition"
           (click)="
             s === OAuthStatus.AUTHORIZED
               ? logout()
@@ -87,54 +112,17 @@ const defaultI18n: Required<OAuthLoginI18n> = {
           <span class="not-authorized" [innerHTML]="i18n().notAuthorized"></span>
         }
         @if (s === OAuthStatus.AUTHORIZED) {
-          <span class="authorized">
-            <span class="welcome" [innerHTML]="i18n().authorized + '&nbsp;'"></span>
-            <strong class="profile-name" [innerHTML]="displayName()"></strong>
+          <span class="authorized inline-flex items-center gap-1.5">
+            <span class="welcome text-slate-600" [innerHTML]="i18n().authorized + '&nbsp;'"></span>
+            <strong class="profile-name font-semibold text-slate-900" [innerHTML]="displayName()"></strong>
           </span>
         }
         @if (s === OAuthStatus.DENIED) {
-          <span class="denied" [innerHTML]="i18n().denied"></span>
+          <span class="denied text-rose-600" [innerHTML]="i18n().denied"></span>
         }
       </ng-template>
     }
   `,
-  styles: [
-    `
-      .oauth {
-        .dropdown-menu {
-          left: auto;
-          right: 0;
-          box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-          min-width: 250px;
-
-          &:before {
-            content: '';
-            display: inline-block;
-            border-left: 7px solid transparent;
-            border-right: 7px solid transparent;
-            border-bottom: 7px solid #ccc;
-            border-bottom-color: rgba(0, 0, 0, 0.2);
-            position: absolute;
-            top: -7px;
-            left: auto;
-            right: 15px;
-          }
-
-          &:after {
-            content: '';
-            display: inline-block;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 6px solid #ffffff;
-            position: absolute;
-            top: -6px;
-            left: auto;
-            right: 16px;
-          }
-        }
-      }
-    `
-  ],
   encapsulation: ViewEncapsulation.None
 })
 export class OAuthLoginComponent {

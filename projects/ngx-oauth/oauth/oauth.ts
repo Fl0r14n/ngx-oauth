@@ -15,7 +15,7 @@ import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
 const base64url = (str: string) => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-const randomString = (length: number = 48) => {
+const randomString = (length = 48) => {
   const buff = arrToString(crypto.getRandomValues(new Uint8Array(length * 2)))
   return base64url(buff).substring(0, length)
 }

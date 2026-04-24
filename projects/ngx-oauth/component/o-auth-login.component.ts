@@ -7,6 +7,7 @@ import {
   inject,
   input,
   output,
+  signal,
   TemplateRef,
   ViewEncapsulation
 } from '@angular/core'
@@ -23,7 +24,7 @@ export type OAuthLoginI18n = {
   denied?: string
 }
 
-const defaultI18n: OAuthLoginI18n = {
+const defaultI18n: Required<OAuthLoginI18n> = {
   username: 'Username',
   password: 'Password',
   submit: 'Sign in',
@@ -43,11 +44,11 @@ const defaultI18n: OAuthLoginI18n = {
         [ngTemplateOutletContext]="{ login: loginFunction, logout: logoutFunction, status: status() }" />
     } @else if (status(); as s) {
       @if (type() === OAuthType.RESOURCE) {
-        <div class="oauth dropdown text-end {{ collapse ? 'show' : '' }}">
+        <div class="oauth dropdown text-end {{ collapse() ? 'show' : '' }}">
           <button class="btn btn-link p-0 dropdown-toggle" (click)="s === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
             <ng-container *ngTemplateOutlet="message" />
           </button>
-          <div class="dropdown-menu mr-3 {{ collapse ? 'show' : '' }}">
+          <div class="dropdown-menu mr-3 {{ collapse() ? 'show' : '' }}">
             @if (s === OAuthStatus.NOT_AUTHORIZED || s === OAuthStatus.DENIED) {
               <form class="p-3" #form="ngForm" (submit)="login({ username: username, password: password })">
                 <div class="mb-3">
@@ -74,7 +75,9 @@ const defaultI18n: OAuthLoginI18n = {
           type="button"
           class="oauth"
           (click)="
-            s === OAuthStatus.AUTHORIZED ? logout() : login({ responseType: responseType(), redirectUri: redirectUri(), state: state() })
+            s === OAuthStatus.AUTHORIZED
+              ? logout()
+              : login({ responseType: resolvedResponseType(), redirectUri: resolvedRedirectUri(), state: state() })
           ">
           <ng-container *ngTemplateOutlet="message" />
         </button>
@@ -141,39 +144,35 @@ export class OAuthLoginComponent {
   readonly OAuthStatus = OAuthStatus
   readonly OAuthType = OAuthType
 
-  type = input<OAuthType>(OAuthType.RESOURCE)
-  logoutRedirectUri = input<string | undefined>(undefined)
-  state = input('')
-  profileName = input<string | undefined>(undefined)
+  readonly type = input<OAuthType>(OAuthType.RESOURCE)
+  readonly state = input('')
+  readonly profileName = input<string | undefined>(undefined)
+  readonly logoutRedirectUri = input<string | undefined>(undefined)
+  readonly redirectUri = input<string | undefined>(undefined)
+  readonly responseType = input<string | undefined>(undefined)
+  readonly i18n = input<Required<OAuthLoginI18n>, OAuthLoginI18n | undefined>(defaultI18n, {
+    transform: v => ({ ...defaultI18n, ...v })
+  })
 
-  protected i18nInput = input<OAuthLoginI18n>({}, { alias: 'i18n' })
-  i18n = computed<OAuthLoginI18n>(() => ({ ...defaultI18n, ...this.i18nInput() }))
+  readonly loginTemplate = contentChild<TemplateRef<unknown>>('login')
+  readonly stateChange = output<string | undefined>()
 
-  protected redirectUriInput = input<string | undefined>(undefined, { alias: 'redirectUri' })
-  redirectUri = computed(() => this.redirectUriInput() || `${globalThis.location?.origin}${this.locationService.path(true) || '/'}`)
-
-  protected responseTypeInput = input<string | undefined>(undefined, { alias: 'responseType' })
-  responseType = computed(() => this.responseTypeInput() || this.type())
-
-  loginTemplate = contentChild<TemplateRef<unknown>>('login')
-
-  status = this.oauth.status
-  private token = this.oauth.token
-
-  displayName = computed(() => {
+  protected readonly status = this.oauth.status
+  protected readonly resolvedRedirectUri = computed(
+    () => this.redirectUri() || `${globalThis.location?.origin ?? ''}${this.locationService.path(true) || '/'}`
+  )
+  protected readonly resolvedResponseType = computed(() => this.responseType() || this.type())
+  protected readonly displayName = computed(() => {
     const override = this.profileName()
     if (override) return override
-    const t = this.token()
-    const payload = t?.id_token?.split('.')[1]
+    const payload = this.oauth.token()?.id_token?.split('.')[1]
     const info = (payload && JSON.parse(atob(payload))) || {}
     return info.name || info.username || info.email || info.sub || ''
   })
 
-  stateChange = output<string | undefined>()
-
+  protected readonly collapse = signal(false)
   username = ''
   password = ''
-  collapse = false
 
   loginFunction = (p: OAuthParameters) => this.login(p)
   logoutFunction = () => this.logout()
@@ -187,16 +186,16 @@ export class OAuthLoginComponent {
   }
 
   login(parameters: OAuthParameters) {
-    this.collapse = false
+    this.collapse.set(false)
     return this.oauth.login(parameters)
   }
 
   toggleCollapse() {
-    this.collapse = !this.collapse
+    this.collapse.update(v => !v)
   }
 
   @HostListener('window:keydown.escape')
   keyboardEvent() {
-    this.collapse = false
+    this.collapse.set(false)
   }
 }

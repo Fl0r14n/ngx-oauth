@@ -3,7 +3,7 @@ import { ClientCredentialConfig, OAuthToken, OAuthType, OpenIdConfig, ResourceOw
 
 const HEADERS = { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' }
 
-const refresh = async (token?: OAuthToken, config?: OpenIdConfig) => {
+const refresh = async (token?: OAuthToken, config?: Partial<OpenIdConfig>) => {
   const { tokenPath, clientId, clientSecret, scope } = config || {}
   const { refresh_token, type } = token || {}
   if (!refresh_token || !tokenPath) return token
@@ -21,7 +21,7 @@ const refresh = async (token?: OAuthToken, config?: OpenIdConfig) => {
   return result ? { ...result, type } : token
 }
 
-const revoke = async (token?: OAuthToken, config?: OpenIdConfig) => {
+const revoke = async (token?: OAuthToken, config?: Partial<OpenIdConfig>) => {
   const { revokePath, clientId, clientSecret } = config || {}
   if (!revokePath) return
   const { access_token, refresh_token } = token || {}
@@ -45,7 +45,7 @@ const revoke = async (token?: OAuthToken, config?: OpenIdConfig) => {
   }
 }
 
-const authorize = async (token?: OAuthToken, config?: OpenIdConfig) => {
+const authorize = async (token?: OAuthToken, config?: Partial<OpenIdConfig>) => {
   const { clientId, clientSecret, tokenPath, scope } = config || {}
   const { code, redirect_uri, code_verifier } = token || {}
   if (!code || !tokenPath) return token
@@ -100,19 +100,19 @@ const resourceOwnerLogin = async (parameters?: ResourceOwnerParameters, config?:
   return result ? { ...result, type: OAuthType.RESOURCE } : undefined
 }
 
-const openIdConfiguration = async (config?: OpenIdConfig) => {
+const openIdConfiguration = async (config?: Partial<OpenIdConfig>) => {
   const { issuerPath, clientId } = config || {}
   if (!issuerPath) return undefined
   return fetch(`${issuerPath}/.well-known/openid-configuration?client_id=${clientId}`).then(r => r.json())
 }
 
-const userInfo = async (config?: OpenIdConfig, fetchFn = fetch) => {
+const userInfo = async (config?: Partial<OpenIdConfig>, fetchFn = fetch) => {
   const { userPath } = config || {}
   if (!userPath) return undefined
   return fetchFn(userPath).then(r => r.json())
 }
 
-const introspect = async (token?: OAuthToken, config?: OpenIdConfig) => {
+const introspect = async (token?: OAuthToken, config?: Partial<OpenIdConfig>) => {
   const { introspectionPath, clientId, clientSecret } = config || {}
   const { access_token } = token || {}
   if (!introspectionPath || !access_token || !clientId) return undefined

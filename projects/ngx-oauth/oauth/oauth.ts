@@ -10,13 +10,7 @@ import {
 import { OAUTH_TOKEN } from './token'
 import { config } from './config'
 import { inject, InjectionToken, signal } from '@angular/core'
-import {
-  OAUTH_AUTHORIZE,
-  OAUTH_CLIENT_CREDENTIAL,
-  OAUTH_OPENID_CONFIG,
-  OAUTH_RESOURCE_OWNER,
-  OAUTH_REVOKE
-} from './functions'
+import { OAUTH_AUTHORIZE, OAUTH_CLIENT_CREDENTIAL, OAUTH_RESOURCE_OWNER, OAUTH_REVOKE } from './functions'
 import { OAUTH_VERIFY_JWT } from './jwt'
 
 const arrToString = (buf: Uint8Array) => buf.reduce((s, b) => s + String.fromCharCode(b), '')
@@ -37,14 +31,12 @@ const parseOauthUri = (hash: string) => {
 export const OAUTH = new InjectionToken('OAUTH', {
   providedIn: 'root',
   factory: () => {
-    const { token, status, type, isAuthorized, storageKey } = inject(OAUTH_TOKEN)
+    const { token, status, type, isAuthorized, storageKey, autoconfigOauth } = inject(OAUTH_TOKEN)
     const resourceOwnerLogin = inject(OAUTH_RESOURCE_OWNER)
     const clientCredentialLogin = inject(OAUTH_CLIENT_CREDENTIAL)
     const revoke = inject(OAUTH_REVOKE)
     const authorize = inject(OAUTH_AUTHORIZE)
-    const openIdConfiguration = inject(OAUTH_OPENID_CONFIG)
     const verifyJwt = inject(OAUTH_VERIFY_JWT)
-
     const state = signal<string | undefined>(undefined)
 
     const login = async (parameters?: OAuthParameters) => {
@@ -73,7 +65,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
         token.set({})
         globalThis.location?.replace(logoutUrl)
       } else {
-        await revoke(token(), config() as OpenIdConfig)
+        await revoke(token(), config())
         token.set({})
       }
     }
@@ -88,7 +80,7 @@ export const OAUTH = new InjectionToken('OAUTH', {
         return parameters
       }
       const checkCode = async () => {
-        const parameters = await authorize(token(), config() as OpenIdConfig)
+        const parameters = await authorize(token(), config())
         if (parameters) {
           token.set(await checkNonce(parameters))
         }
@@ -114,26 +106,6 @@ export const OAUTH = new InjectionToken('OAUTH', {
         state.set(parameters?.['state'])
         await autoconfigOauth()
         await checkCode()
-      }
-    }
-
-    const autoconfigOauth = async () => {
-      const v = await openIdConfiguration(config() as OpenIdConfig)
-      if (v) {
-        config.set({
-          ...config(),
-          ...((v?.authorization_endpoint && { authorizePath: v.authorization_endpoint }) || {}),
-          ...((v?.token_endpoint && { tokenPath: v.token_endpoint }) || {}),
-          ...((v?.revocation_endpoint && { revokePath: v.revocation_endpoint }) || {}),
-          ...((v?.userinfo_endpoint && { userPath: v.userinfo_endpoint }) || {}),
-          ...((v?.introspection_endpoint && { introspectionPath: v.introspection_endpoint }) || {}),
-          ...((v?.end_session_endpoint && { logoutPath: v.end_session_endpoint }) || {}),
-          ...((v?.jwks_uri && { jwksUri: v.jwks_uri }) || {}),
-          ...(((config() as any)?.pkce === undefined &&
-            v?.code_challenge_methods_supported && { pkce: v.code_challenge_methods_supported.indexOf('S256') > -1 }) ||
-            {}),
-          ...{ scope: config()?.scope || 'openid' }
-        })
       }
     }
 

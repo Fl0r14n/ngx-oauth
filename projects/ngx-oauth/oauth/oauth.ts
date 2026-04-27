@@ -143,6 +143,8 @@ export const OAUTH = new InjectionToken('OAUTH', {
       authorizationUrl += (authorizePath.includes('?') && '&') || '?'
       authorizationUrl += `client_id=${clientId}`
       token.set({ ...token(), redirect_uri: parameters.redirectUri })
+      authorizationUrl += `&access_type=${parameters.accessType || 'offline'}`
+      authorizationUrl += `&prompt=${parameters.prompt || ''}`
       authorizationUrl += `&redirect_uri=${encodeURIComponent(parameters.redirectUri)}`
       authorizationUrl += `&response_type=${parameters.responseType}`
       authorizationUrl += `&scope=${encodeURIComponent(scope)}`

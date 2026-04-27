@@ -43,6 +43,8 @@ export type ResourceOwnerParameters = {
 }
 
 export type AuthorizationCodeParameters = {
+  accessType?: 'online' | 'offline'
+  prompt?: 'none' | 'consent' | 'login' | 'select_account'
   redirectUri: string
   responseType: OAuthType.IMPLICIT | OAuthType.AUTHORIZATION_CODE | string
   state?: string

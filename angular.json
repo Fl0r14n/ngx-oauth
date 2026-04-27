@@ -41,6 +41,7 @@
             "tsConfig": "projects/ngx-oauth/tsconfig.spec.json",
             "runner": "vitest",
             "providersFile": "projects/ngx-oauth/test-providers.ts",
+            "setupFiles": ["projects/ngx-oauth/test-setup.ts"],
             "include": ["**/*.spec.ts"]
           }
         }
@@ -99,7 +100,8 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "assets": []
             }
           },
           "defaultConfiguration": "production"

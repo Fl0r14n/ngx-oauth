@@ -1,12 +1,20 @@
 import type { Mock } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { OAUTH_TOKEN } from './token'
-import { OAUTH_REFRESH } from './functions'
+import { OAUTH_OPENID_CONFIG, OAUTH_REFRESH } from './functions'
 import { oauthConfig, config } from './config'
 import { OAuthStatus, OAuthToken } from './types'
 
+const flush = async () => {
+  for (let i = 0; i < 20; i++) {
+    await Promise.resolve()
+    TestBed.tick()
+  }
+}
+
 describe('OAUTH_TOKEN', () => {
   let refreshMock: Mock
+  let openIdConfigMock: Mock
 
   const setup = (initial?: OAuthToken) => {
     localStorage.clear()
@@ -14,8 +22,12 @@ describe('OAUTH_TOKEN', () => {
     config.set(undefined as any)
     if (initial) localStorage.setItem('token', JSON.stringify(initial))
     refreshMock = vi.fn()
+    openIdConfigMock = vi.fn().mockResolvedValue(undefined)
     TestBed.configureTestingModule({
-      providers: [{ provide: OAUTH_REFRESH, useValue: refreshMock }]
+      providers: [
+        { provide: OAUTH_REFRESH, useValue: refreshMock },
+        { provide: OAUTH_OPENID_CONFIG, useValue: openIdConfigMock }
+      ]
     })
     return TestBed.inject(OAUTH_TOKEN)
   }
@@ -88,11 +100,69 @@ describe('OAUTH_TOKEN', () => {
     refreshMock.mockResolvedValue({ access_token: 'fresh', expires_in: 60 })
     config.set({ tokenPath: '/t', clientId: 'c' } as any)
     api.token.set({ refresh_token: 'r', expires_in: 60, expires: Date.now() - 10_000 })
-    for (let i = 0; i < 20; i++) {
-      await Promise.resolve()
-      TestBed.tick()
-    }
+    await flush()
     expect(refreshMock).toHaveBeenCalled()
     expect(api.token().access_token).toBe('fresh')
+  })
+
+  it('preserves refresh_token when refresh response omits it', async () => {
+    const api = setup()
+    refreshMock.mockResolvedValue({ access_token: 'fresh', expires_in: 60 })
+    config.set({ tokenPath: '/t', clientId: 'c' } as any)
+    api.token.set({ refresh_token: 'keep', expires_in: 60, expires: Date.now() - 10_000 })
+    await flush()
+    expect(api.token().refresh_token).toBe('keep')
+    expect(api.token().access_token).toBe('fresh')
+  })
+
+  describe('autoconfigOauth', () => {
+    it('fetches discovery and merges endpoints when tokenPath/authorizePath missing', async () => {
+      const api = setup()
+      config.set({ issuerPath: 'https://idp', clientId: 'c' } as any)
+      openIdConfigMock.mockResolvedValue({
+        token_endpoint: 'https://idp/token',
+        authorization_endpoint: 'https://idp/auth',
+        revocation_endpoint: 'https://idp/revoke',
+        userinfo_endpoint: 'https://idp/me',
+        end_session_endpoint: 'https://idp/logout',
+        jwks_uri: 'https://idp/jwks',
+        code_challenge_methods_supported: ['S256']
+      })
+      await api.autoconfigOauth()
+      const cfg = config() as any
+      expect(cfg.tokenPath).toBe('https://idp/token')
+      expect(cfg.authorizePath).toBe('https://idp/auth')
+      expect(cfg.revokePath).toBe('https://idp/revoke')
+      expect(cfg.userPath).toBe('https://idp/me')
+      expect(cfg.logoutPath).toBe('https://idp/logout')
+      expect(cfg.jwksUri).toBe('https://idp/jwks')
+      expect(cfg.pkce).toBe(true)
+      expect(cfg.scope).toBe('openid')
+    })
+
+    it('skips discovery when tokenPath already set', async () => {
+      const api = setup()
+      config.set({ tokenPath: '/t', clientId: 'c' } as any)
+      await api.autoconfigOauth()
+      expect(openIdConfigMock).not.toHaveBeenCalled()
+    })
+
+    it('skips discovery when authorizePath already set', async () => {
+      const api = setup()
+      config.set({ authorizePath: '/auth', clientId: 'c' } as any)
+      await api.autoconfigOauth()
+      expect(openIdConfigMock).not.toHaveBeenCalled()
+    })
+
+    it('preserves explicit pkce config', async () => {
+      const api = setup()
+      config.set({ issuerPath: 'https://idp', clientId: 'c', pkce: false } as any)
+      openIdConfigMock.mockResolvedValue({
+        token_endpoint: 'https://idp/token',
+        code_challenge_methods_supported: ['S256']
+      })
+      await api.autoconfigOauth()
+      expect((config() as any).pkce).toBe(false)
+    })
   })
 })

@@ -1,18 +1,5 @@
-import {
-  Component,
-  computed,
-  contentChild,
-  effect,
-  inject,
-  input,
-  output,
-  PLATFORM_ID,
-  signal,
-  TemplateRef,
-  viewChild,
-  ViewEncapsulation
-} from '@angular/core'
-import { CommonModule, isPlatformBrowser, Location as Location2 } from '@angular/common'
+import { Component, computed, effect, inject, input, PLATFORM_ID, signal, viewChild, ViewEncapsulation } from '@angular/core'
+import { CommonModule, isPlatformBrowser } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { MatButtonModule } from '@angular/material/button'
 import { MatFormFieldModule } from '@angular/material/form-field'
@@ -56,25 +43,20 @@ const defaultI18n: Required<OAuthLoginI18n> = {
   imports: [CommonModule, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule],
   template: `
     @if (isBrowser) {
-      @if (loginTemplate(); as tpl) {
-        <ng-container
-          [ngTemplateOutlet]="tpl"
-          [ngTemplateOutletContext]="{ login: loginFunction, logout: logoutFunction, status: status() }" />
-      } @else if (status(); as s) {
+      @if (status(); as s) {
         @if (s === OAuthStatus.NOT_AUTHORIZED && isAuthCode()) {
-          <button mat-icon-button type="button" [attr.aria-label]="i18n().notAuthorized" (click)="login(authCodeParams())">
+          <button matIconButton type="button" [attr.aria-label]="i18n().notAuthorized" (click)="login(config())">
             <mat-icon [fontSet]="'material-icons-outlined'">account_circle</mat-icon>
           </button>
         } @else {
           <button
-            mat-icon-button
-            type="button"
+            matIconButton
             [matMenuTriggerFor]="menu"
             [attr.aria-label]="s === OAuthStatus.AUTHORIZED ? i18n().authorized : i18n().notAuthorized">
             <mat-icon [fontSet]="s === OAuthStatus.AUTHORIZED ? 'material-icons' : 'material-icons-outlined'">account_circle</mat-icon>
           </button>
           <mat-menu #menu="matMenu" xPosition="after">
-            <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" class="oauth-login-content">
+            <div tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" class="oauth-login-content">
               @if (s === OAuthStatus.AUTHORIZED) {
                 <mat-list class="p-0!">
                   <mat-list-item>
@@ -92,26 +74,28 @@ const defaultI18n: Required<OAuthLoginI18n> = {
                       <span matListItemLine>{{ profile().subtitle }}</span>
                     }
                     <div matListItemMeta>
-                      <button mat-icon-button type="button" [attr.aria-label]="i18n().logout" (click)="logoutAndClose()">
+                      <button mat-icon-button type="button" [attr.aria-label]="i18n().logout" (click)="logout()">
                         <mat-icon>close</mat-icon>
                       </button>
                     </div>
                   </mat-list-item>
                 </mat-list>
               } @else if (s === OAuthStatus.DENIED && showError()) {
-                <div class="flex items-center gap-2 py-1 text-red-700">
-                  <mat-icon>error_outline</mat-icon>
-                  <span class="flex-1 text-sm" [innerHTML]="i18n().denied"></span>
-                  <button mat-icon-button type="button" (click)="dismissError()" [attr.aria-label]="i18n().dismiss">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                </div>
+                <mat-list class="p-0!">
+                  <mat-list-item class="!bg-red-50 text-red-800">
+                    <mat-icon matListItemIcon class="!text-red-600">error_outline</mat-icon>
+                    <span matListItemLine class="flex-1 text-sm" [innerHTML]="i18n().denied"></span>
+                    <button mat-icon-button matListItemMeta type="button" (click)="dismissError()" [attr.aria-label]="i18n().dismiss">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </mat-list-item>
+                </mat-list>
               } @else {
                 <form
                   #form="ngForm"
                   (ngSubmit)="login({ username: username, password: password })"
                   autocomplete="on"
-                  class="flex flex-col gap-3">
+                  class="flex flex-col gap-3 m-3">
                   <mat-form-field subscriptSizing="dynamic" class="block w-full">
                     <mat-label>{{ i18n().username }}</mat-label>
                     <mat-icon matPrefix>alternate_email</mat-icon>
@@ -161,25 +145,15 @@ const defaultI18n: Required<OAuthLoginI18n> = {
 export class OAuthLoginComponent {
   private oauth = inject(OAUTH)
   private user = inject(OAUTH_USER)
-  private locationService = inject(Location2)
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID))
   readonly OAuthStatus = OAuthStatus
   readonly config = input<OAuthLoginConfig>({})
   readonly i18n = input<Required<OAuthLoginI18n>, OAuthLoginI18n | undefined>(defaultI18n, {
     transform: v => ({ ...defaultI18n, ...v })
   })
-
-  readonly loginTemplate = contentChild<TemplateRef<unknown>>('login')
-  readonly stateChange = output<string | undefined>()
   readonly trigger = viewChild(MatMenuTrigger)
-
   protected readonly status = this.oauth.status
   protected readonly isAuthCode = computed(() => !!this.config().responseType)
-  protected readonly authCodeParams = computed<AuthorizationCodeParameters>(() => ({
-    ...this.config(),
-    responseType: this.config().responseType!,
-    redirectUri: this.config().redirectUri || `${globalThis.location?.origin ?? ''}${this.locationService.path(true) || '/'}`
-  }))
   protected readonly profile = computed(() => {
     const info = this.user.value() ?? {}
     const title = info.name || info.preferred_username || info.email || info.sub || ''
@@ -187,14 +161,12 @@ export class OAuthLoginComponent {
     const initials = `${info.given_name?.charAt(0) ?? ''}${info.family_name?.charAt(0) ?? ''}`.toUpperCase()
     return { title, subtitle, picture: info.picture, initials }
   })
-
   protected readonly visible = signal(false)
   protected readonly showError = signal(true)
   username = ''
   password = ''
 
   constructor() {
-    effect(() => this.stateChange.emit(this.oauth.state()))
     effect(() => {
       if (this.status() === OAuthStatus.DENIED) this.showError.set(true)
     })
@@ -205,16 +177,9 @@ export class OAuthLoginComponent {
     })
   }
 
-  loginFunction = (p: OAuthParameters) => this.login(p)
-  logoutFunction = () => this.logout()
-
   logout() {
-    return this.oauth.logout(this.config().logoutRedirectUri, this.config().state)
-  }
-
-  logoutAndClose() {
     this.trigger()?.closeMenu()
-    return this.logout()
+    return this.oauth.logout(this.config().logoutRedirectUri, this.config().state)
   }
 
   dismissError() {
@@ -222,8 +187,8 @@ export class OAuthLoginComponent {
     return this.oauth.logout()
   }
 
-  login(parameters: OAuthParameters) {
+  login(parameters: OAuthLoginConfig) {
     this.trigger()?.closeMenu()
-    return this.oauth.login(parameters)
+    return this.oauth.login(parameters as OAuthParameters)
   }
 }

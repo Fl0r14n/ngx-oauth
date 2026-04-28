@@ -54,14 +54,15 @@ export const OAUTH = new InjectionToken('OAUTH', {
       }
     }
 
-    const logout = async (logoutRedirectUri?: string, state?: string) => {
+    const logout = async (next?: string, state?: string) => {
       await autoconfigOauth()
-      const { logoutPath, clientId } = (config() as OpenIdConfig) || {}
-      if (logoutRedirectUri && logoutPath) {
+      const { logoutPath, clientId, logoutRedirectUri } = (config() as OpenIdConfig) || {}
+      const returnUrl = next || logoutRedirectUri
+      if (returnUrl && logoutPath) {
         const { id_token } = token()
         const tokenHint = (id_token && `&id_token_hint=${id_token}`) || ''
         const stateFwd = (state && `&state=${state}`) || ''
-        const logoutUrl = `${logoutPath}?client_id=${clientId}&post_logout_redirect_uri=${logoutRedirectUri}${tokenHint}${stateFwd}`
+        const logoutUrl = `${logoutPath}?client_id=${clientId}&post_logout_redirect_uri=${returnUrl}${tokenHint}${stateFwd}`
         token.set({})
         globalThis.location?.replace(logoutUrl)
       } else {

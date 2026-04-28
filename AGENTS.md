@@ -24,6 +24,11 @@
 - Default env is jsdom (node). App is zoneless — zone.js NOT used at runtime or test time.
 - `buildTarget` points at `ngx-oauth-sample:build:development` (ng-packagr builder is not a valid unit-test buildTarget; sample app supplies the compile pipeline).
 
+## SSR
+
+- OAuth callback route (`RenderMode.Client`) must render on the client — reads `window.location` (hash, search) and writes to `localStorage`.
+- Configure in `app.routes.server.ts`: `{ path: 'oauth_callback', renderMode: RenderMode.Client }`
+
 ## Key Config
 
 - `angular.json` — library + app build targets, library test target

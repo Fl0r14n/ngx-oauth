@@ -5,11 +5,13 @@ import { OAuthType } from 'ngx-oauth'
 @Component({
   selector: 'app-main-page',
   imports: [OAuthLoginComponent],
-  template: ` <oauth-login [type]="type" [redirectUri]="redirectUri" [logoutRedirectUri]="logoutRedirectUri" [state]="state" /> `
+  template: `<div class="flex justify-end"><oauth-login [config]="config" /></div>`
 })
 export class MainPage {
-  type = OAuthType.AUTHORIZATION_CODE
-  redirectUri = `${globalThis.location?.origin}/oauth_callback`
-  logoutRedirectUri = `${globalThis.location?.origin}/`
-  state = crypto.randomUUID()
+  config = {
+    responseType: OAuthType.AUTHORIZATION_CODE,
+    redirectUri: `${globalThis.location?.origin}/oauth_callback`,
+    logoutRedirectUri: `${globalThis.location?.origin}/`,
+    state: crypto.randomUUID()
+  }
 }

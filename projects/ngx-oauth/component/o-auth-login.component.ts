@@ -3,41 +3,57 @@ import {
   computed,
   contentChild,
   effect,
-  HostListener,
   inject,
   input,
   output,
   PLATFORM_ID,
   signal,
   TemplateRef,
+  viewChild,
   ViewEncapsulation
 } from '@angular/core'
 import { CommonModule, isPlatformBrowser, Location as Location2 } from '@angular/common'
 import { FormsModule } from '@angular/forms'
-import { OAUTH, OAUTH_USER, OAuthParameters, OAuthStatus, OAuthType } from 'ngx-oauth'
+import { MatButtonModule } from '@angular/material/button'
+import { MatFormFieldModule } from '@angular/material/form-field'
+import { MatIconModule } from '@angular/material/icon'
+import { MatInputModule } from '@angular/material/input'
+import { MatListModule } from '@angular/material/list'
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu'
+import { AuthorizationCodeParameters, OAUTH, OAUTH_USER, OAuthParameters, OAuthStatus, ResourceOwnerParameters } from 'ngx-oauth'
+
+export type OAuthLoginConfig = Partial<ResourceOwnerParameters & AuthorizationCodeParameters & { logoutRedirectUri: string }>
 
 export type OAuthLoginI18n = {
   username?: string
   password?: string
   submit?: string
+  logout?: string
   notAuthorized?: string
   authorized?: string
   denied?: string
+  dismiss?: string
+  showPassword?: string
+  hidePassword?: string
 }
 
 const defaultI18n: Required<OAuthLoginI18n> = {
   username: 'Username',
   password: 'Password',
   submit: 'Sign in',
+  logout: 'Sign out',
   notAuthorized: 'Sign in',
   authorized: 'Welcome',
-  denied: 'Access Denied. Try again!'
+  denied: 'Access denied. Try again.',
+  dismiss: 'Dismiss',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password'
 }
 
 @Component({
   selector: 'oauth-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule],
   template: `
     @if (isBrowser) {
       @if (loginTemplate(); as tpl) {
@@ -45,105 +61,99 @@ const defaultI18n: Required<OAuthLoginI18n> = {
           [ngTemplateOutlet]="tpl"
           [ngTemplateOutletContext]="{ login: loginFunction, logout: logoutFunction, status: status() }" />
       } @else if (status(); as s) {
-        @if (type() === OAuthType.RESOURCE) {
-          <div class="oauth-login relative inline-block text-right">
-            <button
-              type="button"
-              class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition"
-              (click)="s === OAuthStatus.AUTHORIZED ? logout() : toggleCollapse()">
-              <ng-container *ngTemplateOutlet="message" />
-              @if (s !== OAuthStatus.AUTHORIZED) {
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 opacity-60">
-                  <path
-                    fill-rule="evenodd"
-                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                    clip-rule="evenodd" />
-                </svg>
-              }
-            </button>
-            @if (collapse() && (s === OAuthStatus.NOT_AUTHORIZED || s === OAuthStatus.DENIED)) {
-              <div
-                class="absolute right-0 z-20 mt-2 w-72 origin-top-right rounded-xl border border-slate-200 bg-white p-4 shadow-lg ring-1 ring-black/5 focus:outline-none">
-                <div class="absolute -top-2 right-6 h-4 w-4 rotate-45 border-l border-t border-slate-200 bg-white"></div>
-                <form #form="ngForm" (submit)="login({ username: username, password: password })" class="relative space-y-3">
-                  @if (s === OAuthStatus.DENIED) {
-                    <div
-                      class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700"
-                      [innerHTML]="i18n().denied"></div>
-                  }
-                  <div>
-                    <label for="oauth-login-username" class="mb-1 block text-xs font-medium text-slate-600">{{ i18n().username }}</label>
-                    <input
-                      id="oauth-login-username"
-                      type="text"
-                      name="username"
-                      required
-                      [(ngModel)]="username"
-                      [placeholder]="i18n().username"
-                      class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
-                  </div>
-                  <div>
-                    <label for="oauth-login-password" class="mb-1 block text-xs font-medium text-slate-600">{{ i18n().password }}</label>
-                    <input
-                      id="oauth-login-password"
-                      type="password"
-                      name="password"
-                      required
-                      [(ngModel)]="password"
-                      [placeholder]="i18n().password"
-                      class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
-                  </div>
-                  <div class="flex justify-end pt-1">
-                    <button
-                      type="submit"
-                      [disabled]="form.invalid"
-                      class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 transition">
-                      {{ i18n().submit }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            }
-          </div>
+        @if (s === OAuthStatus.NOT_AUTHORIZED && isAuthCode()) {
+          <button mat-icon-button type="button" [attr.aria-label]="i18n().notAuthorized" (click)="login(authCodeParams())">
+            <mat-icon [fontSet]="'material-icons-outlined'">account_circle</mat-icon>
+          </button>
         } @else {
           <button
+            mat-icon-button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition"
-            (click)="
-              s === OAuthStatus.AUTHORIZED
-                ? logout()
-                : login({ responseType: resolvedResponseType(), redirectUri: resolvedRedirectUri(), state: state() })
-            ">
-            <ng-container *ngTemplateOutlet="message" />
+            [matMenuTriggerFor]="menu"
+            [attr.aria-label]="s === OAuthStatus.AUTHORIZED ? i18n().authorized : i18n().notAuthorized">
+            <mat-icon [fontSet]="s === OAuthStatus.AUTHORIZED ? 'material-icons' : 'material-icons-outlined'">account_circle</mat-icon>
           </button>
-        }
-        <ng-template #message>
-          @if (s === OAuthStatus.NOT_AUTHORIZED) {
-            <span class="not-authorized" [innerHTML]="i18n().notAuthorized"></span>
-          }
-          @if (s === OAuthStatus.AUTHORIZED) {
-            <span class="authorized inline-flex items-center gap-2">
-              @if (profile().picture) {
-                <img [src]="profile().picture" alt="" class="avatar h-8 w-8 rounded-full object-cover ring-1 ring-slate-200" />
+          <mat-menu #menu="matMenu" xPosition="after">
+            <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" class="oauth-login-content">
+              @if (s === OAuthStatus.AUTHORIZED) {
+                <mat-list class="p-0!">
+                  <mat-list-item>
+                    @if (profile().picture) {
+                      <img matListItemAvatar [src]="profile().picture" alt="" />
+                    } @else {
+                      <div
+                        matListItemAvatar
+                        class="flex! items-center justify-center bg-blue-600 text-sm font-semibold uppercase text-white">
+                        {{ profile().initials || '?' }}
+                      </div>
+                    }
+                    <span matListItemTitle>{{ profile().title }}</span>
+                    @if (profile().subtitle) {
+                      <span matListItemLine>{{ profile().subtitle }}</span>
+                    }
+                    <div matListItemMeta>
+                      <button mat-icon-button type="button" [attr.aria-label]="i18n().logout" (click)="logoutAndClose()">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  </mat-list-item>
+                </mat-list>
+              } @else if (s === OAuthStatus.DENIED && showError()) {
+                <div class="flex items-center gap-2 py-1 text-red-700">
+                  <mat-icon>error_outline</mat-icon>
+                  <span class="flex-1 text-sm" [innerHTML]="i18n().denied"></span>
+                  <button mat-icon-button type="button" (click)="dismissError()" [attr.aria-label]="i18n().dismiss">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
               } @else {
-                <span
-                  class="avatar inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold uppercase text-indigo-700 ring-1 ring-indigo-200">
-                  {{ profile().initials }}
-                </span>
+                <form
+                  #form="ngForm"
+                  (ngSubmit)="login({ username: username, password: password })"
+                  autocomplete="on"
+                  class="flex flex-col gap-3">
+                  <mat-form-field subscriptSizing="dynamic" class="block w-full">
+                    <mat-label>{{ i18n().username }}</mat-label>
+                    <mat-icon matPrefix>alternate_email</mat-icon>
+                    <input matInput name="username" autocomplete="username" required [(ngModel)]="username" />
+                  </mat-form-field>
+                  <mat-form-field subscriptSizing="dynamic" class="block w-full">
+                    <mat-label>{{ i18n().password }}</mat-label>
+                    <mat-icon matPrefix>password</mat-icon>
+                    <input
+                      matInput
+                      name="password"
+                      autocomplete="current-password"
+                      required
+                      [type]="visible() ? 'text' : 'password'"
+                      [(ngModel)]="password" />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      (click)="visible.set(!visible())"
+                      [attr.aria-label]="visible() ? i18n().hidePassword : i18n().showPassword">
+                      <mat-icon>{{ visible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    </button>
+                  </mat-form-field>
+                  <div class="flex justify-end pt-1">
+                    <button mat-flat-button type="submit" [disabled]="form.invalid">{{ i18n().submit }}</button>
+                  </div>
+                </form>
               }
-              <span class="flex flex-col items-start leading-tight">
-                <strong class="profile-name text-sm font-semibold text-slate-900">{{ profile().title }}</strong>
-                @if (profile().subtitle) {
-                  <span class="profile-email text-xs text-slate-500">{{ profile().subtitle }}</span>
-                }
-              </span>
-            </span>
-          }
-          @if (s === OAuthStatus.DENIED) {
-            <span class="denied text-rose-600" [innerHTML]="i18n().denied"></span>
-          }
-        </ng-template>
+            </div>
+          </mat-menu>
+        }
       }
+    }
+  `,
+  styles: `
+    .mat-mdc-menu-panel:has(.oauth-login-content) {
+      max-width: none;
+      min-width: 360px;
+    }
+    .oauth-login-content .mat-mdc-list-item .mdc-list-item__end {
+      align-self: center !important;
     }
   `,
   encapsulation: ViewEncapsulation.None
@@ -154,24 +164,22 @@ export class OAuthLoginComponent {
   private locationService = inject(Location2)
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID))
   readonly OAuthStatus = OAuthStatus
-  readonly OAuthType = OAuthType
-  readonly type = input<OAuthType>(OAuthType.RESOURCE)
-  readonly state = input('')
-  readonly logoutRedirectUri = input<string | undefined>(undefined)
-  readonly redirectUri = input<string | undefined>(undefined)
-  readonly responseType = input<string | undefined>(undefined)
+  readonly config = input<OAuthLoginConfig>({})
   readonly i18n = input<Required<OAuthLoginI18n>, OAuthLoginI18n | undefined>(defaultI18n, {
     transform: v => ({ ...defaultI18n, ...v })
   })
 
   readonly loginTemplate = contentChild<TemplateRef<unknown>>('login')
   readonly stateChange = output<string | undefined>()
+  readonly trigger = viewChild(MatMenuTrigger)
 
   protected readonly status = this.oauth.status
-  protected readonly resolvedRedirectUri = computed(
-    () => this.redirectUri() || `${globalThis.location?.origin ?? ''}${this.locationService.path(true) || '/'}`
-  )
-  protected readonly resolvedResponseType = computed(() => this.responseType() || this.type())
+  protected readonly isAuthCode = computed(() => !!this.config().responseType)
+  protected readonly authCodeParams = computed<AuthorizationCodeParameters>(() => ({
+    ...this.config(),
+    responseType: this.config().responseType!,
+    redirectUri: this.config().redirectUri || `${globalThis.location?.origin ?? ''}${this.locationService.path(true) || '/'}`
+  }))
   protected readonly profile = computed(() => {
     const info = this.user.value() ?? {}
     const title = info.name || info.preferred_username || info.email || info.sub || ''
@@ -180,32 +188,42 @@ export class OAuthLoginComponent {
     return { title, subtitle, picture: info.picture, initials }
   })
 
-  protected readonly collapse = signal(false)
+  protected readonly visible = signal(false)
+  protected readonly showError = signal(true)
   username = ''
   password = ''
+
+  constructor() {
+    effect(() => this.stateChange.emit(this.oauth.state()))
+    effect(() => {
+      if (this.status() === OAuthStatus.DENIED) this.showError.set(true)
+    })
+    effect(() => {
+      const { username, password } = this.config()
+      if (username !== undefined) this.username = username
+      if (password !== undefined) this.password = password
+    })
+  }
 
   loginFunction = (p: OAuthParameters) => this.login(p)
   logoutFunction = () => this.logout()
 
-  constructor() {
-    effect(() => this.stateChange.emit(this.oauth.state()))
+  logout() {
+    return this.oauth.logout(this.config().logoutRedirectUri, this.config().state)
   }
 
-  logout() {
-    return this.oauth.logout(this.logoutRedirectUri(), this.state())
+  logoutAndClose() {
+    this.trigger()?.closeMenu()
+    return this.logout()
+  }
+
+  dismissError() {
+    this.showError.set(false)
+    return this.oauth.logout()
   }
 
   login(parameters: OAuthParameters) {
-    this.collapse.set(false)
+    this.trigger()?.closeMenu()
     return this.oauth.login(parameters)
-  }
-
-  toggleCollapse() {
-    this.collapse.update(v => !v)
-  }
-
-  @HostListener('window:keydown.escape')
-  keyboardEvent() {
-    this.collapse.set(false)
   }
 }

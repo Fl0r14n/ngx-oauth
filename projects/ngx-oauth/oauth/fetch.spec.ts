@@ -76,16 +76,15 @@ describe('OAUTH_FETCH', () => {
     refreshMock.mockReturnValue(new Promise(r => (resolveRefresh = r)))
     token.token.set({ access_token: 'old', token_type: 'Bearer', refresh_token: 'r', expires: Date.now() - 1 })
     await flush()
-    // OAUTH_TOKEN's expiry effect kicks one refresh; capture that baseline so we can
-    // assert that the three concurrent fetchFn calls collapse into a single extra call.
-    const baseline = refreshMock.mock.calls.length
+    // checkToken shares a single in-flight guard between OAUTH_TOKEN's effect
+    // and OAUTH_FETCH; concurrent fetchFn calls reuse the in-flight refresh.
     const p1 = fetchFn('/a')
     const p2 = fetchFn('/b')
     const p3 = fetchFn('/c')
     await Promise.resolve()
     resolveRefresh({ access_token: 'new', token_type: 'Bearer', expires_in: 60 })
     await Promise.all([p1, p2, p3])
-    expect(refreshMock.mock.calls.length - baseline).toBe(1)
+    expect(refreshMock.mock.calls.length).toBe(1)
   })
 
   it('skips ignored paths', async () => {

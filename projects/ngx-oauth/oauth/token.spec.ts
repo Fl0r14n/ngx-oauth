@@ -78,14 +78,6 @@ describe('OAUTH_TOKEN', () => {
     expect(api.accessToken()).toBeUndefined()
   })
 
-  it('isExpiredToken', () => {
-    const api = setup()
-    expect(api.isExpiredToken({ expires: Date.now() - 1 })).toBe(true)
-    expect(api.isExpiredToken({ expires: Date.now() + 100000 })).toBe(false)
-    expect(api.isExpiredToken({})).toBe(false)
-    expect(api.isExpiredToken(undefined)).toBe(false)
-  })
-
   it('effect stamps expires when expires_in present and expires missing', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1000)
     const api = setup()

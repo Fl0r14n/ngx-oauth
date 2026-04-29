@@ -62,23 +62,31 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
       }
     }
 
+    let inFlight: Promise<void> | undefined
+    const checkToken = (t: OAuthToken) => {
+      if (inFlight) return inFlight
+      inFlight = (async () => {
+        if (isExpiredToken(t)) {
+          await autoconfigOauth()
+          const refreshed = await refresh(t, config())
+          if (refreshed && !isExpiredToken(refreshed)) {
+            //keep the refresh token cuz we might not net a new one
+            setExpires({ refresh_token: t.refresh_token, ...refreshed })
+          }
+        } else {
+          setExpires(t)
+        }
+      })().finally(() => (inFlight = undefined))
+      return inFlight
+    }
+
     effect(async () => {
       const t = token()
-      if (isExpiredToken(t)) {
-        await untracked(() => autoconfigOauth())
-        const refreshed = await untracked(() => refresh(token(), config()))
-        if (refreshed && !isExpiredToken(refreshed)) {
-          //keep the refresh token cuz we might not net a new one
-          setExpires({ refresh_token: t.refresh_token, ...refreshed })
-        }
-      } else {
-        setExpires(t)
-      }
+      await untracked(() => checkToken(t))
     })
 
     return {
       token,
-      isExpiredToken,
       type,
       accessToken,
       status,
@@ -87,6 +95,7 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
       hasError,
       errorDescription,
       storageKey,
+      checkToken,
       autoconfigOauth
     }
   }

@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatInputModule } from '@angular/material/input'
 import { MatListModule } from '@angular/material/list'
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu'
-import { AuthorizationCodeParameters, OAUTH, OAUTH_USER, OAuthParameters, OAuthStatus, ResourceOwnerParameters } from 'ngx-oauth'
+import { AuthorizationCodeParameters, OAUTH, OAUTH_USER, OAuthParameters, OAuthStatus, OAuthType, ResourceOwnerParameters } from 'ngx-oauth'
 
 export type OAuthLoginConfig = Partial<ResourceOwnerParameters & AuthorizationCodeParameters & { logoutRedirectUri: string }>
 
@@ -153,7 +153,10 @@ export class OAuthLoginComponent {
   })
   readonly trigger = viewChild(MatMenuTrigger)
   protected readonly status = this.oauth.status
-  protected readonly isAuthCode = computed(() => !!this.config().responseType)
+  protected readonly isAuthCode = computed(() => {
+    const { responseType } = this.config()
+    return responseType && responseType !== OAuthType.RESOURCE
+  })
   protected readonly profile = computed(() => {
     const info = this.user.value() ?? {}
     const title = info.name || info.preferred_username || info.email || info.sub || ''

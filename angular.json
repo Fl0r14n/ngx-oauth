@@ -33,6 +33,17 @@
             ],
             "eslintConfig": "projects/ngx-oauth/eslint.config.js"
           }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "ngx-oauth-sample:build:development",
+            "tsConfig": "projects/ngx-oauth/tsconfig.spec.json",
+            "runner": "vitest",
+            "providersFile": "projects/ngx-oauth/test-providers.ts",
+            "setupFiles": ["projects/ngx-oauth/test-setup.ts"],
+            "include": ["**/*.spec.ts"]
+          }
         }
       }
     },
@@ -40,7 +51,7 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
+          "style": "css"
         }
       },
       "root": "projects/ngx-oauth-sample",
@@ -55,13 +66,13 @@
             "browser": "projects/ngx-oauth-sample/src/main.ts",
             "polyfills": [],
             "tsConfig": "projects/ngx-oauth-sample/tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               "projects/ngx-oauth-sample/src/favicon.ico",
               "projects/ngx-oauth-sample/src/assets"
             ],
             "styles": [
-              "projects/ngx-oauth-sample/src/styles.scss"
+              "projects/ngx-oauth-sample/src/styles.css"
             ],
             "scripts": [],
             "server": "projects/ngx-oauth-sample/src/main.server.ts",
@@ -89,7 +100,8 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "assets": []
             }
           },
           "defaultConfiguration": "production"
@@ -97,7 +109,11 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "ssl": true
+            "host": "0.0.0.0",
+            "port": 3000,
+            "ssl": true,
+            "sslCert": ".cert/cert.pem",
+            "sslKey": ".cert/key.pem"
           },
           "configurations": {
             "production": {
@@ -120,13 +136,13 @@
           "options": {
             "polyfills": [],
             "tsConfig": "projects/ngx-oauth-sample/tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               "projects/ngx-oauth-sample/src/favicon.ico",
               "projects/ngx-oauth-sample/src/assets"
             ],
             "styles": [
-              "projects/ngx-oauth-sample/src/styles.scss"
+              "projects/ngx-oauth-sample/src/styles.css"
             ],
             "scripts": []
           }

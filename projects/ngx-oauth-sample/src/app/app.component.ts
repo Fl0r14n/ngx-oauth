@@ -1,63 +1,9 @@
-import { Component, inject } from '@angular/core';
-import { OAuthService, OAuthType } from 'ngx-oauth';
-import { OAuthLoginComponent } from 'ngx-oauth/component';
-import { Observable } from 'rxjs';
-import { PROFILE_SERVICE, ProfileService } from './service';
-import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, OAuthLoginComponent],
-  template: `
-    <header>
-      <nav class="navbar navbar-light bg-light container-fluid px-3">
-        <a class="navbar-brand">OAuth Demo</a>
-        <ul class="nav">
-          <li class="nav-item">
-            <oauth-login
-              [type]="type"
-              [profileName$]="profileName$"
-              [i18n]="i18n"
-              [useLogoutUrl]="useLogoutUrl"
-              [(state)]="state"
-            ></oauth-login>
-          </li>
-        </ul>
-      </nav>
-      @if (status$ | async; as status) {
-        <div class="alert alert-info text-center font-weight-bold">{{ status }}</div>
-      }
-    </header>
-    <button class="btn btn-primary" (click)="refresh()">Refresh profile</button>
-  `
+  imports: [RouterOutlet],
+  template: ` <router-outlet />`
 })
-export class AppComponent {
-  private _state = 'some_salt_dummy_state';
-  useLogoutUrl = true;
-  status$ = this.oauthService.status$;
-  type = OAuthType.AUTHORIZATION_CODE;
-
-  private oauthService = inject(OAuthService);
-  private profileService = inject(ProfileService, { optional: true }) ?? inject(PROFILE_SERVICE);
-
-  i18n = {
-    username: 'Username'
-  };
-
-  get state(): string {
-    return this._state;
-  }
-
-  set state(value: string) {
-    this._state = value;
-  }
-
-  get profileName$(): Observable<string | undefined> | undefined {
-    return this.profileService.profileName$;
-  }
-
-  refresh() {
-    //test expired token
-    this.oauthService.getUserInfo().subscribe();
-  }
-}
+export class AppComponent {}

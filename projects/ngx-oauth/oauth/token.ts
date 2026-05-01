@@ -96,7 +96,8 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
       errorDescription,
       storageKey,
       checkToken,
-      autoconfigOauth
+      autoconfigOauth,
+      isExpiredToken
     }
   }
 })

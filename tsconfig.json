@@ -1,7 +1,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -20,12 +19,12 @@
     "useDefineForClassFields": false,
     "paths": {
       "ngx-oauth": [
-        "dist/ngx-oauth",
-        "dist/ngx-oauth/ngx-oauth"
+        "./dist/ngx-oauth",
+        "./dist/ngx-oauth/ngx-oauth"
       ],
       "ngx-oauth/component": [
-        "dist/ngx-oauth/component",
-        "dist/ngx-oauth/component/ngx-oauth-component"
+        "./dist/ngx-oauth/component",
+        "./dist/ngx-oauth/component/ngx-oauth-component"
       ]
     }
   },

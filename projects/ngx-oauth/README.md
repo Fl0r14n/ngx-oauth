@@ -123,6 +123,38 @@ export class CallbackComponent {
 }
 ```
 
+### Server-side rendering (SSR)
+
+`oauthCallback`, `login`, and `logout` need browser APIs (`location`, `localStorage`) and finish with a redirect, so they must run on the **client**, not during SSR. If a route guard runs them server-side and returns a redirect, the server emits an HTTP 302 that navigates the browser away *before* it can complete the flow — the login silently fails.
+
+**Preferred — render the callback route on the client.** When the route is statically addressable, set `RenderMode.Client` in `app.routes.server.ts`; the server sends a shell and the browser performs the whole navigation (running the guard once, on the client):
+
+```typescript
+import { RenderMode, ServerRoute } from '@angular/ssr'
+
+export const serverRoutes: ServerRoute[] = [
+  { path: 'oauth_callback', renderMode: RenderMode.Client },
+  { path: '**', renderMode: RenderMode.Server }
+]
+```
+
+**When the route can't be targeted** — e.g. it's nested under a dynamic prefix like `:tenant/:locale/oauth_callback` that no static `ServerRoute` path matches (there is no matcher function, and `**` is a trailing-only catch-all) — defer inside the guard instead. Return early on the server so the route renders without redirecting; the client re-runs the guard on initial navigation and completes the exchange:
+
+```typescript
+import { inject, PLATFORM_ID } from '@angular/core'
+import { isPlatformServer } from '@angular/common'
+import { CanActivateFn } from '@angular/router'
+import { OAUTH } from 'ngx-oauth'
+
+export const oauthCallbackGuard: CanActivateFn = async () => {
+  if (isPlatformServer(inject(PLATFORM_ID))) return true // defer — let the client do it
+  await inject(OAUTH).oauthCallback()
+  return true // …then redirect to your post-login target
+}
+```
+
+Apply the same `isPlatformServer` guard to your `login`/`logout` routes for the same reason.
+
 ### `OAUTH` API
 
 | Member | Type | Description |

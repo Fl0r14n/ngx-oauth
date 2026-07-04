@@ -1,6 +1,6 @@
 # ngx-oauth
 
-OAuth 2.1 library for Angular 21. Zoneless, signal-based.
+OAuth 2.1 library for Angular 22. Zoneless, signal-based.
 
 ## Projects
 

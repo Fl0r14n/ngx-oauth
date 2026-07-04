@@ -1,13 +1,13 @@
 {
   "name": "ngx-oauth",
-  "version": "8.0.3",
+  "version": "8.0.4",
   "author": "Fl0r14n <florian.chis@gmail.com>",
   "homepage": "https://github.com/Fl0r14n/ngx-oauth",
   "description": "A fully OAuth2.1 compliant angular library",
   "license": "MIT",
   "keywords": [
     "angular",
-    "Angular 21",
+    "Angular 22",
     "oauth",
     "oauth2",
     "oidc",

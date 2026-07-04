@@ -52,12 +52,7 @@ export type AuthorizationCodeParameters = {
 
 export type OAuthParameters = ResourceOwnerParameters | AuthorizationCodeParameters
 export type OAuthTypeConfig =
-  | OpenIdConfig
-  | AuthorizationCodePKCEConfig
-  | AuthorizationCodeConfig
-  | ImplicitConfig
-  | ResourceOwnerConfig
-  | ClientCredentialConfig
+  OpenIdConfig | AuthorizationCodePKCEConfig | AuthorizationCodeConfig | ImplicitConfig | ResourceOwnerConfig | ClientCredentialConfig
 
 export type OAuthConfig = {
   config?: Partial<OAuthTypeConfig>

@@ -1,4 +1,4 @@
-import { signal, Signal, WritableSignal } from '@angular/core'
+import { effect, signal, Signal, WritableSignal } from '@angular/core'
 
 const storage = () => {
   const s = globalThis.localStorage
@@ -33,6 +33,16 @@ export const storageSignal = <T>(keyInput: string | Signal<string>, defaultValue
       const next = fn(current)
       set(keyFn(), next)
       return next
+    })
+  }
+
+  if (typeof keyInput === 'function') {
+    let loadedKey = keyFn()
+    effect(() => {
+      const key = keyInput()
+      if (key === loadedKey) return
+      loadedKey = key
+      signalSet(get(key) ?? defaultValue)
     })
   }
 

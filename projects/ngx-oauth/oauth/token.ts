@@ -70,8 +70,13 @@ export const OAUTH_TOKEN = new InjectionToken('OAUTH_TOKEN', {
           await autoconfigOauth()
           const refreshed = await refresh(t, config())
           if (refreshed && !isExpiredToken(refreshed)) {
-            //keep the refresh token cuz we might not net a new one
-            setExpires({ refresh_token: t.refresh_token, ...refreshed })
+            if (refreshed.error) {
+              // RFC 6749 §5.2 error (e.g. invalid_grant) — persist it like the 401 fetch handler so the dead token is dropped
+              token.set(refreshed)
+            } else {
+              //keep the refresh token cuz we might not get a new one
+              setExpires({ refresh_token: t.refresh_token, ...refreshed })
+            }
           }
         } else {
           setExpires(t)

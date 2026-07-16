@@ -107,6 +107,27 @@ describe('OAUTH_TOKEN', () => {
     expect(api.token().access_token).toBe('fresh')
   })
 
+  it('persists the RFC 6749 error body when the refresh token is rejected (invalid_grant)', async () => {
+    const api = setup()
+    refreshMock.mockResolvedValue({ error: 'invalid_grant', error_description: 'Invalid refresh token', type: 'code' })
+    config.set({ tokenPath: '/t', clientId: 'c' } as any)
+    api.token.set({ refresh_token: 'dead', access_token: 'stale', token_type: 'Bearer', expires: Date.now() - 10_000 })
+    await flush()
+    expect(api.token()).toEqual({ error: 'invalid_grant', error_description: 'Invalid refresh token', type: 'code' })
+    expect(api.status()).toBe(OAuthStatus.DENIED)
+    expect(api.accessToken()).toBeUndefined()
+  })
+
+  it('keeps the old token when refresh yields neither a fresh token nor an error (transient failure)', async () => {
+    const api = setup()
+    refreshMock.mockResolvedValue(undefined)
+    config.set({ tokenPath: '/t', clientId: 'c' } as any)
+    const stale = { refresh_token: 'keep', access_token: 'stale', expires: Date.now() - 10_000 }
+    api.token.set(stale)
+    await flush()
+    expect(api.token()).toEqual(stale)
+  })
+
   describe('autoconfigOauth', () => {
     it('fetches discovery and merges endpoints when tokenPath/authorizePath missing', async () => {
       const api = setup()

@@ -48,3 +48,6 @@ Thumbs.db
 
 package-lock.json
 bun.lock
+
+# Agent tooling
+.claude

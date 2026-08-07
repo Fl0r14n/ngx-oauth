@@ -19,10 +19,19 @@ export const OAUTH_FETCH = new InjectionToken<typeof fetch>('OAUTH_FETCH', {
         if (at) {
           const headers = new Headers(init?.headers)
           headers.set('Authorization', at)
-          if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+          // add content type for json in case is missing
+          if (typeof init?.body === 'string' && !headers.has('Content-Type')) {
+            headers.set('Content-Type', 'application/json')
+          }
+          if (!headers.has('Accept')) headers.set('Accept', 'application/json')
           const response = await globalThis.fetch(input, { ...init, headers })
           if (response.status === 401) {
-            token.set(await response.json())
+            //clone cuz of stream can be read once and catch so that token is set accordingly
+            const body = await response
+              .clone()
+              .json()
+              .catch(() => undefined)
+            token.set((typeof body === 'object' && body) || {})
           }
           return response
         }

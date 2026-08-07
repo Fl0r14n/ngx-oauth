@@ -12,7 +12,25 @@ const flush = async () => {
   }
 }
 
-const mockJsonResponse = (status: number, body: any) => ({ status, json: () => Promise.resolve(body) }) as any
+/** A stand-in for Response with the one behaviour that matters to OAUTH_FETCH: the body is a one-shot
+ * stream. Read it twice and you get what a real Response gives you — which is how the missing clone()
+ * around the 401 read stayed invisible. */
+const mockJsonResponse = (status: number, body: any) => {
+  let read = false
+  return {
+    status,
+    json: () => (read ? Promise.reject(new TypeError('Body has already been read')) : ((read = true), Promise.resolve(body))),
+    clone: () => mockJsonResponse(status, body)
+  } as any
+}
+
+/** A 401 whose body is not JSON at all — a gateway's HTML error page, or nothing. */
+const mockUnparseableResponse = (status: number) =>
+  ({
+    status,
+    json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    clone: () => mockUnparseableResponse(status)
+  }) as any
 
 if (typeof (globalThis as any).Request === 'undefined') {
   ;(globalThis as any).Request = class {}
@@ -50,13 +68,52 @@ describe('OAUTH_FETCH', () => {
     expect(new Headers(init.headers).get('Authorization')).toBe('Bearer at')
   })
 
-  it('sets default Content-Type when not provided', async () => {
+  it('sets default Content-Type for a string body', async () => {
     const { fetchFn, token } = setup()
     token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
     await flush()
-    await fetchFn('/api')
+    await fetchFn('/api', { method: 'POST', body: '{}' })
     const init = globalFetch.mock.calls[0][1] as RequestInit
     expect(new Headers(init.headers).get('Content-Type')).toBe('application/json')
+  })
+
+  it('sends no Content-Type on a bodyless request', async () => {
+    const { fetchFn, token } = setup()
+    token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
+    await flush()
+    // the header describes a body that is not there, and a strict gateway may reject it
+    await fetchFn('/api')
+    const init = globalFetch.mock.calls[0][1] as RequestInit
+    expect(new Headers(init.headers).get('Content-Type')).toBeNull()
+  })
+
+  it('leaves a non-string body to type itself, FormData boundary included', async () => {
+    const { fetchFn, token } = setup()
+    token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
+    await flush()
+    // defaulting to JSON here would strip the multipart boundary and break the upload
+    await fetchFn('/api', { method: 'POST', body: new FormData() })
+    const init = globalFetch.mock.calls[0][1] as RequestInit
+    expect(new Headers(init.headers).get('Content-Type')).toBeNull()
+  })
+
+  it('sets default Accept, body or not', async () => {
+    const { fetchFn, token } = setup()
+    token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
+    await flush()
+    // Accept is what actually asks for JSON back — Content-Type never did
+    await fetchFn('/api')
+    const init = globalFetch.mock.calls[0][1] as RequestInit
+    expect(new Headers(init.headers).get('Accept')).toBe('application/json')
+  })
+
+  it('does not override an Accept the caller set', async () => {
+    const { fetchFn, token } = setup()
+    token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
+    await flush()
+    await fetchFn('/report.pdf', { headers: { Accept: 'application/pdf' } })
+    const init = globalFetch.mock.calls[0][1] as RequestInit
+    expect(new Headers(init.headers).get('Accept')).toBe('application/pdf')
   })
 
   it('refreshes before the request when token is expired', async () => {
@@ -112,5 +169,26 @@ describe('OAUTH_FETCH', () => {
     globalFetch.mockResolvedValueOnce(mockJsonResponse(401, { error: 'invalid_token' }))
     await fetchFn('/api')
     expect(token.token().error).toBe('invalid_token')
+  })
+
+  it('leaves the 401 body readable by the caller', async () => {
+    const { fetchFn, token } = setup()
+    token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
+    await flush()
+    globalFetch.mockResolvedValueOnce(mockJsonResponse(401, { error: 'invalid_token' }))
+    // storing the body must not consume it — the caller has the most reason to want a 401's body
+    const response = await fetchFn('/api')
+    await expect(response.json()).resolves.toEqual({ error: 'invalid_token' })
+  })
+
+  it('clears the token on a 401 with an unparseable body, without rejecting', async () => {
+    const { fetchFn, token } = setup()
+    token.token.set({ access_token: 'at', token_type: 'Bearer', expires: Date.now() + 60_000 })
+    await flush()
+    // a gateway's HTML 401: there is no error to keep, and the parse failure must not reach the caller
+    globalFetch.mockResolvedValueOnce(mockUnparseableResponse(401))
+    const response = await fetchFn('/api')
+    expect(response.status).toBe(401)
+    expect(token.token()).toEqual({})
   })
 })

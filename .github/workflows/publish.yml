@@ -1,0 +1,35 @@
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # the OIDC token npm exchanges for publish rights
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org # points npm at the registry, independent of how it authenticates
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run build:lib
+      - run: bun run test
+      # trusted publishing needs npm >= 11.5.1; node 24 ships 11.x but the exact patch drifts
+      - run: npm install -g npm@latest
+      # Published from ng-packagr's output, not from projects/ngx-oauth — that directory has no built
+      # bundles, and its package.json is the source manifest ng-packagr rewrites on the way out.
+      #
+      # No NODE_AUTH_TOKEN: a trusted publisher registered for this repo and workflow on npmjs.com exchanges
+      # the OIDC token above for publish rights, and provenance comes with it. Register it once with
+      #   npm trust github ngx-oauth --file publish.yml --repo Fl0r14n/ngx-oauth --allow-publish
+      - run: npm publish --access public
+        working-directory: dist/ngx-oauth

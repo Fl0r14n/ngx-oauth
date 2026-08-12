@@ -58,13 +58,6 @@ git push --follow-tags
 gh release create v8.3.0 --generate-notes
 ```
 
-Then watch it land:
-
-```sh
-gh run watch "$(gh run list --workflow publish.yml --limit 1 --json databaseId --jq '.[0].databaseId')" --exit-status
-npm view ngx-oauth version
-```
-
 ## License
 
 [MIT](LICENSE)

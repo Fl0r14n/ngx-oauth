@@ -44,6 +44,46 @@ const oauthConfig = {
 
 See [ngx-oauth/README.md](projects/ngx-oauth/README.md) for the full library documentation.
 
+## Publishing
+
+**Publishing a GitHub release publishes to npm.** That is the whole flow — the release event runs
+[`.github/workflows/publish.yml`](.github/workflows/publish.yml), which lints, builds the library, tests it
+and then publishes `ngx-oauth`.
+
+```sh
+# 1. bump the version in projects/ngx-oauth/package.json — that is the manifest ng-packagr
+#    emits into dist/ngx-oauth and the one npm publishes. The root package.json has its own
+#    unrelated version; npm never sees it.
+# 2. commit and tag
+git commit -am 'release 8.3.0'
+git tag v8.3.0
+git push --follow-tags
+# 3. publish the release — this is the step that triggers npm
+gh release create v8.3.0 --generate-notes
+```
+
+Watch it and confirm the result:
+
+```sh
+gh run watch "$(gh run list --workflow publish.yml --limit 1 --json databaseId --jq '.[0].databaseId')" --exit-status
+npm view ngx-oauth version
+```
+
+The workflow publishes from `dist/ngx-oauth`, not from `projects/ngx-oauth` — the source directory holds no
+bundles, and its `package.json` is the manifest ng-packagr rewrites on the way out.
+
+No npm token is involved. It authenticates with [trusted
+publishing](https://docs.npmjs.com/trusted-publishers/), exchanging GitHub's OIDC token for publish rights,
+which also attaches [provenance](https://docs.npmjs.com/generating-provenance-statements) to the published
+version. That takes one registration per package, already done for this one:
+
+```sh
+npm trust github ngx-oauth --file publish.yml --repo Fl0r14n/ngx-oauth --allow-publish
+```
+
+To publish from a workstation instead, `npm run build:lib && npm publish ./dist/ngx-oauth` — but prefer the
+release: a local publish prompts for a 2FA code and produces no provenance.
+
 ## License
 
 [MIT](LICENSE)

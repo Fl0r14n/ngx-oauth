@@ -151,11 +151,12 @@ describe('OAuth function tokens', () => {
   })
 
   describe('openIdConfiguration', () => {
-    it('GETs .well-known endpoint', async () => {
+    // a `client_id` here is not in OIDC Discovery 1.0 §4.1, and Entra rejects the request outright
+    it('GETs .well-known endpoint with no query parameters', async () => {
       fetchMock.mockResolvedValueOnce(mockJsonResponse({ issuer: 'https://idp' }))
       const fn = TestBed.inject(OAUTH_OPENID_CONFIG)
       const result = await fn({ issuerPath: 'https://idp', clientId: 'c' } as any)
-      expect(fetchMock).toHaveBeenCalledWith('https://idp/.well-known/openid-configuration?client_id=c')
+      expect(fetchMock).toHaveBeenCalledWith('https://idp/.well-known/openid-configuration')
       expect(result).toEqual({ issuer: 'https://idp' })
     })
 

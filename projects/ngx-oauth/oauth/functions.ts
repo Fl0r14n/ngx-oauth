@@ -100,10 +100,12 @@ const resourceOwnerLogin = async (parameters?: ResourceOwnerParameters, config?:
   return result ? { ...result, type: OAuthType.RESOURCE } : undefined
 }
 
+// OIDC Discovery 1.0 §4.1 defines no query parameters here, and Entra answers a `client_id` with
+// AADSTS1004008 rather than a document
 const openIdConfiguration = async (config?: Partial<OpenIdConfig>) => {
-  const { issuerPath, clientId } = config || {}
+  const { issuerPath } = config || {}
   if (!issuerPath) return undefined
-  return fetch(`${issuerPath}/.well-known/openid-configuration?client_id=${clientId}`).then(r => r.json())
+  return fetch(`${issuerPath}/.well-known/openid-configuration`).then(r => r.json())
 }
 
 const userInfo = async (config?: Partial<OpenIdConfig>, fetchFn = fetch) => {

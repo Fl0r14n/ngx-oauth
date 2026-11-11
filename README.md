@@ -1,5 +1,9 @@
 # ngx-oauth
 
+> **Moved.** This library continues as [`@oidcraft/angular`](https://www.npmjs.com/package/@oidcraft/angular),
+> from 9.0.0, developed in [`oidcraft/packages/angular`](https://github.com/Fl0r14n/oidcraft/tree/main/packages/angular).
+> `ngx-oauth` is deprecated on npm and this repository is archived; its published versions keep working.
+
 OAuth 2.1 library for Angular 22. Zoneless, signal-based.
 
 ## Projects
